@@ -36,6 +36,7 @@ export default function FormularioInscripcion() {
   // Datos Beneficiario
   const [benefNombre, setBenefNombre] = useState('');
   const [benefCedula, setBenefCedula] = useState('');
+  const [benefTelefono, setBenefTelefono] = useState('');
   const [benefParentesco, setBenefParentesco] = useState('');
 
   // Pago
@@ -109,6 +110,7 @@ export default function FormularioInscripcion() {
       formData.append('categoria', categoria);
       formData.append('beneficiarioNombre', benefNombre);
       formData.append('beneficiarioCedula', benefCedula);
+      formData.append('beneficiarioTelefono', benefTelefono);
       formData.append('beneficiarioParentesco', benefParentesco);
       formData.append('metodoPago', metodoPago);
       formData.append('requiereFactura', requiereFactura.toString());
@@ -467,6 +469,21 @@ export default function FormularioInscripcion() {
               onChange={(e) => handleBenefCedulaChange(e.target.value)}
               required
               placeholder="Solo letras y números"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent"
+            />
+          </div>
+
+          {/* # Teléfono */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              # Teléfono *
+            </label>
+            <input
+              type="tel"
+              value={benefTelefono}
+              onChange={(e) => setBenefTelefono(e.target.value)}
+              required
+              placeholder="+506 8888-8888"
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent"
             />
           </div>

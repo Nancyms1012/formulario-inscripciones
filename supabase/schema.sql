@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS inscripciones (
   -- Datos Beneficiario
   beneficiario_nombre VARCHAR(200) NOT NULL,
   beneficiario_cedula VARCHAR(50) NOT NULL,
+  beneficiario_telefono VARCHAR(30) NOT NULL,
   beneficiario_parentesco VARCHAR(50) NOT NULL,
   
   -- Pago

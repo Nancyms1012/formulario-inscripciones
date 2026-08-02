@@ -30,6 +30,7 @@ export async function POST(request: NextRequest) {
     const categoria = formData.get('categoria') as string;
     const beneficiarioNombre = formData.get('beneficiarioNombre') as string;
     const beneficiarioCedula = formData.get('beneficiarioCedula') as string;
+    const beneficiarioTelefono = formData.get('beneficiarioTelefono') as string;
     const beneficiarioParentesco = formData.get('beneficiarioParentesco') as string;
     const metodoPago = formData.get('metodoPago') as string;
     const requiereFactura = formData.get('requiereFactura') === 'true';
@@ -39,7 +40,7 @@ export async function POST(request: NextRequest) {
     if (!tipoIdentificacion || !numeroIdentificacion || !nombre || !primerApellido ||
         !segundoApellido || !celular || !email || !fechaNacimiento || !genero ||
         !provincia || !evento || !categoria || !beneficiarioNombre ||
-        !beneficiarioCedula || !beneficiarioParentesco || !metodoPago) {
+        !beneficiarioCedula || !beneficiarioTelefono || !beneficiarioParentesco || !metodoPago) {
       return NextResponse.json(
         { error: 'Todos los campos obligatorios deben estar completos' },
         { status: 400 }
@@ -92,6 +93,7 @@ export async function POST(request: NextRequest) {
         categoria,
         beneficiario_nombre: beneficiarioNombre,
         beneficiario_cedula: beneficiarioCedula,
+        beneficiario_telefono: beneficiarioTelefono,
         beneficiario_parentesco: beneficiarioParentesco,
         metodo_pago: metodoPago,
         comprobante_sinpe_url: comprobanteUrl,
