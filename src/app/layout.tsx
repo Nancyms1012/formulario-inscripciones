@@ -18,7 +18,7 @@ export default function RootLayout({
         <header className="bg-[#0d2240] text-white shadow-lg">
           <div className="max-w-4xl mx-auto px-4 py-4 flex items-center gap-4">
             <img
-              src="/images/logo-la-copa.png"
+              src="/images/LOGO_COPA.jpeg"
               alt="La Copa"
               className="h-12 w-12 rounded-lg object-cover"
             />
