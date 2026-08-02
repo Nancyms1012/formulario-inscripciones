@@ -1,0 +1,22 @@
+@import "tailwindcss";
+
+:root {
+  --color-primary: #0d2240;
+  --color-primary-light: #1a4f8b;
+  --color-primary-dark: #081829;
+  --color-accent: #2563eb;
+  --color-success: #16a34a;
+  --color-warning: #f59e0b;
+  --color-error: #dc2626;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+@theme inline {
+  --color-lacopa-primary: #0d2240;
+  --color-lacopa-primary-light: #1a4f8b;
+  --color-lacopa-primary-dark: #081829;
+  --color-lacopa-accent: #2563eb;
+}
