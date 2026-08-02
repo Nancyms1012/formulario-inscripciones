@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
     if (error) {
       console.error('Error insertando inscripción:', error);
       return NextResponse.json(
-        { error: 'Error al guardar la inscripción. Intente de nuevo.' },
+        { error: `Error al guardar: ${error.message} (código: ${error.code})` },
         { status: 500 }
       );
     }
@@ -122,8 +122,9 @@ export async function POST(request: NextRequest) {
     });
   } catch (err) {
     console.error('Error en API inscripciones:', err);
+    const errorMsg = err instanceof Error ? err.message : 'Error desconocido';
     return NextResponse.json(
-      { error: 'Error interno del servidor' },
+      { error: `Error interno: ${errorMsg}` },
       { status: 500 }
     );
   }
