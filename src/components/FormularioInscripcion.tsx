@@ -354,9 +354,9 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Equipo */}
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Equipo</label>
-            <input type="text" value={equipo} onChange={(e) => setEquipo(e.target.value)}
-              placeholder="Nombre del equipo (opcional)"
+            <label className="block text-sm font-medium text-gray-700 mb-1">Equipo *</label>
+            <input type="text" value={equipo} onChange={(e) => setEquipo(e.target.value)} required
+              placeholder="Nombre del equipo"
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent" />
           </div>
           {/* Tipo Licencia */}
