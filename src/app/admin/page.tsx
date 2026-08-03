@@ -19,6 +19,7 @@ interface Inscripcion {
   metodo_pago: string;
   estado_pago: string;
   requiere_factura: boolean;
+  comprobante_sinpe_url: string | null;
   checkin: boolean;
   checkin_fecha: string | null;
   created_at: string;
@@ -232,6 +233,7 @@ export default function AdminPage() {
                   <th className="px-4 py-3 text-left">Evento</th>
                   <th className="px-4 py-3 text-left">Categoría</th>
                   <th className="px-4 py-3 text-left">Pago</th>
+                  <th className="px-4 py-3 text-left">Comprobante</th>
                   <th className="px-4 py-3 text-left">Check-in</th>
                   <th className="px-4 py-3 text-left">Fecha</th>
                 </tr>
@@ -258,6 +260,16 @@ export default function AdminPage() {
                       }`}>
                         {insc.metodo_pago} - {insc.estado_pago === 'confirmado' ? 'OK' : 'Pend.'}
                       </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      {insc.comprobante_sinpe_url ? (
+                        <a href={insc.comprobante_sinpe_url} target="_blank" rel="noopener noreferrer"
+                          className="text-[#1a4f8b] underline text-xs hover:text-[#0d2240]">
+                          Ver comprobante
+                        </a>
+                      ) : (
+                        <span className="text-gray-400 text-xs">{insc.metodo_pago === 'Sinpe' ? 'Sin archivo' : '—'}</span>
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       {insc.checkin ? (
