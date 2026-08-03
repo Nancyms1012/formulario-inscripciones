@@ -116,35 +116,35 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
 
     setEnviando(true);
     try {
-      const formData = new FormData();
-      formData.append('nacionalidad', nacionalidad);
-      formData.append('tipoIdentificacion', tipoId);
-      formData.append('numeroIdentificacion', numeroId);
-      formData.append('nombre', nombre);
-      formData.append('primerApellido', primerApellido);
-      formData.append('segundoApellido', segundoApellido);
-      formData.append('celular', celular);
-      formData.append('email', email);
-      formData.append('fechaNacimiento', `${anio}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`);
-      formData.append('genero', genero);
-      formData.append('provincia', provincia);
-      formData.append('equipo', equipo);
-      formData.append('tipoLicencia', tipoLicencia);
-      formData.append('uciId', uciId);
-      formData.append('evento', evento);
-      formData.append('categoria', categoria);
-      formData.append('beneficiarioNombre', benefNombre);
-      formData.append('beneficiarioCedula', benefCedula);
-      formData.append('beneficiarioTelefono', benefTelefono);
-      formData.append('beneficiarioParentesco', benefParentesco);
-      formData.append('metodoPago', metodoPago);
-      formData.append('requiereFactura', requiereFactura.toString());
-      if (comprobante) formData.append('comprobante', comprobante);
+      const { guardarInscripcion } = await import('@/lib/inscripcion-client');
 
-      const res = await fetch('/api/inscripciones', { method: 'POST', body: formData });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Error al procesar la inscripción');
-      setCodigoInscripcion(data.codigoInscripcion);
+      const resultado = await guardarInscripcion({
+        nacionalidad,
+        tipoIdentificacion: tipoId,
+        numeroIdentificacion: numeroId,
+        nombre,
+        primerApellido,
+        segundoApellido,
+        celular,
+        email,
+        fechaNacimiento: `${anio}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`,
+        genero,
+        provincia,
+        equipo,
+        tipoLicencia,
+        uciId,
+        evento,
+        categoria,
+        beneficiarioNombre: benefNombre,
+        beneficiarioCedula: benefCedula,
+        beneficiarioTelefono: benefTelefono,
+        beneficiarioParentesco: benefParentesco,
+        metodoPago,
+        requiereFactura,
+        comprobante,
+      });
+
+      setCodigoInscripcion(resultado.codigoInscripcion);
       setExito(true);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Error inesperado');
