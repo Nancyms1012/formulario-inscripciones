@@ -25,7 +25,7 @@ export default function LandingPage() {
             className="h-20 w-20 rounded-xl object-cover shadow-md"
           />
           <img
-            src="/images/logo-copa-kids.png"
+            src="/images/logo-copa-kids.jpeg"
             alt="Copa Kids"
             className="h-20 w-20 rounded-xl object-contain shadow-md"
           />
