@@ -14,7 +14,7 @@ import {
 } from '@/lib/categories';
 import type { Gender, EventType } from '@/lib/categories';
 
-export default function FormularioInscripcion() {
+export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' }) {
   // Control de T&C
   const [aceptaTerminos, setAceptaTerminos] = useState(false);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
@@ -34,7 +34,10 @@ export default function FormularioInscripcion() {
   const [genero, setGenero] = useState<Gender | ''>('');
   const [provincia, setProvincia] = useState('');
 
-  // Datos de la Carrera
+  // Eventos según modo
+  const eventosDisponibles = modo === 'kids'
+    ? (['Copa Kids'] as EventType[])
+    : (['XCO', 'XCC', 'XCE'] as EventType[]);
   const [equipo, setEquipo] = useState('');
   const [tipoLicencia, setTipoLicencia] = useState('');
   const [uciId, setUciId] = useState('');
@@ -380,7 +383,7 @@ export default function FormularioInscripcion() {
             <select value={evento} onChange={(e) => setEvento(e.target.value)} required
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent">
               <option value="">Seleccionar evento...</option>
-              {EVENTS.map((ev) => (<option key={ev} value={ev}>{ev}</option>))}
+              {eventosDisponibles.map((ev) => (<option key={ev} value={ev}>{ev}</option>))}
             </select>
           </div>
           {/* Categoría */}
