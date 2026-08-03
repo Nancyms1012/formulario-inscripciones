@@ -35,15 +35,18 @@ export default function AdminPage() {
   const cargarInscripciones = async () => {
     setCargando(true);
     try {
-      let url = '/api/inscripciones?';
-      if (filtroEvento) url += `evento=${encodeURIComponent(filtroEvento)}&`;
-      if (filtroCategoria) url += `categoria=${encodeURIComponent(filtroCategoria)}&`;
+      const { supabaseClient } = await import('@/lib/inscripcion-client');
+      let query = supabaseClient.from('inscripciones').select('*');
 
-      const res = await fetch(url);
-      const data = await res.json();
+      if (filtroEvento) query = query.eq('evento', filtroEvento);
+      if (filtroCategoria) query = query.eq('categoria', filtroCategoria);
 
-      if (data.inscripciones) {
-        setInscripciones(data.inscripciones);
+      const { data, error } = await query.order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error cargando inscripciones:', error);
+      } else if (data) {
+        setInscripciones(data);
       }
     } catch (err) {
       console.error('Error cargando inscripciones:', err);

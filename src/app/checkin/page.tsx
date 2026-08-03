@@ -40,15 +40,18 @@ export default function CheckinPage() {
     setCheckinExitoso(false);
 
     try {
-      const res = await fetch(`/api/inscripciones?codigo=${encodeURIComponent(codigoFinal.trim())}`);
-      const data = await res.json();
+      const { supabaseClient } = await import('@/lib/inscripcion-client');
+      const { data, error } = await supabaseClient
+        .from('inscripciones')
+        .select('*')
+        .eq('codigo_inscripcion', codigoFinal.trim());
 
-      if (!res.ok) {
-        throw new Error(data.error || 'Error al buscar');
+      if (error) {
+        throw new Error(error.message);
       }
 
-      if (data.inscripciones && data.inscripciones.length > 0) {
-        setInscripcion(data.inscripciones[0]);
+      if (data && data.length > 0) {
+        setInscripcion(data[0]);
       } else {
         setError('No se encontró ninguna inscripción con ese código.');
       }
@@ -65,16 +68,14 @@ export default function CheckinPage() {
     if (!inscripcion) return;
 
     try {
-      const res = await fetch('/api/checkin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ inscripcionId: inscripcion.id }),
-      });
+      const { supabaseClient } = await import('@/lib/inscripcion-client');
+      const { error } = await supabaseClient
+        .from('inscripciones')
+        .update({ checkin: true, checkin_fecha: new Date().toISOString() })
+        .eq('id', inscripcion.id);
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || 'Error al confirmar check-in');
+      if (error) {
+        throw new Error(error.message);
       }
 
       setCheckinExitoso(true);
