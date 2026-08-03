@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS inscripciones (
   codigo_inscripcion VARCHAR(20) UNIQUE NOT NULL,
   
   -- Datos Personales
+  nacionalidad VARCHAR(20) NOT NULL,
   tipo_identificacion VARCHAR(20) NOT NULL,
   numero_identificacion VARCHAR(50) NOT NULL,
   nombre VARCHAR(100) NOT NULL,
@@ -19,6 +20,9 @@ CREATE TABLE IF NOT EXISTS inscripciones (
   provincia VARCHAR(50) NOT NULL,
   
   -- Datos de la Carrera
+  equipo VARCHAR(100) DEFAULT '',
+  tipo_licencia VARCHAR(20) NOT NULL,
+  uci_id VARCHAR(50) DEFAULT '',
   evento VARCHAR(20) NOT NULL,
   categoria VARCHAR(50) NOT NULL,
   
@@ -65,46 +69,5 @@ CREATE TRIGGER update_inscripciones_updated_at
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
--- Habilitar Row Level Security
-ALTER TABLE inscripciones ENABLE ROW LEVEL SECURITY;
-
--- Política para permitir inserciones públicas (formulario)
-CREATE POLICY "Permitir inserciones públicas"
-  ON inscripciones
-  FOR INSERT
-  TO anon
-  WITH CHECK (true);
-
--- Política para permitir lectura pública (check-in por código)
-CREATE POLICY "Permitir lectura por código"
-  ON inscripciones
-  FOR SELECT
-  TO anon
-  USING (true);
-
--- Política para permitir updates (check-in)
-CREATE POLICY "Permitir updates de check-in"
-  ON inscripciones
-  FOR UPDATE
-  TO anon
-  USING (true)
-  WITH CHECK (true);
-
--- Storage bucket para comprobantes Sinpe
-INSERT INTO storage.buckets (id, name, public)
-VALUES ('comprobantes', 'comprobantes', true)
-ON CONFLICT (id) DO NOTHING;
-
--- Política de storage para subir comprobantes
-CREATE POLICY "Permitir subida de comprobantes"
-  ON storage.objects
-  FOR INSERT
-  TO anon
-  WITH CHECK (bucket_id = 'comprobantes');
-
--- Política de storage para leer comprobantes
-CREATE POLICY "Permitir lectura de comprobantes"
-  ON storage.objects
-  FOR SELECT
-  TO anon
-  USING (bucket_id = 'comprobantes');
+-- RLS deshabilitado por ahora (habilitar cuando se agregue autenticación)
+ALTER TABLE inscripciones DISABLE ROW LEVEL SECURITY;

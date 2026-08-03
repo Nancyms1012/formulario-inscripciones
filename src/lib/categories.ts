@@ -60,7 +60,8 @@ export function getCompetitiveAge(birthYear: number): number {
 }
 
 /**
- * Obtiene las categorías disponibles según evento, género y año de nacimiento
+ * Obtiene las categorías disponibles según evento, género y año de nacimiento.
+ * Agrega el sufijo "Femenino" o "Masculino" al nombre de la categoría.
  */
 export function getAvailableCategories(
   event: EventType,
@@ -69,6 +70,7 @@ export function getAvailableCategories(
 ): string[] {
   const age = getCompetitiveAge(birthYear);
   const categories = event === 'Copa Kids' ? KIDS_CATEGORIES : RACE_CATEGORIES;
+  const genderLabel = gender === 'F' ? 'Femenino' : 'Masculino';
 
   const available = new Set<string>();
 
@@ -83,9 +85,9 @@ export function getAvailableCategories(
     const meetsMaxAge = category.maxAge === null || age <= category.maxAge;
 
     if (meetsMinAge && meetsMaxAge) {
-      // Agregar todas las categorías en las que puede competir
+      // Agregar todas las categorías con el sufijo de género
       for (const cat of category.availableCategories) {
-        available.add(cat);
+        available.add(`${cat} ${genderLabel}`);
       }
     }
   }
@@ -113,6 +115,12 @@ export const TIPOS_IDENTIFICACION = [
   'Cédula jurídica',
   'Pasaporte',
 ];
+
+// Nacionalidad
+export const NACIONALIDADES = ['Nacional', 'Extranjero'];
+
+// Tipos de licencia
+export const TIPOS_LICENCIA = ['1 Día', 'Anual'];
 
 // Parentescos
 export const PARENTESCOS = [

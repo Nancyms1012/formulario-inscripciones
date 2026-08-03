@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "La Copa - Inscripciones",
-  description: "Formulario de inscripción para carreras de ciclismo - La Copa",
+  title: "La Copa - VI Fecha 13-14 Setiembre",
+  description: "Formulario de inscripción - VI Fecha 13-14 Setiembre - La Copa",
 };
 
 export default function RootLayout({
@@ -23,7 +23,7 @@ export default function RootLayout({
               className="h-12 w-12 rounded-lg object-cover"
             />
             <div>
-              <h1 className="text-xl font-bold">La Copa</h1>
+              <h1 className="text-xl font-bold">VI Fecha 13-14 Setiembre</h1>
               <p className="text-sm text-blue-200">Inscripción a Carreras de Ciclismo</p>
             </div>
           </div>
