@@ -156,6 +156,18 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
       });
 
       setCodigoInscripcion(resultado.codigoInscripcion);
+
+      // Enviar email de confirmación con QR
+      const { enviarEmailConfirmacion } = await import('@/lib/email');
+      enviarEmailConfirmacion({
+        email,
+        nombre,
+        primerApellido,
+        codigoInscripcion: resultado.codigoInscripcion,
+        evento,
+        categoria,
+      });
+
       setExito(true);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Error inesperado');
