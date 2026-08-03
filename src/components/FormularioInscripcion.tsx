@@ -32,6 +32,7 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
   const [mes, setMes] = useState('');
   const [anio, setAnio] = useState('');
   const [genero, setGenero] = useState<Gender | ''>('');
+  const [lateralidad, setLateralidad] = useState('');
   const [provincia, setProvincia] = useState('');
 
   // Eventos según modo
@@ -129,6 +130,7 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
         email,
         fechaNacimiento: `${anio}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`,
         genero,
+        lateralidad,
         provincia,
         equipo,
         tipoLicencia,
@@ -331,6 +333,16 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
               <option value="">Seleccionar...</option>
               <option value="F">Femenino</option>
               <option value="M">Masculino</option>
+            </select>
+          </div>
+          {/* Lateralidad */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Lateralidad *</label>
+            <select value={lateralidad} onChange={(e) => setLateralidad(e.target.value)} required
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent">
+              <option value="">Seleccionar...</option>
+              <option value="Derecha">Derecha</option>
+              <option value="Izquierda">Izquierda</option>
             </select>
           </div>
           {/* Provincia */}

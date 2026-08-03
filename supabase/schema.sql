@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS inscripciones (
   email VARCHAR(150) NOT NULL,
   fecha_nacimiento DATE NOT NULL,
   genero VARCHAR(1) NOT NULL CHECK (genero IN ('F', 'M')),
+  lateralidad VARCHAR(20) NOT NULL,
   provincia VARCHAR(50) NOT NULL,
   
   -- Datos de la Carrera
