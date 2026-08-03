@@ -5,7 +5,7 @@ export default function Home() {
     <div className="min-h-screen flex items-center justify-center px-4 py-12">
       <div className="max-w-lg w-full text-center">
         <h1 className="text-2xl font-bold text-[#0d2240] mb-2">VI Fecha 13-14 Setiembre</h1>
-        <p className="text-gray-600 mb-8">Seleccioná tu categoría para inscribirte</p>
+        <p className="text-gray-600 mb-8">Selecciona tu evento para inscribirte</p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           {/* La Copa */}
