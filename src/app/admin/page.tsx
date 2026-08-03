@@ -79,6 +79,66 @@ export default function AdminPage() {
   const totalPagoPendiente = inscripciones.filter((i) => i.estado_pago === 'pendiente').length;
   const totalFactura = inscripciones.filter((i) => i.requiere_factura).length;
 
+  // Descargar CSV con todas las columnas
+  const descargarCSV = async () => {
+    // Traer TODOS los datos (sin filtros) con todas las columnas
+    const { supabaseClient } = await import('@/lib/inscripcion-client');
+    const { data, error } = await supabaseClient
+      .from('inscripciones')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error || !data || data.length === 0) {
+      alert('No hay datos para descargar.');
+      return;
+    }
+
+    // Definir columnas en orden
+    const columnas = [
+      'codigo_inscripcion', 'nacionalidad', 'tipo_identificacion', 'numero_identificacion',
+      'nombre', 'primer_apellido', 'segundo_apellido', 'celular', 'email',
+      'fecha_nacimiento', 'genero', 'provincia', 'equipo', 'tipo_licencia', 'uci_id',
+      'evento', 'categoria', 'beneficiario_nombre', 'beneficiario_cedula',
+      'beneficiario_telefono', 'beneficiario_parentesco', 'metodo_pago',
+      'estado_pago', 'requiere_factura', 'checkin', 'checkin_fecha', 'created_at'
+    ];
+
+    const encabezados = [
+      'Código', 'Nacionalidad', 'Tipo ID', '# Identificación',
+      'Nombre', 'Primer Apellido', 'Segundo Apellido', 'Celular', 'Email',
+      'Fecha Nacimiento', 'Género', 'Provincia', 'Equipo', 'Tipo Licencia', 'UCI ID',
+      'Evento', 'Categoría', 'Beneficiario Nombre', 'Beneficiario Cédula',
+      'Beneficiario Teléfono', 'Beneficiario Parentesco', 'Método Pago',
+      'Estado Pago', 'Requiere Factura', 'Check-in', 'Fecha Check-in', 'Fecha Inscripción'
+    ];
+
+    // Crear CSV
+    const filas = data.map((row: Record<string, unknown>) =>
+      columnas.map((col) => {
+        const valor = row[col];
+        if (valor === null || valor === undefined) return '';
+        if (typeof valor === 'boolean') return valor ? 'Sí' : 'No';
+        const str = String(valor);
+        // Escapar comillas y envolver en comillas si tiene comas
+        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+          return `"${str.replace(/"/g, '""')}"`;
+        }
+        return str;
+      }).join(',')
+    );
+
+    const csv = [encabezados.join(','), ...filas].join('\n');
+
+    // Descargar archivo
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `inscripciones_la_copa_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -87,12 +147,20 @@ export default function AdminPage() {
           <h1 className="text-2xl font-bold text-[#0d2240]">Panel de Administración</h1>
           <p className="text-gray-600">Gestión de inscripciones - La Copa</p>
         </div>
-        <a
-          href="/checkin"
-          className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm"
-        >
-          Ir a Check-in
-        </a>
+        <div className="flex gap-2">
+          <button
+            onClick={descargarCSV}
+            className="bg-[#1a4f8b] text-white px-4 py-2 rounded-lg hover:bg-[#0d2240] transition-colors text-sm"
+          >
+            Descargar CSV
+          </button>
+          <a
+            href="/checkin"
+            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm"
+          >
+            Ir a Check-in
+          </a>
+        </div>
       </div>
 
       {/* Estadísticas */}
