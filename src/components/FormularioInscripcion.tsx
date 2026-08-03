@@ -80,12 +80,16 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
   }, [genero, anio, evento]);
 
 
-  // Validar # Identificación según nacionalidad
+  // Validar # Identificación según nacionalidad y tipo
   const handleNumeroIdChange = (value: string) => {
     if (nacionalidad === 'Nacional') {
-      // Solo números, máximo 9 dígitos
-      const cleaned = value.replace(/[^0-9]/g, '').slice(0, 9);
-      setNumeroId(cleaned);
+      // Solo números
+      const cleaned = value.replace(/[^0-9]/g, '');
+      if (tipoId === 'Cédula jurídica') {
+        setNumeroId(cleaned.slice(0, 10));
+      } else {
+        setNumeroId(cleaned.slice(0, 9));
+      }
     } else {
       // Extranjeros: letras y números sin límite
       const cleaned = value.replace(/[^a-zA-Z0-9]/g, '');
@@ -99,20 +103,25 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
     setBenefCedula(cleaned);
   };
 
-  // Reset numero de ID cuando cambia nacionalidad
+  // Reset numero de ID cuando cambia nacionalidad o tipo de identificación
   useEffect(() => {
     setNumeroId('');
-  }, [nacionalidad]);
+  }, [nacionalidad, tipoId]);
 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    // Validar cédula nacional = 9 dígitos
-    if (nacionalidad === 'Nacional' && numeroId.length !== 9) {
-      setError('La cédula nacional debe tener exactamente 9 dígitos.');
-      return;
+    // Validar cédula nacional
+    if (nacionalidad === 'Nacional') {
+      if (tipoId === 'Cédula jurídica' && numeroId.length !== 10) {
+        setError('La cédula jurídica debe tener exactamente 10 dígitos.');
+        return;
+      } else if (tipoId !== 'Cédula jurídica' && numeroId.length !== 9) {
+        setError('La cédula física debe tener exactamente 9 dígitos.');
+        return;
+      }
     }
 
     setEnviando(true);
@@ -252,13 +261,17 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
           {/* # Identificación */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              # Identificación * {nacionalidad === 'Nacional' && <span className="text-xs text-gray-400">(9 dígitos)</span>}
+              # Identificación * {nacionalidad === 'Nacional' && tipoId === 'Cédula jurídica' && <span className="text-xs text-gray-400">(10 dígitos)</span>}
+              {nacionalidad === 'Nacional' && tipoId !== 'Cédula jurídica' && tipoId && <span className="text-xs text-gray-400">(9 dígitos)</span>}
             </label>
             <input type="text" value={numeroId} onChange={(e) => handleNumeroIdChange(e.target.value)} required
-              placeholder={nacionalidad === 'Nacional' ? '9 dígitos numéricos' : 'Letras y números'}
-              maxLength={nacionalidad === 'Nacional' ? 9 : undefined}
+              placeholder={nacionalidad === 'Nacional' ? (tipoId === 'Cédula jurídica' ? '10 dígitos numéricos' : '9 dígitos numéricos') : 'Letras y números'}
+              maxLength={nacionalidad === 'Nacional' ? (tipoId === 'Cédula jurídica' ? 10 : 9) : undefined}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent" />
-            {nacionalidad === 'Nacional' && numeroId.length > 0 && numeroId.length < 9 && (
+            {nacionalidad === 'Nacional' && tipoId === 'Cédula jurídica' && numeroId.length > 0 && numeroId.length < 10 && (
+              <p className="text-xs text-amber-600 mt-1">Faltan {10 - numeroId.length} dígitos</p>
+            )}
+            {nacionalidad === 'Nacional' && tipoId !== 'Cédula jurídica' && tipoId && numeroId.length > 0 && numeroId.length < 9 && (
               <p className="text-xs text-amber-600 mt-1">Faltan {9 - numeroId.length} dígitos</p>
             )}
           </div>
