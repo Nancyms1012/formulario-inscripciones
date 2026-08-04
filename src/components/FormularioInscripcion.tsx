@@ -124,6 +124,12 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
       }
     }
 
+    // Validar comprobante Sinpe obligatorio
+    if (metodoPago === 'Sinpe' && !comprobante) {
+      setError('Debés adjuntar el comprobante de Sinpe para continuar.');
+      return;
+    }
+
     setEnviando(true);
     try {
       const { guardarInscripcion } = await import('@/lib/inscripcion-client');
