@@ -7,7 +7,7 @@ export default function LandingPage() {
   const [qrKids, setQrKids] = useState('');
 
   useEffect(() => {
-    const base = typeof window !== 'undefined' ? window.location.origin : '';
+    const base = 'https://inscripciones.raceclubhub.com';
     const qrApi = 'https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=';
     setQrCopa(`${qrApi}${encodeURIComponent(`${base}/inscripcion/copa`)}`);
     setQrKids(`${qrApi}${encodeURIComponent(`${base}/inscripcion/kids`)}`);
