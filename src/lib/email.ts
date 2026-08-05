@@ -1,7 +1,7 @@
 // Envío de email de confirmación con QR usando Resend
 // Se llama desde el cliente después de guardar la inscripción
 
-const RESEND_API_KEY = 're_J26duJPz_GUdKtE2dqtD51phCsSbqATyY';
+const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
 
 export interface EmailData {
   email: string;

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const RESEND_API_KEY = 're_J26duJPz_GUdKtE2dqtD51phCsSbqATyY';
+const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
 
 export async function POST(request: NextRequest) {
   try {
