@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const RESEND_API_KEY = 're_5KSK1YDa_HRKTiXEnLJF2zCWu5jPwFZ7g';
+const RESEND_API_KEY = 're_J26duJPz_GUdKtE2dqtD51phCsSbqATyY';
 
 export async function POST(request: NextRequest) {
   try {
