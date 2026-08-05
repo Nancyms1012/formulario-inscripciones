@@ -27,10 +27,10 @@ export default function CheckinPage() {
   const [error, setError] = useState('');
   const [checkinExitoso, setCheckinExitoso] = useState(false);
   const [scannerActivo, setScannerActivo] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const scannerRef = useRef<unknown>(null);
+  const scannerContainerId = 'qr-reader';
 
-  // Buscar inscripción por código QR
+  // Buscar por código QR
   const buscarPorCodigo = async (codigoBuscar?: string) => {
     const codigoFinal = codigoBuscar || codigo;
     if (!codigoFinal.trim()) return;
@@ -123,65 +123,45 @@ export default function CheckinPage() {
     setResultados([]);
   };
 
-  // Scanner QR con cámara
+  // Scanner QR con html5-qrcode
   const iniciarScanner = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' },
-      });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.play();
-        setScannerActivo(true);
-        escanearFrame();
-      }
+      const { Html5Qrcode } = await import('html5-qrcode');
+      const scanner = new Html5Qrcode(scannerContainerId);
+      scannerRef.current = scanner;
+
+      await scanner.start(
+        { facingMode: 'environment' },
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        (decodedText) => {
+          // QR detectado
+          scanner.stop().then(() => {
+            setScannerActivo(false);
+            setCodigo(decodedText);
+            buscarPorCodigo(decodedText);
+          });
+        },
+        () => {} // ignorar errores de frames sin QR
+      );
+      setScannerActivo(true);
     } catch {
       setError('No se pudo acceder a la cámara. Usá la búsqueda manual.');
     }
   };
 
-  const detenerScanner = () => {
-    if (videoRef.current && videoRef.current.srcObject) {
-      const stream = videoRef.current.srcObject as MediaStream;
-      stream.getTracks().forEach((track) => track.stop());
-      videoRef.current.srcObject = null;
+  const detenerScanner = async () => {
+    if (scannerRef.current) {
+      try {
+        await (scannerRef.current as { stop: () => Promise<void> }).stop();
+      } catch {}
+      scannerRef.current = null;
     }
     setScannerActivo(false);
   };
 
-  const escanearFrame = () => {
-    if (!videoRef.current || !canvasRef.current) return;
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    if (!ctx || video.readyState !== video.HAVE_ENOUGH_DATA) {
-      requestAnimationFrame(escanearFrame);
-      return;
-    }
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    ctx.drawImage(video, 0, 0);
-    if ('BarcodeDetector' in window) {
-      // @ts-expect-error - BarcodeDetector es relativamente nuevo
-      const detector = new BarcodeDetector({ formats: ['qr_code'] });
-      detector.detect(canvas).then((barcodes: Array<{ rawValue: string }>) => {
-        if (barcodes.length > 0) {
-          detenerScanner();
-          setCodigo(barcodes[0].rawValue);
-          buscarPorCodigo(barcodes[0].rawValue);
-          return;
-        }
-        if (scannerActivo) requestAnimationFrame(escanearFrame);
-      }).catch(() => {
-        if (scannerActivo) requestAnimationFrame(escanearFrame);
-      });
-    } else {
-      setError('Tu navegador no soporta escaneo QR nativo. Usá la búsqueda manual.');
-      detenerScanner();
-    }
-  };
-
-  useEffect(() => { return () => { detenerScanner(); }; }, []);
+  useEffect(() => {
+    return () => { detenerScanner(); };
+  }, []);
 
   // Nueva búsqueda
   const limpiar = () => {
@@ -221,9 +201,11 @@ export default function CheckinPage() {
 
         {scannerActivo && (
           <div className="relative rounded-lg overflow-hidden mb-4">
-            <video ref={videoRef} className="w-full rounded-lg" playsInline />
-            <canvas ref={canvasRef} className="hidden" />
+            <div id={scannerContainerId} className="w-full rounded-lg" />
           </div>
+        )}
+        {!scannerActivo && (
+          <div id={scannerContainerId} className="hidden" />
         )}
 
         {/* Búsqueda por código */}
