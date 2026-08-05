@@ -319,9 +319,16 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
           {/* # Celular */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1"># Celular *</label>
-            <input type="tel" value={celular} onChange={(e) => setCelular(e.target.value.replace(/[^0-9]/g, ''))} required
-              placeholder="88888888"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent" />
+            <div className="flex gap-2">
+              <input type="text" value="506" disabled
+                className="w-16 border border-gray-300 rounded-lg px-3 py-2 bg-gray-100 text-gray-600 text-center" />
+              <input type="tel" value={celular} onChange={(e) => setCelular(e.target.value.replace(/[^0-9]/g, '').slice(0, 8))} required
+                placeholder="88888888" maxLength={8}
+                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent" />
+            </div>
+            {celular.length > 0 && celular.length < 8 && (
+              <p className="text-xs text-amber-600 mt-1">Faltan {8 - celular.length} dígitos</p>
+            )}
           </div>
           {/* E-mail */}
           <div>
@@ -470,9 +477,16 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1"># Teléfono *</label>
-            <input type="tel" value={benefTelefono} onChange={(e) => setBenefTelefono(e.target.value.replace(/[^0-9]/g, ''))} required
-              placeholder="88888888"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent" />
+            <div className="flex gap-2">
+              <input type="text" value="506" disabled
+                className="w-16 border border-gray-300 rounded-lg px-3 py-2 bg-gray-100 text-gray-600 text-center" />
+              <input type="tel" value={benefTelefono} onChange={(e) => setBenefTelefono(e.target.value.replace(/[^0-9]/g, '').slice(0, 8))} required
+                placeholder="88888888" maxLength={8}
+                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent" />
+            </div>
+            {benefTelefono.length > 0 && benefTelefono.length < 8 && (
+              <p className="text-xs text-amber-600 mt-1">Faltan {8 - benefTelefono.length} dígitos</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Parentesco *</label>
