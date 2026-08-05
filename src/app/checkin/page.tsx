@@ -126,6 +126,10 @@ export default function CheckinPage() {
   // Scanner QR con html5-qrcode
   const iniciarScanner = async () => {
     try {
+      setScannerActivo(true);
+      // Esperar a que el DOM se actualice
+      await new Promise(resolve => setTimeout(resolve, 100));
+
       const { Html5Qrcode } = await import('html5-qrcode');
       const scanner = new Html5Qrcode(scannerContainerId);
       scannerRef.current = scanner;
@@ -143,8 +147,8 @@ export default function CheckinPage() {
         },
         () => {} // ignorar errores de frames sin QR
       );
-      setScannerActivo(true);
     } catch {
+      setScannerActivo(false);
       setError('No se pudo acceder a la cámara. Usá la búsqueda manual.');
     }
   };
@@ -199,14 +203,9 @@ export default function CheckinPage() {
           )}
         </div>
 
-        {scannerActivo && (
-          <div className="relative rounded-lg overflow-hidden mb-4">
-            <div id={scannerContainerId} className="w-full rounded-lg" />
-          </div>
-        )}
-        {!scannerActivo && (
-          <div id={scannerContainerId} className="hidden" />
-        )}
+        <div className={`relative rounded-lg overflow-hidden mb-4 ${scannerActivo ? '' : 'hidden'}`} style={{ minHeight: '300px' }}>
+          <div id={scannerContainerId} className="w-full" />
+        </div>
 
         {/* Búsqueda por código */}
         <label className="block text-sm font-medium text-gray-700 mb-1">Buscar por código:</label>
