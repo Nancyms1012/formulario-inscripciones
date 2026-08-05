@@ -319,8 +319,8 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
           {/* # Celular */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1"># Celular *</label>
-            <input type="tel" value={celular} onChange={(e) => setCelular(e.target.value)} required
-              placeholder="+506 8888-8888"
+            <input type="tel" value={celular} onChange={(e) => setCelular(e.target.value.replace(/[^0-9]/g, ''))} required
+              placeholder="88888888"
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent" />
           </div>
           {/* E-mail */}
@@ -470,8 +470,8 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1"># Teléfono *</label>
-            <input type="tel" value={benefTelefono} onChange={(e) => setBenefTelefono(e.target.value)} required
-              placeholder="+506 8888-8888"
+            <input type="tel" value={benefTelefono} onChange={(e) => setBenefTelefono(e.target.value.replace(/[^0-9]/g, ''))} required
+              placeholder="88888888"
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent" />
           </div>
           <div>
