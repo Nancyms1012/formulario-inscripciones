@@ -56,7 +56,7 @@ export async function enviarEmailConfirmacion(data: EmailData): Promise<void> {
         'Authorization': `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: 'La Copa <onboarding@resend.dev>',
+        from: 'La Copa <inscripciones@raceclubhub.com>',
         to: [data.email],
         subject: `Inscripción confirmada - ${data.evento} - ${data.codigoInscripcion}`,
         html: htmlContent,
