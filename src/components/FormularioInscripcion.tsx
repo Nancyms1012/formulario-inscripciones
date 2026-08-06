@@ -425,7 +425,7 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
           {tipoLicencia === 'Anual' && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">UCI ID *</label>
-              <input type="text" value={uciId} onChange={(e) => setUciId(e.target.value.replace(/[^0-9]/g, '').slice(0, 11))} required
+             <input type="text" value={uciId} onChange={(e) => setUciId(e.target.value.replace(/[^0-9]/g, '').slice(0, 11))} required
                 placeholder="11 dígitos numéricos" maxLength={11}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent" />
             </div>
