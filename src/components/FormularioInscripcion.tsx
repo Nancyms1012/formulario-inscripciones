@@ -425,8 +425,8 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
           {tipoLicencia === 'Anual' && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">UCI ID *</label>
-              <input type="text" value={uciId} onChange={(e) => setUciId(e.target.value)} required
-                placeholder="Ingrese su UCI ID"
+              <input type="text" value={uciId} onChange={(e) => setUciId(e.target.value.replace(/[^0-9]/g, '').slice(0, 11))} required
+                placeholder="11 dígitos numéricos" maxLength={11}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent" />
             </div>
           )}
@@ -458,10 +458,10 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
       </section>
 
 
-      {/* ========== SECCIÓN 3: DATOS BENEFICIARIO ========== */}
+      {/* ========== SECCIÓN 3: CONTACTO EMERGENCIA ========== */}
       <section className="bg-white rounded-xl shadow-md p-6">
         <h2 className="text-xl font-bold text-[#0d2240] mb-6 pb-2 border-b-2 border-[#0d2240]">
-          Datos del Beneficiario
+          Contacto de Emergencia
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="md:col-span-2">
@@ -470,12 +470,7 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1"># Cédula *</label>
-            <input type="text" value={benefCedula} onChange={(e) => handleBenefCedulaChange(e.target.value)} required
-              placeholder="Solo letras y números"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent" />
-          </div>
-          <div>
+            
             <label className="block text-sm font-medium text-gray-700 mb-1"># Teléfono *</label>
             <div className="flex gap-2">
               <input type="text" value="506" disabled
@@ -489,15 +484,7 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Parentesco *</label>
-            <select value={benefParentesco} onChange={(e) => setBenefParentesco(e.target.value)} required
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent">
-              <option value="">Seleccionar...</option>
-              {PARENTESCOS.map((p) => (<option key={p} value={p}>{p}</option>))}
-            </select>
-          </div>
-        </div>
-      </section>
+                 </section>
 
 
       {/* ========== SECCIÓN 4: PAGO ========== */}
