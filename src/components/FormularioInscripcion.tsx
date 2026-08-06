@@ -470,7 +470,6 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent" />
           </div>
           <div>
-            
             <label className="block text-sm font-medium text-gray-700 mb-1"># Teléfono *</label>
             <div className="flex gap-2">
               <input type="text" value="506" disabled
@@ -479,12 +478,10 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
                 placeholder="88888888" maxLength={8}
                 className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent" />
             </div>
-            {benefTelefono.length > 0 && benefTelefono.length < 8 && (
-              <p className="text-xs text-amber-600 mt-1">Faltan {8 - benefTelefono.length} dígitos</p>
-            )}
           </div>
-          <div>
-                 </section>
+        </div>
+      </section>
+
 
 
       {/* ========== SECCIÓN 4: PAGO ========== */}
