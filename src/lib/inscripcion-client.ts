@@ -29,7 +29,6 @@ export interface InscripcionData {
   email: string;
   fechaNacimiento: string;
   genero: string;
-  lateralidad: string;
   provincia: string;
   equipo: string;
   tipoLicencia: string;
@@ -82,7 +81,6 @@ export async function guardarInscripcion(datos: InscripcionData): Promise<{ codi
       email: datos.email,
       fecha_nacimiento: datos.fechaNacimiento,
       genero: datos.genero,
-      lateralidad: datos.lateralidad,
       provincia: datos.provincia,
       equipo: datos.equipo,
       tipo_licencia: datos.tipoLicencia,
