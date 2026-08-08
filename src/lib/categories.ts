@@ -4,7 +4,7 @@
 export const CURRENT_YEAR = 2026;
 
 export type Gender = 'F' | 'M';
-export type EventType = 'XCO' | 'XCC' | 'XCE' | 'Copa Kids';
+export type EventType = 'XCO' | 'XCC' | 'XCO+XCC' | 'Copa Kids';
 
 export interface Category {
   name: string;
@@ -96,7 +96,7 @@ export function getAvailableCategories(
 }
 
 // Eventos disponibles
-export const EVENTS: EventType[] = ['XCO', 'XCC', 'XCE', 'Copa Kids'];
+export const EVENTS: EventType[] = ['XCO', 'XCC', 'XCO+XCC', 'Copa Kids'];
 
 // Provincias de Costa Rica
 export const PROVINCIAS = [
