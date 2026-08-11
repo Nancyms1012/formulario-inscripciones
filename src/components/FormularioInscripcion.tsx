@@ -218,10 +218,10 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
             <p className="font-medium mb-2">TÉRMINOS Y CONDICIONES DE PARTICIPACIÓN</p>
             <p className="mb-2">Al inscribirse en este evento, el participante acepta los términos y condiciones estipuladas en la Guía de Protocolo de MTB para la actividad deportiva:</p>
             <ul className="list-disc list-inside space-y-1">
-              <li>Declaro que me encuentro en buen estado de salud para participar en esta competencia.</li>
-              <li>Eximo de toda responsabilidad a los organizadores por lesiones o daños sufridos durante el evento.</li>
-              <li>Autorizo el uso de mi imagen con fines promocionales del evento.</li>
-              <li>Me comprometo a respetar el reglamento de la competencia.</li>
+              <li>Libero de toda respondabilidad judicial y extrajudicial a la Asociación de Ciclismo de Montaña CRC y a los patrocinadores y organizadores de La Copa Nacional MTB Costa Rica.</li>
+              <li>Declaro que me encuentro en excelente condición física y mental para participar en esta competencia.</li>
+              <li>Tengo el conocimiento de los riesgos y situaciones que se pueden derivar de mi participación en eventos del deporte de ciclismo de montaña.</li>
+              <li>Autorizo a la organización a realizar cualquier tipo de material audiovisual con fines informativos y no comerciales, en donde mi imagen personal pueda estar expuesta.</li>
               <li>Acepto que la organización puede modificar el recorrido o cancelar el evento por razones de fuerza mayor.</li>
             </ul>
             <p className="mt-4 text-xs text-gray-400">[Espacio para términos y condiciones completos]</p>
