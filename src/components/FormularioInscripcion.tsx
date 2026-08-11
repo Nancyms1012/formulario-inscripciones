@@ -221,6 +221,7 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
               <li>Libero de toda respondabilidad judicial y extrajudicial a la Asociación de Ciclismo de Montaña CRC y a los patrocinadores y organizadores de La Copa Nacional MTB Costa Rica.</li>
               <li>Declaro que me encuentro en excelente condición física y mental para participar en esta competencia.</li>
               <li>Tengo el conocimiento de los riesgos y situaciones que se pueden derivar de mi participación en eventos del deporte de ciclismo de montaña.</li>
+              <li>Todo tipo de acciones con vehículos de tracción mecánica o no, ataques de animales o personas y cualquier otra situación que pudiera surgir ante cualquier accidente, incidente o percance durante el desarrollo de la competencia.<li>
               <li>Autorizo a la organización a realizar cualquier tipo de material audiovisual con fines informativos y no comerciales, en donde mi imagen personal pueda estar expuesta.</li>
               <li>Acepto que la organización puede modificar el recorrido o cancelar el evento por razones de fuerza mayor.</li>
             </ul>
