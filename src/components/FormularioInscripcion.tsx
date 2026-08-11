@@ -214,7 +214,7 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
           <h2 className="text-xl font-bold text-[#0d2240] mb-6 pb-2 border-b-2 border-[#0d2240]">
             Términos y Condiciones
           </h2>
-          <div className="bg-gray-50 rounded-lg p-4 max-h-64 overflow-y-auto mb-4 text-sm text-gray-600">
+          <div className="bg-gray-50 rounded-lg p-4 mb-4 text-sm text-gray-600">
             <p className="font-medium mb-2">TÉRMINOS Y CONDICIONES DE PARTICIPACIÓN</p>
             <p className="mb-2">Al inscribirse en este evento, el participante acepta los términos y condiciones estipuladas en la Guía de Protocolo de MTB para la actividad deportiva:</p>
             <ul className="list-disc list-inside space-y-1">
