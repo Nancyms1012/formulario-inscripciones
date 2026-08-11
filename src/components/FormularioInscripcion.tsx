@@ -224,7 +224,7 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
               <li>Todo tipo de acciones con vehículos de tracción mecánica o no, ataques de animales o personas y cualquier otra situación que pudiera surgir ante cualquier accidente, 
                 incidente o percance durante el desarrollo de la competencia.</li>
               <li>Autorizo a la organización a realizar cualquier tipo de material audiovisual con fines informativos y no comerciales, en donde mi imagen personal pueda estar expuesta.</li>
-              <li>Acepto que la organización puede modificar el recorrido o cancelar el evento por razones de fuerza mayor.</li
+              <li>Acepto que la organización puede modificar el recorrido o cancelar el evento por razones de fuerza mayor.</li>
             </ul>
           </div>
           <div className="flex items-center gap-3 mb-6">
