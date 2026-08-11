@@ -224,7 +224,6 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
               <li>Autorizo a la organización a realizar cualquier tipo de material audiovisual con fines informativos y no comerciales, en donde mi imagen personal pueda estar expuesta.</li>
               <li>Acepto que la organización puede modificar el recorrido o cancelar el evento por razones de fuerza mayor.</li>
             </ul>
-            <p className="mt-4 text-xs text-gray-400">[Espacio para términos y condiciones completos]</p>
           </div>
           <div className="flex items-center gap-3 mb-6">
             <input type="checkbox" id="terminos" checked={aceptaTerminos}
