@@ -106,6 +106,12 @@ export default function FormularioKids() {
       }
     }
 
+    // Validar que la cédula del encargado no sea igual a la del menor
+    if (encargadoCedula && numeroId && encargadoCedula === numeroId) {
+      setError('La cédula del encargado no puede ser la misma que la del menor.');
+      return;
+    }
+
     // Validar comprobante Sinpe obligatorio
     if (metodoPago === 'Sinpe' && !comprobante) {
       setError('Debés adjuntar el comprobante de Sinpe para continuar.');
