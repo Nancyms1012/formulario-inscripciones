@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { TERMINOS_CONDICIONES } from '@/lib/terminos';
 import {
   getAvailableCategories,
   EVENTS,
@@ -214,17 +215,14 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
           <h2 className="text-xl font-bold text-[#0d2240] mb-6 pb-2 border-b-2 border-[#0d2240]">
             Términos y Condiciones
           </h2>
-          <div className="bg-gray-50 rounded-lg p-4 max-h-64 overflow-y-auto mb-4 text-sm text-gray-600">
-            <p className="font-medium mb-2">TÉRMINOS Y CONDICIONES DE PARTICIPACIÓN</p>
-            <p className="mb-2">Al inscribirse en este evento, el participante acepta las siguientes condiciones:</p>
+          <div className="bg-gray-50 rounded-lg p-4 mb-4 text-sm text-gray-600">
+            <p className="font-medium mb-2">{TERMINOS_CONDICIONES.titulo}</p>
+            <p className="mb-2">{TERMINOS_CONDICIONES.introduccion}</p>
             <ul className="list-disc list-inside space-y-1">
-              <li>Declaro que me encuentro en buen estado de salud para participar en esta competencia.</li>
-              <li>Eximo de toda responsabilidad a los organizadores por lesiones o daños sufridos durante el evento.</li>
-              <li>Autorizo el uso de mi imagen con fines promocionales del evento.</li>
-              <li>Me comprometo a respetar el reglamento de la competencia.</li>
-              <li>Acepto que la organización puede modificar el recorrido o cancelar el evento por razones de fuerza mayor.</li>
+              {TERMINOS_CONDICIONES.puntos.map((punto, i) => (
+                <li key={i}>{punto}</li>
+              ))}
             </ul>
-            <p className="mt-4 text-xs text-gray-400">[Espacio para términos y condiciones completos]</p>
           </div>
           <div className="flex items-center gap-3 mb-6">
             <input type="checkbox" id="terminos" checked={aceptaTerminos}
