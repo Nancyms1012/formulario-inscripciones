@@ -103,3 +103,86 @@ export async function guardarInscripcion(datos: InscripcionData): Promise<{ codi
 
   return { codigoInscripcion };
 }
+
+
+export interface InscripcionKidsData {
+  nacionalidad: string;
+  tipoIdentificacion: string;
+  numeroIdentificacion: string;
+  nombre: string;
+  primerApellido: string;
+  segundoApellido: string;
+  fechaNacimiento: string;
+  genero: string;
+  provincia: string;
+  lateralidad: string;
+  categoria: string;
+  encargadoNombre: string;
+  encargadoCedula: string;
+  encargadoTelefono: string;
+  encargadoEmail: string;
+  encargadoParentesco: string;
+  metodoPago: string;
+  requiereFactura: boolean;
+  comprobante: File | null;
+}
+
+export async function guardarInscripcionKids(datos: InscripcionKidsData): Promise<{ codigoInscripcion: string }> {
+  const codigoInscripcion = generarCodigo();
+
+  // Subir comprobante si existe
+  let comprobanteUrl: string | null = null;
+  if (datos.comprobante && datos.metodoPago === 'Sinpe') {
+    const file = datos.comprobante;
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`;
+
+    const { data: uploadData, error: uploadError } = await supabaseClient.storage
+      .from('comprobantes')
+      .upload(fileName, file, { contentType: file.type });
+
+    if (!uploadError && uploadData) {
+      const { data: urlData } = supabaseClient.storage
+        .from('comprobantes')
+        .getPublicUrl(uploadData.path);
+      comprobanteUrl = urlData.publicUrl;
+    }
+  }
+
+  // Insertar inscripción Kids
+  const { error } = await supabaseClient
+    .from('inscripciones')
+    .insert({
+      codigo_inscripcion: codigoInscripcion,
+      nacionalidad: datos.nacionalidad,
+      tipo_identificacion: datos.tipoIdentificacion,
+      numero_identificacion: datos.numeroIdentificacion,
+      nombre: datos.nombre,
+      primer_apellido: datos.primerApellido,
+      segundo_apellido: datos.segundoApellido,
+      celular: '',
+      email: datos.encargadoEmail,
+      fecha_nacimiento: datos.fechaNacimiento,
+      genero: datos.genero,
+      provincia: datos.provincia,
+      equipo: '',
+      tipo_licencia: '',
+      uci_id: '',
+      evento: 'Copa Kids',
+      categoria: datos.categoria,
+      beneficiario_nombre: datos.encargadoNombre,
+      beneficiario_cedula: datos.encargadoCedula,
+      beneficiario_telefono: datos.encargadoTelefono,
+      beneficiario_parentesco: datos.encargadoParentesco,
+      metodo_pago: datos.metodoPago,
+      comprobante_sinpe_url: comprobanteUrl,
+      requiere_factura: datos.requiereFactura,
+      estado_pago: 'pendiente',
+    });
+
+  if (error) {
+    throw new Error(`Error al guardar: ${error.message}`);
+  }
+
+  return { codigoInscripcion };
+}
