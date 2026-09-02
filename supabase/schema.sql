@@ -37,6 +37,9 @@ CREATE TABLE IF NOT EXISTS inscripciones (
   metodo_pago VARCHAR(20) NOT NULL CHECK (metodo_pago IN ('Tarjeta', 'Sinpe', 'Efectivo')),
   comprobante_sinpe_url TEXT,
   requiere_factura BOOLEAN DEFAULT FALSE,
+  factura_nombre VARCHAR(200) DEFAULT '',
+  factura_celular VARCHAR(30) DEFAULT '',
+  factura_email VARCHAR(150) DEFAULT '',
   estado_pago VARCHAR(20) DEFAULT 'pendiente' CHECK (estado_pago IN ('pendiente', 'confirmado')),
   
   -- Check-in

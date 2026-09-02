@@ -58,6 +58,12 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
   const [comprobante, setComprobante] = useState<File | null>(null);
   const [requiereFactura, setRequiereFactura] = useState(false);
 
+  // Factura Electrónica
+  const [facturaDatos, setFacturaDatos] = useState<'formulario' | 'otros'>('formulario');
+  const [facturaNombre, setFacturaNombre] = useState('');
+  const [facturaCelular, setFacturaCelular] = useState('');
+  const [facturaEmail, setFacturaEmail] = useState('');
+
   // UI State
   const [enviando, setEnviando] = useState(false);
   const [exito, setExito] = useState(false);
@@ -130,6 +136,11 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
       return;
     }
 
+    // Determinar datos de factura
+    const facturaNombreFinal = !requiereFactura ? '' : (facturaDatos === 'otros' ? facturaNombre : `${nombre} ${primerApellido} ${segundoApellido}`.trim());
+    const facturaCelularFinal = !requiereFactura ? '' : (facturaDatos === 'otros' ? facturaCelular : celular);
+    const facturaEmailFinal = !requiereFactura ? '' : (facturaDatos === 'otros' ? facturaEmail : email);
+
     setEnviando(true);
     try {
       const { guardarInscripcion } = await import('@/lib/inscripcion-client');
@@ -157,6 +168,9 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
         beneficiarioParentesco: benefParentesco,
         metodoPago,
         requiereFactura,
+        facturaNombre: facturaNombreFinal,
+        facturaCelular: facturaCelularFinal,
+        facturaEmail: facturaEmailFinal,
         comprobante,
       });
 
@@ -503,6 +517,58 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
               className="h-4 w-4 text-[#1a4f8b] rounded focus:ring-[#1a4f8b]" />
             <label htmlFor="factura" className="text-sm text-gray-700">Requiero Factura Electrónica</label>
           </div>
+
+          {requiereFactura && (
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-4 mt-2">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">¿Qué datos usar para la factura?</label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <label className={`flex items-center justify-center p-3 border-2 rounded-lg cursor-pointer transition-all ${
+                    facturaDatos === 'formulario' ? 'border-[#1a4f8b] bg-blue-50 text-[#0d2240] font-medium' : 'border-gray-200 hover:border-gray-300'
+                  }`}>
+                    <input type="radio" name="facturaDatos" value="formulario" checked={facturaDatos === 'formulario'}
+                      onChange={() => setFacturaDatos('formulario')} className="sr-only" />
+                    <span>Usar mis datos del formulario</span>
+                  </label>
+                  <label className={`flex items-center justify-center p-3 border-2 rounded-lg cursor-pointer transition-all ${
+                    facturaDatos === 'otros' ? 'border-[#1a4f8b] bg-blue-50 text-[#0d2240] font-medium' : 'border-gray-200 hover:border-gray-300'
+                  }`}>
+                    <input type="radio" name="facturaDatos" value="otros" checked={facturaDatos === 'otros'}
+                      onChange={() => setFacturaDatos('otros')} className="sr-only" />
+                    <span>Usar otros datos</span>
+                  </label>
+                </div>
+              </div>
+
+              {facturaDatos === 'otros' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
+                    <input type="text" value={facturaNombre} onChange={(e) => setFacturaNombre(e.target.value)} required={requiereFactura && facturaDatos === 'otros'}
+                      placeholder="Nombre para la factura"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1"># Celular *</label>
+                    <div className="flex gap-2">
+                      <input type="text" value="506" disabled
+                        className="w-16 border border-gray-300 rounded-lg px-3 py-2 bg-gray-100 text-gray-600 text-center" />
+                      <input type="tel" value={facturaCelular}
+                        onChange={(e) => setFacturaCelular(e.target.value.replace(/[^0-9]/g, '').slice(0, 8))} required={requiereFactura && facturaDatos === 'otros'}
+                        placeholder="88888888" maxLength={8}
+                        className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Correo electrónico *</label>
+                    <input type="email" value={facturaEmail} onChange={(e) => setFacturaEmail(e.target.value)} required={requiereFactura && facturaDatos === 'otros'}
+                      placeholder="correo@ejemplo.com"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent" />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </section>
 

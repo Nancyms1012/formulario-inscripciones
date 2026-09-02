@@ -41,6 +41,9 @@ export interface InscripcionData {
   beneficiarioParentesco: string;
   metodoPago: string;
   requiereFactura: boolean;
+  facturaNombre: string;
+  facturaCelular: string;
+  facturaEmail: string;
   comprobante: File | null;
 }
 
@@ -94,6 +97,9 @@ export async function guardarInscripcion(datos: InscripcionData): Promise<{ codi
       metodo_pago: datos.metodoPago,
       comprobante_sinpe_url: comprobanteUrl,
       requiere_factura: datos.requiereFactura,
+      factura_nombre: datos.facturaNombre,
+      factura_celular: datos.facturaCelular,
+      factura_email: datos.facturaEmail,
       estado_pago: 'pendiente',
     });
 
@@ -124,6 +130,9 @@ export interface InscripcionKidsData {
   encargadoParentesco: string;
   metodoPago: string;
   requiereFactura: boolean;
+  facturaNombre: string;
+  facturaCelular: string;
+  facturaEmail: string;
   comprobante: File | null;
 }
 
@@ -177,6 +186,9 @@ export async function guardarInscripcionKids(datos: InscripcionKidsData): Promis
       metodo_pago: datos.metodoPago,
       comprobante_sinpe_url: comprobanteUrl,
       requiere_factura: datos.requiereFactura,
+      factura_nombre: datos.facturaNombre,
+      factura_celular: datos.facturaCelular,
+      factura_email: datos.facturaEmail,
       estado_pago: 'pendiente',
     });
 
