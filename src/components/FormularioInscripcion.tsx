@@ -61,7 +61,7 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
   // Factura Electrónica
   const [facturaDatos, setFacturaDatos] = useState<'formulario' | 'otros'>('formulario');
   const [facturaNombre, setFacturaNombre] = useState('');
-  const [facturaCelular, setFacturaCelular] = useState('');
+  const [facturaCedula, setFacturaCedula] = useState('');
   const [facturaEmail, setFacturaEmail] = useState('');
 
   // UI State
@@ -138,7 +138,7 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
 
     // Determinar datos de factura
     const facturaNombreFinal = !requiereFactura ? '' : (facturaDatos === 'otros' ? facturaNombre : `${nombre} ${primerApellido} ${segundoApellido}`.trim());
-    const facturaCelularFinal = !requiereFactura ? '' : (facturaDatos === 'otros' ? facturaCelular : celular);
+    const facturaCedulaFinal = !requiereFactura ? '' : (facturaDatos === 'otros' ? facturaCedula : numeroId);
     const facturaEmailFinal = !requiereFactura ? '' : (facturaDatos === 'otros' ? facturaEmail : email);
 
     setEnviando(true);
@@ -169,7 +169,7 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
         metodoPago,
         requiereFactura,
         facturaNombre: facturaNombreFinal,
-        facturaCelular: facturaCelularFinal,
+        facturaCedula: facturaCedulaFinal,
         facturaEmail: facturaEmailFinal,
         comprobante,
       });
@@ -549,15 +549,11 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1"># Celular *</label>
-                    <div className="flex gap-2">
-                      <input type="text" value="506" disabled
-                        className="w-16 border border-gray-300 rounded-lg px-3 py-2 bg-gray-100 text-gray-600 text-center" />
-                      <input type="tel" value={facturaCelular}
-                        onChange={(e) => setFacturaCelular(e.target.value.replace(/[^0-9]/g, '').slice(0, 8))} required={requiereFactura && facturaDatos === 'otros'}
-                        placeholder="88888888" maxLength={8}
-                        className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent" />
-                    </div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1"># Cédula (física o jurídica) *</label>
+                    <input type="text" value={facturaCedula}
+                      onChange={(e) => setFacturaCedula(e.target.value.replace(/[^0-9]/g, ''))} required={requiereFactura && facturaDatos === 'otros'}
+                      placeholder="Solo números"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Correo electrónico *</label>

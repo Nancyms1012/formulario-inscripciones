@@ -42,7 +42,7 @@ export interface InscripcionData {
   metodoPago: string;
   requiereFactura: boolean;
   facturaNombre: string;
-  facturaCelular: string;
+  facturaCedula: string;
   facturaEmail: string;
   comprobante: File | null;
 }
@@ -98,7 +98,7 @@ export async function guardarInscripcion(datos: InscripcionData): Promise<{ codi
       comprobante_sinpe_url: comprobanteUrl,
       requiere_factura: datos.requiereFactura,
       factura_nombre: datos.facturaNombre,
-      factura_celular: datos.facturaCelular,
+      factura_cedula: datos.facturaCedula,
       factura_email: datos.facturaEmail,
       estado_pago: 'pendiente',
     });
@@ -131,7 +131,7 @@ export interface InscripcionKidsData {
   metodoPago: string;
   requiereFactura: boolean;
   facturaNombre: string;
-  facturaCelular: string;
+  facturaCedula: string;
   facturaEmail: string;
   comprobante: File | null;
 }
@@ -187,7 +187,7 @@ export async function guardarInscripcionKids(datos: InscripcionKidsData): Promis
       comprobante_sinpe_url: comprobanteUrl,
       requiere_factura: datos.requiereFactura,
       factura_nombre: datos.facturaNombre,
-      factura_celular: datos.facturaCelular,
+      factura_cedula: datos.facturaCedula,
       factura_email: datos.facturaEmail,
       estado_pago: 'pendiente',
     });
