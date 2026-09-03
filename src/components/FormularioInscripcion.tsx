@@ -14,6 +14,7 @@ import {
   CURRENT_YEAR,
 } from '@/lib/categories';
 import type { Gender, EventType } from '@/lib/categories';
+import { getPaymentLink } from '@/lib/payment-links';
 
 export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' }) {
   // Control de T&C
@@ -45,6 +46,9 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
   const [evento, setEvento] = useState('');
   const [categoria, setCategoria] = useState('');
   const [categoriasDisponibles, setCategoriasDisponibles] = useState<string[]>([]);
+
+  // Link y monto de pago según evento + categoría
+  const paymentLink = (evento && categoria) ? getPaymentLink(evento, categoria) : null;
 
 
   // Datos Beneficiario
@@ -189,6 +193,11 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
           categoria,
         }),
       }).catch(() => {}); // No bloquear si falla
+
+      // Si pagó con tarjeta, abrir la página de pago de Tilopay
+      if (metodoPago === 'Tarjeta' && paymentLink) {
+        window.open(paymentLink.url, '_blank');
+      }
 
       setExito(true);
     } catch (err: unknown) {
@@ -488,6 +497,20 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
       <section className="bg-white rounded-xl shadow-md p-6">
         <h2 className="text-xl font-bold text-[#0d2240] mb-6 pb-2 border-b-2 border-[#0d2240]">Pago</h2>
         <div className="space-y-4">
+          {/* Monto a pagar */}
+          {evento && categoria && paymentLink && (
+            <div className="bg-[#0d2240] text-white rounded-lg p-4 text-center">
+              <p className="text-sm text-blue-200">Monto a pagar</p>
+              <p className="text-3xl font-bold">₡{paymentLink.monto.toLocaleString('es-CR')}</p>
+              <p className="text-xs text-blue-200 mt-1">{evento} · {categoria}</p>
+            </div>
+          )}
+          {evento && categoria && !paymentLink && (
+            <div className="bg-amber-50 border border-amber-200 text-amber-700 rounded-lg p-3 text-sm text-center">
+              No se encontró un monto para esta combinación. Contactá a la organización.
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Método de pago *</label>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -503,6 +526,21 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
               ))}
             </div>
           </div>
+
+          {/* Pago con Tarjeta (Tilopay) */}
+          {metodoPago === 'Tarjeta' && paymentLink && (
+            <div className="bg-blue-50 p-4 rounded-lg text-center">
+              <p className="text-sm text-gray-700 mb-3">
+                Al enviar la inscripción se abrirá la página segura de pago de Tilopay para pagar ₡{paymentLink.monto.toLocaleString('es-CR')} con tarjeta.
+              </p>
+              <a href={paymentLink.url} target="_blank" rel="noopener noreferrer"
+                className="inline-block bg-[#1a4f8b] text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-[#0d2240] transition-colors">
+                Abrir página de pago (₡{paymentLink.monto.toLocaleString('es-CR')})
+              </a>
+              <p className="text-xs text-gray-500 mt-2">Tu inscripción se guardará como &quot;pendiente de pago&quot; hasta que la organización confirme el pago.</p>
+            </div>
+          )}
+
           {metodoPago === 'Sinpe' && (
             <div className="bg-blue-50 p-4 rounded-lg">
               <label className="block text-sm font-medium text-gray-700 mb-2">Comprobante de Sinpe *</label>

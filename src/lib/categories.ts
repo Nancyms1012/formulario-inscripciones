@@ -4,7 +4,7 @@
 export const CURRENT_YEAR = 2026;
 
 export type Gender = 'F' | 'M';
-export type EventType = 'XCO' | 'XCC' | 'XCO+XCC' | 'Copa Kids';
+export type EventType = 'XCO' | 'XCC' | 'XCO+XCC' | 'XCO+XCC+XCE' | 'XCE' | 'Copa Kids';
 
 export interface Category {
   name: string;
@@ -59,8 +59,18 @@ export function getCompetitiveAge(birthYear: number): number {
   return CURRENT_YEAR - birthYear;
 }
 
+// Categorías adicionales (abiertas) y en qué eventos aplican
+// Estas NO dependen de la edad exacta más allá de un mínimo, y aparecen como opción extra
+export const CATEGORIAS_ESPECIALES: { name: string; gender: 'F' | 'M' | 'F/M'; minAge: number; eventos: EventType[] }[] = [
+  { name: 'E-Bike', gender: 'F/M', minAge: 18, eventos: ['XCO', 'XCO+XCC'] },
+  { name: 'Cyclocross', gender: 'F/M', minAge: 17, eventos: ['XCO', 'XCC', 'XCO+XCC'] },
+  { name: 'Pasados de línea', gender: 'M', minAge: 18, eventos: ['XCO', 'XCC', 'XCO+XCC'] },
+  { name: 'Ligas menores', gender: 'F/M', minAge: 0, eventos: ['XCC'] },
+];
+
 /**
  * Obtiene las categorías disponibles según evento, género y año de nacimiento.
+ * Solo devuelve categorías que TIENEN link de pago para ese evento.
  * Agrega el sufijo "Femenino" o "Masculino" al nombre de la categoría.
  */
 export function getAvailableCategories(
@@ -92,11 +102,20 @@ export function getAvailableCategories(
     }
   }
 
+  // Agregar categorías especiales que aplican al evento y edad
+  for (const esp of CATEGORIAS_ESPECIALES) {
+    if (!esp.eventos.includes(event)) continue;
+    if (esp.gender !== 'F/M' && esp.gender !== gender) continue;
+    if (age >= esp.minAge) {
+      available.add(`${esp.name} ${genderLabel}`);
+    }
+  }
+
   return Array.from(available);
 }
 
 // Eventos disponibles
-export const EVENTS: EventType[] = ['XCO', 'XCC', 'XCO+XCC', 'Copa Kids'];
+export const EVENTS: EventType[] = ['XCO', 'XCC', 'XCO+XCC', 'XCO+XCC+XCE', 'Copa Kids'];
 
 // Provincias de Costa Rica
 export const PROVINCIAS = [
