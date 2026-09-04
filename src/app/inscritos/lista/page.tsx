@@ -22,6 +22,8 @@ function ListaInscritosContent() {
   const [busqueda, setBusqueda] = useState('');
   const [filtroCategoria, setFiltroCategoria] = useState('');
   const [filtroEvento, setFiltroEvento] = useState('');
+  const [ordenCampo, setOrdenCampo] = useState<'nombre' | 'evento' | 'categoria' | 'equipo'>('nombre');
+  const [ordenAsc, setOrdenAsc] = useState(true);
 
   const esKids = grupo === 'kids';
   const titulo = esKids ? 'Copa Kids' : 'La Copa';
@@ -66,6 +68,33 @@ function ListaInscritosContent() {
     const coincideEvento = !filtroEvento || i.evento === filtroEvento;
     return coincideTexto && coincideCat && coincideEvento;
   });
+
+  // Ordenamiento
+  const ordenados = [...filtrados].sort((a, b) => {
+    let valA = '';
+    let valB = '';
+    if (ordenCampo === 'nombre') {
+      valA = `${a.primer_apellido} ${a.segundo_apellido} ${a.nombre}`.toLowerCase();
+      valB = `${b.primer_apellido} ${b.segundo_apellido} ${b.nombre}`.toLowerCase();
+    } else {
+      valA = (a[ordenCampo] || '').toLowerCase();
+      valB = (b[ordenCampo] || '').toLowerCase();
+    }
+    const comp = valA.localeCompare(valB, 'es');
+    return ordenAsc ? comp : -comp;
+  });
+
+  // Cambiar orden al hacer click en encabezado
+  const cambiarOrden = (campo: 'nombre' | 'evento' | 'categoria' | 'equipo') => {
+    if (ordenCampo === campo) {
+      setOrdenAsc(!ordenAsc);
+    } else {
+      setOrdenCampo(campo);
+      setOrdenAsc(true);
+    }
+  };
+
+  const flecha = (campo: string) => ordenCampo === campo ? (ordenAsc ? ' ▲' : ' ▼') : '';
 
   const colorPrimary = esKids ? '#1a7a3a' : '#0d2240';
 
@@ -139,14 +168,14 @@ function ListaInscritosContent() {
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 text-gray-500 uppercase text-xs">
                   <tr>
-                    <th className="px-4 py-3 text-left">Nombre</th>
-                    <th className="px-4 py-3 text-left">Evento</th>
-                    <th className="px-4 py-3 text-left">Categoría</th>
-                    <th className="px-4 py-3 text-left">Equipo</th>
+                    <th className="px-4 py-3 text-left cursor-pointer select-none hover:text-gray-700" onClick={() => cambiarOrden('nombre')}>Nombre{flecha('nombre')}</th>
+                    <th className="px-4 py-3 text-left cursor-pointer select-none hover:text-gray-700" onClick={() => cambiarOrden('evento')}>Evento{flecha('evento')}</th>
+                    <th className="px-4 py-3 text-left cursor-pointer select-none hover:text-gray-700" onClick={() => cambiarOrden('categoria')}>Categoría{flecha('categoria')}</th>
+                    <th className="px-4 py-3 text-left cursor-pointer select-none hover:text-gray-700" onClick={() => cambiarOrden('equipo')}>Equipo{flecha('equipo')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {filtrados.map((i) => (
+                  {ordenados.map((i) => (
                     <tr key={i.id} className="hover:bg-gray-50">
                       <td className="px-4 py-3 font-medium text-gray-800">
                         {i.nombre} {i.primer_apellido} {i.segundo_apellido}
