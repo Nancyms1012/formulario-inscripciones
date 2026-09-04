@@ -36,6 +36,7 @@ export default function FormularioKids() {
   // Categoría
   const [categoria, setCategoria] = useState('');
   const [categoriasDisponibles, setCategoriasDisponibles] = useState<string[]>([]);
+  const [equipo, setEquipo] = useState('');
 
   // Link y monto de pago (Copa Kids)
   const paymentLink = categoria ? getPaymentLink('Copa Kids', categoria) : null;
@@ -146,6 +147,7 @@ export default function FormularioKids() {
       provincia,
       lateralidad,
       categoria,
+      equipo,
       encargadoNombre,
       encargadoCedula,
       encargadoTelefono,
@@ -399,14 +401,22 @@ export default function FormularioKids() {
         <h2 className="text-xl font-bold text-[#0d2240] mb-6 pb-2 border-b-2 border-[#0d2240]">
           {"Datos de la Carrera"}
         </h2>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">{"Categoría *"}</label>
-          <select value={categoria} onChange={(e) => setCategoria(e.target.value)} required
-            disabled={categoriasDisponibles.length === 0}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent disabled:bg-gray-100 disabled:text-gray-400">
-            <option value="">{categoriasDisponibles.length === 0 ? 'Completá género y fecha de nacimiento primero' : 'Seleccionar categoría...'}</option>
-            {categoriasDisponibles.map((cat) => (<option key={cat} value={cat}>{cat}</option>))}
-          </select>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{"Categoría *"}</label>
+            <select value={categoria} onChange={(e) => setCategoria(e.target.value)} required
+              disabled={categoriasDisponibles.length === 0}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent disabled:bg-gray-100 disabled:text-gray-400">
+              <option value="">{categoriasDisponibles.length === 0 ? 'Completá género y fecha de nacimiento primero' : 'Seleccionar categoría...'}</option>
+              {categoriasDisponibles.map((cat) => (<option key={cat} value={cat}>{cat}</option>))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{"Equipo *"}</label>
+            <input type="text" value={equipo} onChange={(e) => setEquipo(e.target.value)} required
+              placeholder="Nombre del equipo"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent" />
+          </div>
         </div>
         {categoriasDisponibles.length > 0 && (
           <p className="text-xs text-gray-500 mt-2">

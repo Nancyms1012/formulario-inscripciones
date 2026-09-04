@@ -124,6 +124,7 @@ export interface InscripcionKidsData {
   provincia: string;
   lateralidad: string;
   categoria: string;
+  equipo: string;
   encargadoNombre: string;
   encargadoCedula: string;
   encargadoTelefono: string;
@@ -176,7 +177,7 @@ export async function guardarInscripcionKids(datos: InscripcionKidsData): Promis
       fecha_nacimiento: datos.fechaNacimiento,
       genero: datos.genero,
       provincia: datos.provincia,
-      equipo: '',
+      equipo: datos.equipo,
       tipo_licencia: '',
       uci_id: '',
       evento: 'Copa Kids',
