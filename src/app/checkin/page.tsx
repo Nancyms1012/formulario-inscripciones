@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { getDiasParticipa, type DiaEvento } from '@/lib/dias-evento';
 
 interface InscripcionData {
   id: string;
@@ -15,6 +16,10 @@ interface InscripcionData {
   numero_identificacion: string;
   checkin: boolean;
   checkin_fecha: string | null;
+  checkin_xcc?: boolean;
+  checkin_xcc_fecha?: string | null;
+  checkin_xco?: boolean;
+  checkin_xco_fecha?: string | null;
   metodo_pago: string;
   estado_pago: string;
   uci_id?: string;
@@ -22,6 +27,7 @@ interface InscripcionData {
 }
 
 export default function CheckinPage() {
+  const [dia, setDia] = useState<DiaEvento | null>(null); // XCC (sábado) o XCO (domingo)
   const [codigo, setCodigo] = useState('');
   const [busquedaTexto, setBusquedaTexto] = useState('');
   const [buscando, setBuscando] = useState(false);
@@ -32,6 +38,19 @@ export default function CheckinPage() {
   const [scannerActivo, setScannerActivo] = useState(false);
   const scannerRef = useRef<unknown>(null);
   const scannerContainerId = 'qr-reader';
+
+  // ¿La inscripción participa en el día seleccionado?
+  const participaHoy = (insc: InscripcionData): boolean => {
+    if (!dia) return true;
+    return getDiasParticipa(insc.evento, insc.categoria).includes(dia);
+  };
+
+  // ¿Ya hizo check-in en el día seleccionado?
+  const yaHizoCheckin = (insc: InscripcionData): boolean => {
+    if (dia === 'XCC') return !!insc.checkin_xcc;
+    if (dia === 'XCO') return !!insc.checkin_xco;
+    return !!insc.checkin;
+  };
 
   // Buscar por código QR
   const buscarPorCodigo = async (codigoBuscar?: string) => {
@@ -100,21 +119,26 @@ export default function CheckinPage() {
     }
   };
 
-  // Confirmar check-in
+  // Confirmar check-in (para el día seleccionado)
   const confirmarCheckin = async () => {
-    if (!inscripcion) return;
+    if (!inscripcion || !dia) return;
+
+    const ahora = new Date().toISOString();
+    const cambios = dia === 'XCC'
+      ? { checkin_xcc: true, checkin_xcc_fecha: ahora }
+      : { checkin_xco: true, checkin_xco_fecha: ahora };
 
     try {
       const { supabaseClient } = await import('@/lib/inscripcion-client');
       const { error } = await supabaseClient
         .from('inscripciones')
-        .update({ checkin: true, checkin_fecha: new Date().toISOString() })
+        .update(cambios)
         .eq('id', inscripcion.id);
 
       if (error) throw new Error(error.message);
 
       setCheckinExitoso(true);
-      setInscripcion({ ...inscripcion, checkin: true, checkin_fecha: new Date().toISOString() });
+      setInscripcion({ ...inscripcion, ...cambios });
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Error al confirmar');
     }
@@ -180,11 +204,43 @@ export default function CheckinPage() {
     setError('');
   };
 
+  // ===== PANTALLA 1: SELECCIÓN DE DÍA =====
+  if (!dia) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-8">
+        <div className="text-center mb-8">
+          <h1 className="text-2xl font-bold text-[#0d2240]">Check-in de Participantes</h1>
+          <p className="text-gray-600 mt-1">Seleccioná el día para hacer el check-in</p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <button onClick={() => setDia('XCC')}
+            className="bg-white rounded-xl shadow-md p-8 hover:shadow-xl transition-shadow border-2 border-transparent hover:border-[#0d2240] text-center">
+            <p className="text-2xl font-bold text-[#0d2240]">XCC</p>
+            <p className="text-gray-500 mt-1">Sábado 12 Setiembre</p>
+            <p className="text-xs text-gray-400 mt-2">Short Track</p>
+          </button>
+          <button onClick={() => setDia('XCO')}
+            className="bg-white rounded-xl shadow-md p-8 hover:shadow-xl transition-shadow border-2 border-transparent hover:border-[#0d2240] text-center">
+            <p className="text-2xl font-bold text-[#0d2240]">XCO</p>
+            <p className="text-gray-500 mt-1">Domingo 13 Setiembre</p>
+            <p className="text-xs text-gray-400 mt-2">Cross Country · Copa Kids</p>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
       <div className="text-center mb-8">
-        <h1 className="text-2xl font-bold text-[#0d2240]">Check-in de Participantes</h1>
-        <p className="text-gray-600 mt-1">Escaneá el QR o buscá por código, nombre o cédula</p>
+        <h1 className="text-2xl font-bold text-[#0d2240]">Check-in · Día {dia}</h1>
+        <p className="text-gray-600 mt-1">
+          {dia === 'XCC' ? 'Sábado 12 Setiembre' : 'Domingo 13 Setiembre'} · Escaneá el QR o buscá por código, nombre o cédula
+        </p>
+        <button onClick={() => { setDia(null); limpiar(); }}
+          className="mt-2 text-sm text-[#1a4f8b] hover:underline">
+          Cambiar día
+        </button>
       </div>
 
       {/* Scanner QR */}
@@ -275,8 +331,8 @@ export default function CheckinPage() {
         <div className="bg-white rounded-xl shadow-md p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bold text-[#0d2240]">Datos del Participante</h2>
-            {inscripcion.checkin && (
-              <span className="bg-green-100 text-green-800 text-sm font-medium px-3 py-1 rounded-full">&#10003; Ya hizo check-in</span>
+            {yaHizoCheckin(inscripcion) && (
+              <span className="bg-green-100 text-green-800 text-sm font-medium px-3 py-1 rounded-full">&#10003; Ya hizo check-in {dia}</span>
             )}
           </div>
           {/* Dorsal grande en azul (o código si aún no hay dorsal) */}
@@ -316,15 +372,25 @@ export default function CheckinPage() {
             </div>
           </div>
 
-          {!inscripcion.checkin && !checkinExitoso && (
+          {/* Aviso si NO participa el día seleccionado */}
+          {!participaHoy(inscripcion) && (
+            <div className="mt-6 bg-amber-50 border border-amber-200 text-amber-800 px-4 py-4 rounded-lg text-center font-medium">
+              ⚠️ Este participante NO compite el día {dia} ({dia === 'XCC' ? 'Sábado' : 'Domingo'}).
+              <br />
+              <span className="text-sm font-normal">Participa en: {getDiasParticipa(inscripcion.evento, inscripcion.categoria).join(', ')}</span>
+            </div>
+          )}
+
+          {/* Botón de check-in (solo si participa hoy y no ha hecho check-in) */}
+          {participaHoy(inscripcion) && !yaHizoCheckin(inscripcion) && !checkinExitoso && (
             <button onClick={confirmarCheckin}
               className="w-full mt-6 bg-green-600 text-white px-6 py-4 rounded-lg text-lg font-bold hover:bg-green-700 transition-colors">
-              &#10003; Confirmar Llegada
+              &#10003; Confirmar Llegada · Día {dia}
             </button>
           )}
           {checkinExitoso && (
             <div className="mt-6 bg-green-50 border border-green-200 text-green-700 px-4 py-4 rounded-lg text-center font-medium">
-              &#10003; Check-in confirmado exitosamente
+              &#10003; Check-in {dia} confirmado exitosamente
             </div>
           )}
           <button onClick={limpiar}
