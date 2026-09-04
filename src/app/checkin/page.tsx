@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { getDiasParticipa, type DiaEvento } from '@/lib/dias-evento';
 
 interface InscripcionData {
@@ -18,15 +18,26 @@ interface InscripcionData {
   checkin_fecha: string | null;
   checkin_xcc?: boolean;
   checkin_xcc_fecha?: string | null;
+  checkin_xcc_por?: string | null;
   checkin_xco?: boolean;
   checkin_xco_fecha?: string | null;
+  checkin_xco_por?: string | null;
   metodo_pago: string;
   estado_pago: string;
   uci_id?: string;
   tipo_licencia?: string;
 }
 
+// Estadística por categoría
+interface StatCategoria {
+  categoria: string;
+  total: number;
+  hechos: number;
+}
+
 export default function CheckinPage() {
+  const [operador, setOperador] = useState<string | null>(null);
+  const [operadorInput, setOperadorInput] = useState('');
   const [dia, setDia] = useState<DiaEvento | null>(null); // XCC (sábado) o XCO (domingo)
   const [codigo, setCodigo] = useState('');
   const [busquedaTexto, setBusquedaTexto] = useState('');
@@ -38,6 +49,31 @@ export default function CheckinPage() {
   const [scannerActivo, setScannerActivo] = useState(false);
   const scannerRef = useRef<unknown>(null);
   const scannerContainerId = 'qr-reader';
+
+  // Estadísticas del día
+  const [statTotal, setStatTotal] = useState({ total: 0, hechos: 0 });
+  const [statsPorCategoria, setStatsPorCategoria] = useState<StatCategoria[]>([]);
+  const [cargandoStats, setCargandoStats] = useState(false);
+
+  // Cargar operador guardado en el navegador
+  useEffect(() => {
+    const guardado = typeof window !== 'undefined' ? localStorage.getItem('checkin_operador') : null;
+    if (guardado) setOperador(guardado);
+  }, []);
+
+  const guardarOperador = () => {
+    const nombre = operadorInput.trim();
+    if (!nombre) return;
+    localStorage.setItem('checkin_operador', nombre);
+    setOperador(nombre);
+  };
+
+  const cambiarOperador = () => {
+    localStorage.removeItem('checkin_operador');
+    setOperador(null);
+    setOperadorInput('');
+    setDia(null);
+  };
 
   // ¿La inscripción participa en el día seleccionado?
   const participaHoy = (insc: InscripcionData): boolean => {
@@ -51,6 +87,57 @@ export default function CheckinPage() {
     if (dia === 'XCO') return !!insc.checkin_xco;
     return !!insc.checkin;
   };
+
+  // Calcular estadísticas del día seleccionado
+  const cargarStats = useCallback(async (diaActual: DiaEvento) => {
+    setCargandoStats(true);
+    try {
+      const { supabaseClient } = await import('@/lib/inscripcion-client');
+      const { data, error } = await supabaseClient
+        .from('inscripciones')
+        .select('evento, categoria, checkin_xcc, checkin_xco');
+
+      if (error) throw new Error(error.message);
+      if (!data) return;
+
+      // Filtrar solo quienes participan en el día
+      const participantes = data.filter((r) =>
+        getDiasParticipa(r.evento, r.categoria).includes(diaActual)
+      );
+
+      const hechoEn = (r: { checkin_xcc?: boolean; checkin_xco?: boolean }) =>
+        diaActual === 'XCC' ? !!r.checkin_xcc : !!r.checkin_xco;
+
+      // Total general
+      const total = participantes.length;
+      const hechos = participantes.filter(hechoEn).length;
+      setStatTotal({ total, hechos });
+
+      // Por categoría
+      const mapa = new Map<string, StatCategoria>();
+      for (const r of participantes) {
+        const key = r.categoria || 'Sin categoría';
+        const actual = mapa.get(key) || { categoria: key, total: 0, hechos: 0 };
+        actual.total += 1;
+        if (hechoEn(r)) actual.hechos += 1;
+        mapa.set(key, actual);
+      }
+      const stats = Array.from(mapa.values()).sort((a, b) =>
+        a.categoria.localeCompare(b.categoria)
+      );
+      setStatsPorCategoria(stats);
+    } catch (err: unknown) {
+      // No bloqueamos el check-in si fallan las stats
+      console.error('Error al cargar estadísticas', err);
+    } finally {
+      setCargandoStats(false);
+    }
+  }, []);
+
+  // Recargar stats cuando cambia el día
+  useEffect(() => {
+    if (dia) cargarStats(dia);
+  }, [dia, cargarStats]);
 
   // Buscar por código QR
   const buscarPorCodigo = async (codigoBuscar?: string) => {
@@ -125,8 +212,8 @@ export default function CheckinPage() {
 
     const ahora = new Date().toISOString();
     const cambios = dia === 'XCC'
-      ? { checkin_xcc: true, checkin_xcc_fecha: ahora }
-      : { checkin_xco: true, checkin_xco_fecha: ahora };
+      ? { checkin_xcc: true, checkin_xcc_fecha: ahora, checkin_xcc_por: operador }
+      : { checkin_xco: true, checkin_xco_fecha: ahora, checkin_xco_por: operador };
 
     try {
       const { supabaseClient } = await import('@/lib/inscripcion-client');
@@ -139,6 +226,8 @@ export default function CheckinPage() {
 
       setCheckinExitoso(true);
       setInscripcion({ ...inscripcion, ...cambios });
+      // Actualizar stats en vivo
+      cargarStats(dia);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Error al confirmar');
     }
@@ -204,6 +293,34 @@ export default function CheckinPage() {
     setError('');
   };
 
+  // ===== PANTALLA 0: LOGIN POR NOMBRE (operador) =====
+  if (!operador) {
+    return (
+      <div className="max-w-md mx-auto px-4 py-12">
+        <div className="bg-white rounded-xl shadow-md p-8 text-center">
+          <h1 className="text-2xl font-bold text-[#0d2240]">Check-in de Participantes</h1>
+          <p className="text-gray-600 mt-2 mb-6">Ingresá tu nombre para comenzar. Se registrará quién aplica cada check-in.</p>
+          <input
+            type="text"
+            value={operadorInput}
+            onChange={(e) => setOperadorInput(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && guardarOperador()}
+            placeholder="Tu nombre"
+            autoFocus
+            className="w-full border border-gray-300 rounded-lg px-4 py-3 mb-4 text-center focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent"
+          />
+          <button
+            onClick={guardarOperador}
+            disabled={!operadorInput.trim()}
+            className="w-full bg-[#0d2240] text-white px-6 py-3 rounded-lg text-lg font-bold hover:bg-[#1a4f8b] transition-colors disabled:opacity-50"
+          >
+            Ingresar
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // ===== PANTALLA 1: SELECCIÓN DE DÍA =====
   if (!dia) {
     return (
@@ -211,6 +328,10 @@ export default function CheckinPage() {
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-[#0d2240]">Check-in de Participantes</h1>
           <p className="text-gray-600 mt-1">Seleccioná el día para hacer el check-in</p>
+          <p className="text-sm text-gray-500 mt-2">
+            Operador: <span className="font-medium text-[#1a4f8b]">{operador}</span>
+            <button onClick={cambiarOperador} className="ml-2 text-[#1a4f8b] hover:underline">(cambiar)</button>
+          </p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <button onClick={() => setDia('XCC')}
@@ -230,18 +351,70 @@ export default function CheckinPage() {
     );
   }
 
+  const pendientes = statTotal.total - statTotal.hechos;
+  const pct = statTotal.total > 0 ? Math.round((statTotal.hechos / statTotal.total) * 100) : 0;
+
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
-      <div className="text-center mb-8">
+    <div className="max-w-3xl mx-auto px-4 py-8">
+      <div className="text-center mb-6">
         <h1 className="text-2xl font-bold text-[#0d2240]">Check-in · Día {dia}</h1>
         <p className="text-gray-600 mt-1">
           {dia === 'XCC' ? 'Sábado 12 Setiembre' : 'Domingo 13 Setiembre'} · Escaneá el QR o buscá por código, nombre o cédula
         </p>
-        <button onClick={() => { setDia(null); limpiar(); }}
-          className="mt-2 text-sm text-[#1a4f8b] hover:underline">
-          Cambiar día
-        </button>
+        <p className="text-sm text-gray-500 mt-2">
+          Operador: <span className="font-medium text-[#1a4f8b]">{operador}</span>
+          <button onClick={cambiarOperador} className="ml-2 text-[#1a4f8b] hover:underline">(cambiar)</button>
+          <span className="mx-2 text-gray-300">|</span>
+          <button onClick={() => { setDia(null); limpiar(); }} className="text-[#1a4f8b] hover:underline">Cambiar día</button>
+        </p>
       </div>
+
+      {/* ===== PANEL DE PROGRESO ===== */}
+      <div className="bg-white rounded-xl shadow-md p-6 mb-6">
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-sm font-bold text-[#0d2240] uppercase flex items-center gap-2">
+            <svg className="w-5 h-5 text-[#1a4f8b]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Check-in {dia}
+          </h2>
+          <button onClick={() => cargarStats(dia)} className="text-xs text-[#1a4f8b] hover:underline">
+            {cargandoStats ? 'Actualizando…' : 'Actualizar'}
+          </button>
+        </div>
+        <p className="text-4xl font-extrabold text-[#1a4f8b] leading-none">
+          {statTotal.hechos} <span className="text-gray-400 font-bold">/ {statTotal.total}</span>
+        </p>
+        <p className="text-sm text-gray-500 mt-1">{pct}% con check-in · {pendientes} pendientes</p>
+        <div className="w-full bg-gray-100 rounded-full h-3 mt-3 overflow-hidden">
+          <div className="bg-green-500 h-3 rounded-full transition-all" style={{ width: `${pct}%` }} />
+        </div>
+      </div>
+
+      {/* Tarjetas por categoría */}
+      {statsPorCategoria.length > 0 && (
+        <div className="mb-6">
+          <h3 className="text-sm font-bold text-[#0d2240] uppercase mb-3">Por Categoría</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {statsPorCategoria.map((s) => {
+              const p = s.total > 0 ? Math.round((s.hechos / s.total) * 100) : 0;
+              return (
+                <div key={s.categoria} className="bg-white rounded-xl shadow-sm p-4">
+                  <p className="font-bold text-[#0d2240] text-sm leading-snug">{s.categoria}</p>
+                  <p className="text-xs text-gray-500 mt-1">Total: <span className="font-medium text-gray-700">{s.total}</span></p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-green-600 text-sm">&#10003;</span>
+                    <span className="text-sm text-gray-700">Check-in: <span className="font-bold text-[#0d2240]">{s.hechos} / {s.total}</span></span>
+                  </div>
+                  <div className="w-full bg-gray-100 rounded-full h-2 mt-2 overflow-hidden">
+                    <div className="bg-green-500 h-2 rounded-full transition-all" style={{ width: `${p}%` }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Scanner QR */}
       <div className="bg-white rounded-xl shadow-md p-6 mb-6">
@@ -372,6 +545,13 @@ export default function CheckinPage() {
             </div>
           </div>
 
+          {/* Quién aplicó el check-in (si ya está hecho) */}
+          {yaHizoCheckin(inscripcion) && (dia === 'XCC' ? inscripcion.checkin_xcc_por : inscripcion.checkin_xco_por) && (
+            <p className="mt-3 text-xs text-gray-400">
+              Check-in aplicado por: {dia === 'XCC' ? inscripcion.checkin_xcc_por : inscripcion.checkin_xco_por}
+            </p>
+          )}
+
           {/* Aviso si NO participa el día seleccionado */}
           {!participaHoy(inscripcion) && (
             <div className="mt-6 bg-amber-50 border border-amber-200 text-amber-800 px-4 py-4 rounded-lg text-center font-medium">
@@ -390,7 +570,7 @@ export default function CheckinPage() {
           )}
           {checkinExitoso && (
             <div className="mt-6 bg-green-50 border border-green-200 text-green-700 px-4 py-4 rounded-lg text-center font-medium">
-              &#10003; Check-in {dia} confirmado exitosamente
+              &#10003; Check-in {dia} confirmado exitosamente por {operador}
             </div>
           )}
           <button onClick={limpiar}
