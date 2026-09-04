@@ -42,14 +42,16 @@ export const RACE_CATEGORIES: Category[] = [
   { name: 'Pasados de línea', gender: 'M', minAge: 18, maxAge: null, availableCategories: ['Pasados de línea'] },
 ];
 
-// Categorías para Copa Kids
+// Categorías para Copa Kids (según Guía Técnica)
+// Balance y 0-4 son ambos "Niños A" (nacidos 2022 o después)
+// 5-6 y 7-8 son ambos "Niños B"
 export const KIDS_CATEGORIES: Category[] = [
-  { name: 'Balance', gender: 'F/M', minAge: null, maxAge: 4, availableCategories: ['Balance'] },
-  { name: 'Niños A', gender: 'F/M', minAge: null, maxAge: 4, availableCategories: ['Niños A'] },
-  { name: 'Niños B', gender: 'F/M', minAge: 5, maxAge: 6, availableCategories: ['Niños B'] },
-  { name: 'Niños C', gender: 'F/M', minAge: 7, maxAge: 8, availableCategories: ['Niños C'] },
-  { name: 'Niños D', gender: 'F/M', minAge: 9, maxAge: 10, availableCategories: ['Niños D'] },
-  { name: 'Preinfantil', gender: 'F/M', minAge: 11, maxAge: 12, availableCategories: ['Preinfantil'] },
+  { name: 'Balance (Niños A)', gender: 'F/M', minAge: null, maxAge: 4, availableCategories: ['Balance (Niños A)'] },
+  { name: '0 a 4 años (Niños A)', gender: 'F/M', minAge: null, maxAge: 4, availableCategories: ['0 a 4 años (Niños A)'] },
+  { name: '5 a 6 años (Niños B)', gender: 'F/M', minAge: 5, maxAge: 6, availableCategories: ['5 a 6 años (Niños B)'] },
+  { name: '7 a 8 años (Niños B)', gender: 'F/M', minAge: 7, maxAge: 8, availableCategories: ['7 a 8 años (Niños B)'] },
+  { name: '9 a 10 años (Niños C)', gender: 'F/M', minAge: 9, maxAge: 10, availableCategories: ['9 a 10 años (Niños C)'] },
+  { name: '11 a 12 años (Preinfantil)', gender: 'F/M', minAge: 11, maxAge: 12, availableCategories: ['11 a 12 años (Preinfantil)'] },
 ];
 
 /**

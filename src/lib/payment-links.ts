@@ -90,13 +90,13 @@ export const PAYMENT_LINKS: Record<string, PaymentLink> = {
   'XCO|Máster E': { url: 'https://tp.cr/l/MTQ4NjQ=', monto: 17000 },
   'XCO|Infantil': { url: 'https://tp.cr/l/MTQ4NjE=', monto: 10000 },
 
-  // ===== Copa Kids =====
-  'Copa Kids|Balance': { url: 'https://tp.cr/l/MTQ5OTA=', monto: 8000 },
-  'Copa Kids|Niños A': { url: 'https://tp.cr/l/MTQ5OTA=', monto: 8000 },
-  'Copa Kids|Niños B': { url: 'https://tp.cr/l/MTQ5OTA=', monto: 8000 },
-  'Copa Kids|Niños C': { url: 'https://tp.cr/l/MTQ5OTA=', monto: 8000 },
-  'Copa Kids|Niños D': { url: 'https://tp.cr/l/MTQ5OTA=', monto: 8000 },
-  'Copa Kids|Preinfantil': { url: 'https://tp.cr/l/MTQ5OTA=', monto: 8000 },
+  // ===== Copa Kids (todas ₡8.000, mismo link) =====
+  'Copa Kids|Balance (Niños A)': { url: 'https://tp.cr/l/MTQ5OTA=', monto: 8000 },
+  'Copa Kids|0 a 4 años (Niños A)': { url: 'https://tp.cr/l/MTQ5OTA=', monto: 8000 },
+  'Copa Kids|5 a 6 años (Niños B)': { url: 'https://tp.cr/l/MTQ5OTA=', monto: 8000 },
+  'Copa Kids|7 a 8 años (Niños B)': { url: 'https://tp.cr/l/MTQ5OTA=', monto: 8000 },
+  'Copa Kids|9 a 10 años (Niños C)': { url: 'https://tp.cr/l/MTQ5OTA=', monto: 8000 },
+  'Copa Kids|11 a 12 años (Preinfantil)': { url: 'https://tp.cr/l/MTQ5OTA=', monto: 8000 },
 
   // ===== PRUEBA (₡1) - para testear el flujo de pago =====
   'XCO|Prueba': { url: 'https://tilo.co/s/63fr9kF9', monto: 1 },
