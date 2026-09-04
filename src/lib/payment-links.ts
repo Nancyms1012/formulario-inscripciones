@@ -98,11 +98,7 @@ export const PAYMENT_LINKS: Record<string, PaymentLink> = {
   'Copa Kids|9 a 10 años (Niños C)': { url: 'https://tp.cr/l/MTQ5OTA=', monto: 8000 },
   'Copa Kids|11 a 12 años (Preinfantil)': { url: 'https://tp.cr/l/MTQ5OTA=', monto: 8000 },
 
-  // ===== PRUEBA (₡1) - para testear el flujo de pago =====
-  'XCO|Prueba': { url: 'https://tilo.co/s/63fr9kF9', monto: 1 },
-  'XCC|Prueba': { url: 'https://tilo.co/s/63fr9kF9', monto: 1 },
-  'XCO+XCC|Prueba': { url: 'https://tilo.co/s/63fr9kF9', monto: 1 },
-  'XCO+XCC+XCE|Prueba': { url: 'https://tilo.co/s/63fr9kF9', monto: 1 },
+  // ===== PRUEBA (₡1) - solo en Copa Kids para testear el flujo de pago =====
   'Copa Kids|Prueba': { url: 'https://tilo.co/s/63fr9kF9', monto: 1 },
 };
 
