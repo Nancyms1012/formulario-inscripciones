@@ -60,6 +60,32 @@ export default function AdminPage() {
     cargarInscripciones();
   }, [filtroEvento, filtroCategoria]);
 
+  // Eliminar una inscripción
+  const eliminarInscripcion = async (id: string, nombre: string, codigo: string) => {
+    const confirmar = window.confirm(
+      `¿Seguro que querés eliminar la inscripción de ${nombre} (${codigo})?\n\nEsta acción NO se puede deshacer.`
+    );
+    if (!confirmar) return;
+
+    try {
+      const { supabaseClient } = await import('@/lib/inscripcion-client');
+      const { error } = await supabaseClient
+        .from('inscripciones')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        alert('Error al eliminar: ' + error.message);
+        return;
+      }
+      // Quitar de la lista local sin recargar todo
+      setInscripciones((prev) => prev.filter((i) => i.id !== id));
+    } catch (err) {
+      alert('Error al eliminar la inscripción.');
+      console.error(err);
+    }
+  };
+
   // Filtrar por búsqueda local
   const inscripcionesFiltradas = inscripciones.filter((insc) => {
     if (!busqueda) return true;
@@ -236,6 +262,7 @@ export default function AdminPage() {
                   <th className="px-4 py-3 text-left">Comprobante</th>
                   <th className="px-4 py-3 text-left">Check-in</th>
                   <th className="px-4 py-3 text-left">Fecha</th>
+                  <th className="px-4 py-3 text-left">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -280,6 +307,15 @@ export default function AdminPage() {
                     </td>
                     <td className="px-4 py-3 text-xs text-gray-500">
                       {new Date(insc.created_at).toLocaleDateString('es-CR')}
+                    </td>
+                    <td className="px-4 py-3">
+                      <button
+                        onClick={() => eliminarInscripcion(insc.id, `${insc.nombre} ${insc.primer_apellido}`, insc.codigo_inscripcion)}
+                        className="text-red-600 hover:text-red-800 hover:bg-red-50 rounded px-2 py-1 text-xs font-medium transition-colors"
+                        title="Eliminar inscripción"
+                      >
+                        Eliminar
+                      </button>
                     </td>
                   </tr>
                 ))}
