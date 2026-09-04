@@ -80,8 +80,8 @@ export const PAYMENT_LINKS: Record<string, PaymentLink> = {
   // ===== XCO =====
   'XCO|Juvenil': { url: 'https://tp.cr/l/MTQ5ODA=', monto: 25000 },
   'XCO|Open': { url: 'https://tp.cr/l/MTQ5Nzk=', monto: 17000 },
-  'XCO|Élite': { url: 'https://tp.cr/l/MTQ5Nzg=', monto: 23000 },
-  'XCO|Sub 23': { url: 'https://tp.cr/l/MTQ5Nzg=', monto: 23000 },
+  'XCO|Élite': { url: 'https://tp.cr/l/MTQ5Nzg=', monto: 22000 },
+  'XCO|Sub 23': { url: 'https://tp.cr/l/MTQ5Nzg=', monto: 22000 },
   'XCO|Prejuvenil': { url: 'https://tp.cr/l/MTQ5Nzc=', monto: 15000 },
   'XCO|Máster A': { url: 'https://tp.cr/l/MTQ4NjQ=', monto: 17000 },
   'XCO|Máster B': { url: 'https://tp.cr/l/MTQ4NjQ=', monto: 17000 },
