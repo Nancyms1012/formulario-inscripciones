@@ -66,6 +66,8 @@ export const CATEGORIAS_ESPECIALES: { name: string; gender: 'F' | 'M' | 'F/M'; m
   { name: 'Cyclocross', gender: 'F/M', minAge: 17, eventos: ['XCO', 'XCC', 'XCO+XCC'] },
   { name: 'Pasados de línea', gender: 'M', minAge: 18, eventos: ['XCO', 'XCC', 'XCO+XCC'] },
   { name: 'Ligas menores', gender: 'F/M', minAge: 0, eventos: ['XCC'] },
+  // Categoría de prueba (₡1) - aparece en todos los eventos, cualquier edad
+  { name: 'Prueba', gender: 'F/M', minAge: 0, eventos: ['XCO', 'XCC', 'XCO+XCC', 'XCO+XCC+XCE', 'Copa Kids'] },
 ];
 
 /**

@@ -92,6 +92,13 @@ export const PAYMENT_LINKS: Record<string, PaymentLink> = {
   'Copa Kids|Niños C': { url: 'https://tp.cr/l/MTQ5OTA=', monto: 8000 },
   'Copa Kids|Niños D': { url: 'https://tp.cr/l/MTQ5OTA=', monto: 8000 },
   'Copa Kids|Preinfantil': { url: 'https://tp.cr/l/MTQ5OTA=', monto: 8000 },
+
+  // ===== PRUEBA (₡1) - para testear el flujo de pago =====
+  'XCO|Prueba': { url: 'https://tilo.co/s/63fr9kF9', monto: 1 },
+  'XCC|Prueba': { url: 'https://tilo.co/s/63fr9kF9', monto: 1 },
+  'XCO+XCC|Prueba': { url: 'https://tilo.co/s/63fr9kF9', monto: 1 },
+  'XCO+XCC+XCE|Prueba': { url: 'https://tilo.co/s/63fr9kF9', monto: 1 },
+  'Copa Kids|Prueba': { url: 'https://tilo.co/s/63fr9kF9', monto: 1 },
 };
 
 /**
