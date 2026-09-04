@@ -165,7 +165,7 @@ export default function FormularioKids() {
         return;
       }
       try {
-        sessionStorage.setItem('inscripcionTarjetaKids', JSON.stringify(datosKids));
+        localStorage.setItem('inscripcionTarjetaKids', JSON.stringify(datosKids));
       } catch { /* ignore */ }
       window.location.href = paymentLink.url;
       return;

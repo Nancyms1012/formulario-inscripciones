@@ -182,7 +182,7 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
       }
       try {
         // Guardar los datos temporalmente en el navegador (sin comprobante, tarjeta no lo usa)
-        sessionStorage.setItem('inscripcionTarjeta', JSON.stringify(datosInscripcion));
+        localStorage.setItem('inscripcionTarjeta', JSON.stringify(datosInscripcion));
       } catch { /* ignore */ }
       // Redirigir a la página de pago de Tilopay
       window.location.href = paymentLink.url;

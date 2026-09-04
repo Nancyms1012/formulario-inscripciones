@@ -16,16 +16,16 @@ function PagoExitosoContent() {
     let datosCopa = '';
     let datosKids = '';
     try {
-      datosCopa = sessionStorage.getItem('inscripcionTarjeta') || '';
-      datosKids = sessionStorage.getItem('inscripcionTarjetaKids') || '';
+      datosCopa = localStorage.getItem('inscripcionTarjeta') || '';
+      datosKids = localStorage.getItem('inscripcionTarjetaKids') || '';
     } catch { /* ignore */ }
 
     if (!aprobado) {
       // Pago rechazado: NO se guarda nada
       setEstado('rechazado');
       try {
-        sessionStorage.removeItem('inscripcionTarjeta');
-        sessionStorage.removeItem('inscripcionTarjetaKids');
+        localStorage.removeItem('inscripcionTarjeta');
+        localStorage.removeItem('inscripcionTarjetaKids');
       } catch {}
       return;
     }
@@ -46,7 +46,7 @@ function PagoExitosoContent() {
               codigoInscripcion: resultado.codigoInscripcion, evento: datos.evento, categoria: datos.categoria,
             }),
           }).catch(() => {});
-          sessionStorage.removeItem('inscripcionTarjeta');
+          localStorage.removeItem('inscripcionTarjeta');
         } else if (datosKids) {
           const datos = JSON.parse(datosKids);
           const resultado = await guardarInscripcionKids({ ...datos, comprobante: null, estadoPagoInicial: 'confirmado' });
@@ -58,7 +58,7 @@ function PagoExitosoContent() {
               codigoInscripcion: resultado.codigoInscripcion, evento: 'Copa Kids', categoria: datos.categoria,
             }),
           }).catch(() => {});
-          sessionStorage.removeItem('inscripcionTarjetaKids');
+          localStorage.removeItem('inscripcionTarjetaKids');
         }
         setEstado('exitoso');
       } catch {
