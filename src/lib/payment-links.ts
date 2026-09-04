@@ -33,6 +33,11 @@ export const PAYMENT_LINKS: Record<string, PaymentLink> = {
   'XCC|Máster D': { url: 'https://tilo.co/s/kMn7JEzG', monto: 6000 },
   'XCC|Máster E': { url: 'https://tilo.co/s/kMn7JEzG', monto: 6000 },
   'XCC|Open': { url: 'https://tilo.co/s/kMn7JEzG', monto: 6000 },
+  // XCC categorías menores (Preinfantil, Infantil, Prejuvenil, Juvenil) = ₡5.000
+  'XCC|Preinfantil': { url: 'https://tp.cr/l/MTQ5ODg=', monto: 5000 },
+  'XCC|Infantil': { url: 'https://tp.cr/l/MTQ5ODg=', monto: 5000 },
+  'XCC|Prejuvenil': { url: 'https://tp.cr/l/MTQ5ODg=', monto: 5000 },
+  'XCC|Juvenil': { url: 'https://tp.cr/l/MTQ5ODg=', monto: 5000 },
   'XCC|Ligas menores': { url: 'https://tp.cr/l/MTQ5ODg=', monto: 5000 },
 
   // ===== XCE =====

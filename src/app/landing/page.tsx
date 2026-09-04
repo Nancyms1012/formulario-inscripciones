@@ -18,7 +18,7 @@ export default function LandingPage() {
       <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-2xl w-full">
         {/* Título */}
         <h1 className="text-2xl font-bold text-[#0d2240] text-center mb-2">
-          VI Fecha 13-14 Setiembre
+          VI Fecha Orosi · 12 y 13 Setiembre
         </h1>
         <p className="text-gray-600 text-center mb-8">
           Escaneá el código QR para inscribirte
@@ -34,7 +34,7 @@ export default function LandingPage() {
               className="h-20 w-20 mx-auto rounded-xl object-cover shadow-md mb-4"
             />
             <h2 className="text-lg font-bold text-[#0d2240] mb-1">La Copa</h2>
-            <p className="text-xs text-gray-500 mb-4">XCO · XCC · XCE</p>
+            <p className="text-xs text-gray-500 mb-4">XCO · XCC</p>
             {qrCopa && (
               <img
                 src={qrCopa}

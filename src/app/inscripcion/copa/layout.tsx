@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "La Copa - VI Fecha 13-14 Setiembre",
-  description: "Formulario de inscripción - VI Fecha 13-14 Setiembre - La Copa",
+  title: "La Copa - VI Fecha Orosi",
+  description: "Formulario de inscripción - VI Fecha Orosi, 12 y 13 Setiembre - La Copa",
 };
 
 export default function CopaLayout({
@@ -22,7 +22,7 @@ export default function CopaLayout({
               className="h-12 w-12 rounded-lg object-cover"
             />
             <div>
-              <h1 className="text-xl font-bold">VI Fecha 13-14 Setiembre</h1>
+              <h1 className="text-xl font-bold">VI Fecha Orosi · 12 y 13 Setiembre</h1>
               <p className="text-sm text-blue-200">
                 Inscripción a Carreras de Ciclismo
               </p>
