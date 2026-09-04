@@ -30,9 +30,16 @@ export async function POST(request: NextRequest) {
           </div>
           <div style="text-align: center; margin: 24px 0;">
             <p style="color: #4a5568; font-weight: bold;">Tu codigo QR para el dia de la carrera:</p>
-            <img src="${qrUrl}" alt="QR Code" style="width: 200px; height: 200px; border-radius: 8px;" />
+            <a href="${urlMiInscripcion}" target="_blank">
+              <img src="${qrUrl}" alt="QR Code" style="width: 200px; height: 200px; border-radius: 8px;" />
+            </a>
+            <div style="margin-top: 16px;">
+              <a href="${urlMiInscripcion}" target="_blank" style="display: inline-block; background: #0d2240; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: bold; font-size: 14px;">
+                Ver mi inscripcion
+              </a>
+            </div>
           </div>
-          <p style="color: #4a5568; font-size: 14px;">Presenta este codigo QR el dia del evento para hacer tu check-in.</p>
+          <p style="color: #4a5568; font-size: 14px;">Toca el QR o el boton para ver tus datos, o presentalo el dia del evento para tu check-in.</p>
           <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
           <p style="color: #94a3b8; font-size: 12px; text-align: center;">La Copa - Carreras de Ciclismo</p>
         </div>
