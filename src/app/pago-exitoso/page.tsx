@@ -12,33 +12,61 @@ function PagoExitosoContent() {
     const code = searchParams.get('code');
     const aprobado = code === '1';
 
-    // Recuperar el código de inscripción guardado antes de ir a pagar
-    let codigoInscripcion = '';
+    // Recuperar los datos del formulario guardados antes de ir a pagar
+    let datosCopa = '';
+    let datosKids = '';
     try {
-      codigoInscripcion = sessionStorage.getItem('inscripcionPendiente') || '';
+      datosCopa = sessionStorage.getItem('inscripcionTarjeta') || '';
+      datosKids = sessionStorage.getItem('inscripcionTarjetaKids') || '';
     } catch { /* ignore */ }
-    setCodigo(codigoInscripcion);
 
     if (!aprobado) {
+      // Pago rechazado: NO se guarda nada
       setEstado('rechazado');
+      try {
+        sessionStorage.removeItem('inscripcionTarjeta');
+        sessionStorage.removeItem('inscripcionTarjetaKids');
+      } catch {}
       return;
     }
 
-    // Pago aprobado: marcar la inscripción como pagada
-    const confirmar = async () => {
-      if (codigoInscripcion) {
-        try {
-          const { supabaseClient } = await import('@/lib/inscripcion-client');
-          await supabaseClient
-            .from('inscripciones')
-            .update({ estado_pago: 'confirmado' })
-            .eq('codigo_inscripcion', codigoInscripcion);
-          sessionStorage.removeItem('inscripcionPendiente');
-        } catch { /* ignore - queda pendiente y se confirma manual */ }
+    // Pago aprobado: AHORA sí se guarda la inscripción como confirmada
+    const guardar = async () => {
+      try {
+        const { guardarInscripcion, guardarInscripcionKids } = await import('@/lib/inscripcion-client');
+
+        if (datosCopa) {
+          const datos = JSON.parse(datosCopa);
+          const resultado = await guardarInscripcion({ ...datos, comprobante: null, estadoPagoInicial: 'confirmado' });
+          setCodigo(resultado.codigoInscripcion);
+          fetch('/api/email', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: datos.email, nombre: datos.nombre, primerApellido: datos.primerApellido,
+              codigoInscripcion: resultado.codigoInscripcion, evento: datos.evento, categoria: datos.categoria,
+            }),
+          }).catch(() => {});
+          sessionStorage.removeItem('inscripcionTarjeta');
+        } else if (datosKids) {
+          const datos = JSON.parse(datosKids);
+          const resultado = await guardarInscripcionKids({ ...datos, comprobante: null, estadoPagoInicial: 'confirmado' });
+          setCodigo(resultado.codigoInscripcion);
+          fetch('/api/email', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: datos.encargadoEmail, nombre: datos.nombre, primerApellido: datos.primerApellido,
+              codigoInscripcion: resultado.codigoInscripcion, evento: 'Copa Kids', categoria: datos.categoria,
+            }),
+          }).catch(() => {});
+          sessionStorage.removeItem('inscripcionTarjetaKids');
+        }
+        setEstado('exitoso');
+      } catch {
+        // Si falla el guardado, igual mostramos éxito del pago (se revisa en admin)
+        setEstado('exitoso');
       }
-      setEstado('exitoso');
     };
-    confirmar();
+    guardar();
   }, [searchParams]);
 
   return (
@@ -48,7 +76,7 @@ function PagoExitosoContent() {
           <>
             <div className="text-[#1a4f8b] text-5xl mb-4">&#8987;</div>
             <h2 className="text-xl font-bold text-[#0d2240] mb-2">Procesando pago...</h2>
-            <p className="text-gray-600">Un momento por favor.</p>
+            <p className="text-gray-600">Un momento por favor, estamos confirmando tu inscripción.</p>
           </>
         )}
 
@@ -74,13 +102,10 @@ function PagoExitosoContent() {
             <div className="text-red-500 text-6xl mb-4">&#10007;</div>
             <h2 className="text-2xl font-bold text-[#0d2240] mb-2">El pago no se completó</h2>
             <p className="text-gray-600 mb-4">
-              No se pudo procesar el pago. Tu inscripción quedó como &quot;pendiente de pago&quot;.
+              No se pudo procesar el pago, por lo que <strong>no se registró tu inscripción</strong>.
             </p>
-            {codigo && (
-              <p className="text-sm text-gray-500 mb-2">Código de inscripción: <span className="font-mono font-bold text-[#1a4f8b]">{codigo}</span></p>
-            )}
             <p className="text-sm text-gray-500 mb-6">
-              Podés intentar el pago de nuevo o contactar a la organización.
+              Podés volver a intentarlo llenando el formulario de nuevo.
             </p>
             <a href="/" className="inline-block bg-[#0d2240] text-white px-6 py-3 rounded-lg hover:bg-[#1a4f8b] transition-colors">
               Volver al inicio

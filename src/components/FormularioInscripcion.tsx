@@ -145,36 +145,57 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
     const facturaCedulaFinal = !requiereFactura ? '' : (facturaDatos === 'otros' ? facturaCedula : numeroId);
     const facturaEmailFinal = !requiereFactura ? '' : (facturaDatos === 'otros' ? facturaEmail : email);
 
+    // Datos de la inscripción (comunes a todos los métodos)
+    const datosInscripcion = {
+      nacionalidad,
+      tipoIdentificacion: tipoId,
+      numeroIdentificacion: numeroId,
+      nombre,
+      primerApellido,
+      segundoApellido,
+      celular,
+      email,
+      fechaNacimiento: `${anio}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`,
+      genero,
+      provincia,
+      equipo,
+      tipoLicencia,
+      uciId,
+      evento,
+      categoria,
+      beneficiarioNombre: benefNombre,
+      beneficiarioCedula: benefCedula,
+      beneficiarioTelefono: benefTelefono,
+      beneficiarioParentesco: benefParentesco,
+      metodoPago,
+      requiereFactura,
+      facturaNombre: facturaNombreFinal,
+      facturaCedula: facturaCedulaFinal,
+      facturaEmail: facturaEmailFinal,
+    };
+
+    // ===== TARJETA: NO se guarda hasta que el pago sea exitoso =====
+    if (metodoPago === 'Tarjeta') {
+      if (!paymentLink) {
+        setError('No se encontró el link de pago para esta categoría.');
+        return;
+      }
+      try {
+        // Guardar los datos temporalmente en el navegador (sin comprobante, tarjeta no lo usa)
+        sessionStorage.setItem('inscripcionTarjeta', JSON.stringify(datosInscripcion));
+      } catch { /* ignore */ }
+      // Redirigir a la página de pago de Tilopay
+      window.location.href = paymentLink.url;
+      return;
+    }
+
+    // ===== SINPE / EFECTIVO: se guarda de una vez =====
     setEnviando(true);
     try {
       const { guardarInscripcion } = await import('@/lib/inscripcion-client');
 
       const resultado = await guardarInscripcion({
-        nacionalidad,
-        tipoIdentificacion: tipoId,
-        numeroIdentificacion: numeroId,
-        nombre,
-        primerApellido,
-        segundoApellido,
-        celular,
-        email,
-        fechaNacimiento: `${anio}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`,
-        genero,
-        provincia,
-        equipo,
-        tipoLicencia,
-        uciId,
-        evento,
-        categoria,
-        beneficiarioNombre: benefNombre,
-        beneficiarioCedula: benefCedula,
-        beneficiarioTelefono: benefTelefono,
-        beneficiarioParentesco: benefParentesco,
-        metodoPago,
-        requiereFactura,
-        facturaNombre: facturaNombreFinal,
-        facturaCedula: facturaCedulaFinal,
-        facturaEmail: facturaEmailFinal,
+        ...datosInscripcion,
         comprobante,
       });
 
@@ -193,15 +214,6 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
           categoria,
         }),
       }).catch(() => {}); // No bloquear si falla
-
-      // Si pagó con tarjeta, guardar el código y redirigir a Tilopay
-      if (metodoPago === 'Tarjeta' && paymentLink) {
-        try {
-          sessionStorage.setItem('inscripcionPendiente', resultado.codigoInscripcion);
-        } catch { /* ignore */ }
-        window.location.href = paymentLink.url;
-        return;
-      }
 
       setExito(true);
     } catch (err: unknown) {

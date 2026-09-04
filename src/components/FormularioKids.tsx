@@ -133,32 +133,51 @@ export default function FormularioKids() {
     const facturaCedulaFinal = !requiereFactura ? '' : (facturaDatos === 'otros' ? facturaCedula : encargadoCedula);
     const facturaEmailFinal = !requiereFactura ? '' : (facturaDatos === 'otros' ? facturaEmail : encargadoEmail);
 
+    // Datos de la inscripción Kids
+    const datosKids = {
+      nacionalidad,
+      tipoIdentificacion: tipoId,
+      numeroIdentificacion: numeroId,
+      nombre,
+      primerApellido,
+      segundoApellido,
+      fechaNacimiento: `${anio}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`,
+      genero,
+      provincia,
+      lateralidad,
+      categoria,
+      encargadoNombre,
+      encargadoCedula,
+      encargadoTelefono,
+      encargadoEmail,
+      encargadoParentesco,
+      metodoPago,
+      requiereFactura,
+      facturaNombre: facturaNombreFinal,
+      facturaCedula: facturaCedulaFinal,
+      facturaEmail: facturaEmailFinal,
+    };
+
+    // ===== TARJETA: NO se guarda hasta que el pago sea exitoso =====
+    if (metodoPago === 'Tarjeta') {
+      if (!paymentLink) {
+        setError('No se encontró el link de pago para esta categoría.');
+        return;
+      }
+      try {
+        sessionStorage.setItem('inscripcionTarjetaKids', JSON.stringify(datosKids));
+      } catch { /* ignore */ }
+      window.location.href = paymentLink.url;
+      return;
+    }
+
+    // ===== SINPE / EFECTIVO: se guarda de una vez =====
     setEnviando(true);
     try {
       const { guardarInscripcionKids } = await import('@/lib/inscripcion-client');
 
       const resultado = await guardarInscripcionKids({
-        nacionalidad,
-        tipoIdentificacion: tipoId,
-        numeroIdentificacion: numeroId,
-        nombre,
-        primerApellido,
-        segundoApellido,
-        fechaNacimiento: `${anio}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`,
-        genero,
-        provincia,
-        lateralidad,
-        categoria,
-        encargadoNombre,
-        encargadoCedula,
-        encargadoTelefono,
-        encargadoEmail,
-        encargadoParentesco,
-        metodoPago,
-        requiereFactura,
-        facturaNombre: facturaNombreFinal,
-        facturaCedula: facturaCedulaFinal,
-        facturaEmail: facturaEmailFinal,
+        ...datosKids,
         comprobante,
       });
 
@@ -177,15 +196,6 @@ export default function FormularioKids() {
           categoria,
         }),
       }).catch(() => {});
-
-      // Si pagó con tarjeta, guardar el código y redirigir a Tilopay
-      if (metodoPago === 'Tarjeta' && paymentLink) {
-        try {
-          sessionStorage.setItem('inscripcionPendiente', resultado.codigoInscripcion);
-        } catch { /* ignore */ }
-        window.location.href = paymentLink.url;
-        return;
-      }
 
       setExito(true);
     } catch (err: unknown) {

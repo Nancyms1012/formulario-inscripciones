@@ -45,6 +45,7 @@ export interface InscripcionData {
   facturaCedula: string;
   facturaEmail: string;
   comprobante: File | null;
+  estadoPagoInicial?: 'pendiente' | 'confirmado';
 }
 
 export async function guardarInscripcion(datos: InscripcionData): Promise<{ codigoInscripcion: string }> {
@@ -100,7 +101,7 @@ export async function guardarInscripcion(datos: InscripcionData): Promise<{ codi
       factura_nombre: datos.facturaNombre,
       factura_cedula: datos.facturaCedula,
       factura_email: datos.facturaEmail,
-      estado_pago: 'pendiente',
+      estado_pago: datos.estadoPagoInicial || 'pendiente',
     });
 
   if (error) {
@@ -134,6 +135,7 @@ export interface InscripcionKidsData {
   facturaCedula: string;
   facturaEmail: string;
   comprobante: File | null;
+  estadoPagoInicial?: 'pendiente' | 'confirmado';
 }
 
 export async function guardarInscripcionKids(datos: InscripcionKidsData): Promise<{ codigoInscripcion: string }> {
@@ -189,7 +191,7 @@ export async function guardarInscripcionKids(datos: InscripcionKidsData): Promis
       factura_nombre: datos.facturaNombre,
       factura_cedula: datos.facturaCedula,
       factura_email: datos.facturaEmail,
-      estado_pago: 'pendiente',
+      estado_pago: datos.estadoPagoInicial || 'pendiente',
     });
 
   if (error) {
