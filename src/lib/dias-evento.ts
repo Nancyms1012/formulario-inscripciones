@@ -12,7 +12,7 @@ export type DiaEvento = 'XCC' | 'XCO';
  * - XCO+XCC+XCE -> ambos
  * - Copa Kids -> solo XCO (domingo)
  * - Categorías especiales:
- *    - E-Bike -> ambos días
+ *    - E-Bike -> solo XCC (sábado)
  *    - Pasados de línea -> solo XCC (sábado)
  *    - Cyclocross -> solo XCC (sábado)
  */
@@ -20,7 +20,7 @@ export function getDiasParticipa(evento: string, categoria: string): DiaEvento[]
   const cat = categoria.toLowerCase();
 
   // Categorías especiales tienen prioridad
-  if (cat.includes('e-bike') || cat.includes('ebike')) return ['XCC', 'XCO'];
+  if (cat.includes('e-bike') || cat.includes('ebike')) return ['XCC'];
   if (cat.includes('pasados de línea') || cat.includes('pasados de linea')) return ['XCC'];
   if (cat.includes('cyclocross') || cat.includes('cyclo cross')) return ['XCC'];
 
