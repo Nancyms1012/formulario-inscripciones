@@ -475,48 +475,9 @@ export default function FormularioKids() {
               <p className="text-xs text-blue-200 mt-1">Copa Kids · {categoria}</p>
             </div>
           )}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">{"Método de pago *"}</label>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {METODOS_PAGO.map((metodo) => (
-                <label key={metodo}
-                  className={`flex items-center justify-center p-3 border-2 rounded-lg cursor-pointer transition-all ${
-                    metodoPago === metodo ? 'border-[#1a4f8b] bg-blue-50 text-[#0d2240] font-medium' : 'border-gray-200 hover:border-gray-300'
-                  }`}>
-                  <input type="radio" name="metodoPago" value={metodo} checked={metodoPago === metodo}
-                    onChange={(e) => setMetodoPago(e.target.value)} required className="sr-only" />
-                  <span>{metodo}</span>
-                </label>
-              ))}
-            </div>
-          </div>
 
-          {/* Pago con Tarjeta (Tilopay) */}
-          {metodoPago === 'Tarjeta' && paymentLink && (
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <p className="text-sm text-gray-700">
-                Al presionar <strong>&quot;Enviar Inscripción&quot;</strong> se abrirá la página segura de pago de Tilopay para pagar <strong>₡{paymentLink.monto.toLocaleString('es-CR')}</strong> con tarjeta. La inscripción se confirmará automáticamente al completar el pago.
-              </p>
-            </div>
-          )}
-
-          {metodoPago === 'Sinpe' && (
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <div className="bg-white border border-blue-200 rounded-lg p-3 mb-3 text-center">
-                <p className="text-sm text-gray-600">Realizá tu Sinpe Móvil al número:</p>
-                <p className="text-2xl font-bold text-[#0d2240]">6349-0950</p>
-                <p className="text-xs text-gray-500">Asociación Nacional de Ciclismo de Montaña</p>
-                {paymentLink && (
-                  <p className="text-sm font-medium text-[#1a4f8b] mt-1">Monto: ₡{paymentLink.monto.toLocaleString('es-CR')}</p>
-                )}
-              </div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">{"Comprobante de Sinpe *"}</label>
-              <input type="file" accept="image/*,.pdf" onChange={(e) => setComprobante(e.target.files?.[0] || null)} required
-                className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-[#0d2240] file:text-white hover:file:bg-[#1a4f8b]" />
-              <p className="text-xs text-gray-500 mt-1">{"Subí una imagen o PDF del comprobante de pago."}</p>
-            </div>
-          )}
-          <div className="flex items-center gap-3 pt-2">
+          {/* Factura Electrónica (ANTES del método de pago) */}
+          <div className="flex items-center gap-3">
             <input type="checkbox" id="factura" checked={requiereFactura}
               onChange={(e) => setRequiereFactura(e.target.checked)}
               className="h-4 w-4 text-[#1a4f8b] rounded focus:ring-[#1a4f8b]" />
@@ -524,7 +485,7 @@ export default function FormularioKids() {
           </div>
 
           {requiereFactura && (
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-4 mt-2">
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">{"¿Qué datos usar para la factura?"}</label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -568,6 +529,48 @@ export default function FormularioKids() {
                   </div>
                 </div>
               )}
+            </div>
+          )}
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">{"Método de pago *"}</label>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {METODOS_PAGO.map((metodo) => (
+                <label key={metodo}
+                  className={`flex items-center justify-center p-3 border-2 rounded-lg cursor-pointer transition-all ${
+                    metodoPago === metodo ? 'border-[#1a4f8b] bg-blue-50 text-[#0d2240] font-medium' : 'border-gray-200 hover:border-gray-300'
+                  }`}>
+                  <input type="radio" name="metodoPago" value={metodo} checked={metodoPago === metodo}
+                    onChange={(e) => setMetodoPago(e.target.value)} required className="sr-only" />
+                  <span>{metodo}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Pago con Tarjeta (Tilopay) */}
+          {metodoPago === 'Tarjeta' && paymentLink && (
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <p className="text-sm text-gray-700">
+                Al presionar <strong>&quot;Enviar Inscripción&quot;</strong> se abrirá la página segura de pago de Tilopay para pagar <strong>₡{paymentLink.monto.toLocaleString('es-CR')}</strong> con tarjeta. La inscripción se confirmará automáticamente al completar el pago.
+              </p>
+            </div>
+          )}
+
+          {metodoPago === 'Sinpe' && (
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <div className="bg-white border border-blue-200 rounded-lg p-3 mb-3 text-center">
+                <p className="text-sm text-gray-600">Realizá tu Sinpe Móvil al número:</p>
+                <p className="text-2xl font-bold text-[#0d2240]">6349-0950</p>
+                <p className="text-xs text-gray-500">Asociación Nacional de Ciclismo de Montaña</p>
+                {paymentLink && (
+                  <p className="text-sm font-medium text-[#1a4f8b] mt-1">Monto: ₡{paymentLink.monto.toLocaleString('es-CR')}</p>
+                )}
+              </div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{"Comprobante de Sinpe *"}</label>
+              <input type="file" accept="image/*,.pdf" onChange={(e) => setComprobante(e.target.files?.[0] || null)} required
+                className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-[#0d2240] file:text-white hover:file:bg-[#1a4f8b]" />
+              <p className="text-xs text-gray-500 mt-1">{"Subí una imagen o PDF del comprobante de pago."}</p>
             </div>
           )}
         </div>
