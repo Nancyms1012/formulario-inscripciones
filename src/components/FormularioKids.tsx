@@ -502,10 +502,18 @@ export default function FormularioKids() {
 
           {metodoPago === 'Sinpe' && (
             <div className="bg-blue-50 p-4 rounded-lg">
+              <div className="bg-white border border-blue-200 rounded-lg p-3 mb-3 text-center">
+                <p className="text-sm text-gray-600">Realizá tu Sinpe Móvil al número:</p>
+                <p className="text-2xl font-bold text-[#0d2240]">6349-0950</p>
+                <p className="text-xs text-gray-500">Asociación Nacional de Ciclismo de Montaña</p>
+                {paymentLink && (
+                  <p className="text-sm font-medium text-[#1a4f8b] mt-1">Monto: ₡{paymentLink.monto.toLocaleString('es-CR')}</p>
+                )}
+              </div>
               <label className="block text-sm font-medium text-gray-700 mb-2">{"Comprobante de Sinpe *"}</label>
               <input type="file" accept="image/*,.pdf" onChange={(e) => setComprobante(e.target.files?.[0] || null)} required
                 className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-[#0d2240] file:text-white hover:file:bg-[#1a4f8b]" />
-              <p className="text-xs text-gray-500 mt-1">{"Sube una imagen o PDF del comprobante de pago."}</p>
+              <p className="text-xs text-gray-500 mt-1">{"Subí una imagen o PDF del comprobante de pago."}</p>
             </div>
           )}
           <div className="flex items-center gap-3 pt-2">
