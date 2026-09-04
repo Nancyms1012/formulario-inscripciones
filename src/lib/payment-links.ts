@@ -78,7 +78,7 @@ export const PAYMENT_LINKS: Record<string, PaymentLink> = {
   'XCO+XCC|Infantil': { url: 'https://tp.cr/l/MTUwMjY=', monto: 15000 },
 
   // ===== XCO =====
-  'XCO|Juvenil': { url: 'https://tp.cr/l/MTQ5ODA=', monto: 15000 },
+  'XCO|Juvenil': { url: 'https://tp.cr/l/MTQ5Nzc=', monto: 15000 },
   'XCO|Open': { url: 'https://tp.cr/l/MTQ5Nzk=', monto: 17000 },
   'XCO|Élite': { url: 'https://tp.cr/l/MTQ5Nzg=', monto: 22000 },
   'XCO|Sub 23': { url: 'https://tp.cr/l/MTQ5Nzg=', monto: 22000 },
