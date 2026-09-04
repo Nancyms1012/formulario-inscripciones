@@ -36,6 +36,10 @@ interface Inscripcion {
   comprobante_sinpe_url: string | null;
   checkin: boolean;
   checkin_fecha: string | null;
+  checkin_xcc?: boolean;
+  checkin_xcc_fecha?: string | null;
+  checkin_xco?: boolean;
+  checkin_xco_fecha?: string | null;
   created_at: string;
 }
 
@@ -48,6 +52,65 @@ export default function AdminPage() {
   const [busqueda, setBusqueda] = useState('');
   const [tab, setTab] = useState<'inscripciones' | 'resumen'>('inscripciones');
   const [detalle, setDetalle] = useState<Inscripcion | null>(null);
+  const [editando, setEditando] = useState(false);
+  const [editForm, setEditForm] = useState<Partial<Inscripcion>>({});
+  const [guardandoEdit, setGuardandoEdit] = useState(false);
+
+  // Iniciar edición: copiar datos del detalle al formulario
+  const iniciarEdicion = () => {
+    if (!detalle) return;
+    setEditForm({ ...detalle });
+    setEditando(true);
+  };
+
+  // Guardar cambios de la edición
+  const guardarEdicion = async () => {
+    if (!detalle) return;
+    setGuardandoEdit(true);
+    try {
+      const { supabaseClient } = await import('@/lib/inscripcion-client');
+      const campos = {
+        nombre: editForm.nombre,
+        primer_apellido: editForm.primer_apellido,
+        segundo_apellido: editForm.segundo_apellido,
+        numero_identificacion: editForm.numero_identificacion,
+        email: editForm.email,
+        celular: editForm.celular,
+        provincia: editForm.provincia,
+        equipo: editForm.equipo,
+        tipo_licencia: editForm.tipo_licencia,
+        uci_id: editForm.uci_id,
+        evento: editForm.evento,
+        categoria: editForm.categoria,
+        dorsal: editForm.dorsal,
+        estado_pago: editForm.estado_pago,
+        beneficiario_nombre: editForm.beneficiario_nombre,
+        beneficiario_telefono: editForm.beneficiario_telefono,
+        beneficiario_cedula: editForm.beneficiario_cedula,
+        beneficiario_parentesco: editForm.beneficiario_parentesco,
+      };
+      const { error } = await supabaseClient
+        .from('inscripciones')
+        .update(campos)
+        .eq('id', detalle.id);
+      if (error) {
+        alert('Error al guardar: ' + error.message);
+        setGuardandoEdit(false);
+        return;
+      }
+      // Actualizar en las listas locales
+      const actualizado = { ...detalle, ...campos } as Inscripcion;
+      setInscripciones((prev) => prev.map((i) => (i.id === detalle.id ? actualizado : i)));
+      setTodasInscripciones((prev) => prev.map((i) => (i.id === detalle.id ? actualizado : i)));
+      setDetalle(actualizado);
+      setEditando(false);
+    } catch (err) {
+      alert('Error al guardar los cambios.');
+      console.error(err);
+    } finally {
+      setGuardandoEdit(false);
+    }
+  };
 
 
   const cargarInscripciones = async () => {
@@ -564,12 +627,31 @@ export default function AdminPage() {
                 )}
                 <p className="text-sm text-blue-200">{detalle.nombre} {detalle.primer_apellido} {detalle.segundo_apellido}</p>
               </div>
-              <button onClick={() => setDetalle(null)} className="text-white hover:bg-white/20 rounded-lg w-8 h-8 flex items-center justify-center text-xl">
-                &times;
-              </button>
+              <div className="flex items-center gap-2">
+                {!editando ? (
+                  <button onClick={iniciarEdicion} className="bg-white/15 hover:bg-white/25 text-white text-sm font-medium px-3 py-1 rounded-lg transition-colors">
+                    Editar
+                  </button>
+                ) : (
+                  <>
+                    <button onClick={guardarEdicion} disabled={guardandoEdit}
+                      className="bg-green-500 hover:bg-green-600 text-white text-sm font-medium px-3 py-1 rounded-lg transition-colors disabled:opacity-50">
+                      {guardandoEdit ? 'Guardando...' : 'Guardar'}
+                    </button>
+                    <button onClick={() => setEditando(false)}
+                      className="bg-white/15 hover:bg-white/25 text-white text-sm font-medium px-3 py-1 rounded-lg transition-colors">
+                      Cancelar
+                    </button>
+                  </>
+                )}
+                <button onClick={() => { setDetalle(null); setEditando(false); }} className="text-white hover:bg-white/20 rounded-lg w-8 h-8 flex items-center justify-center text-xl">
+                  &times;
+                </button>
+              </div>
             </div>
 
-            {/* Cuerpo */}
+            {/* Cuerpo - MODO LECTURA */}
+            {!editando && (
             <div className="p-6 space-y-6">
               {/* Datos Personales */}
               <div>
@@ -590,6 +672,7 @@ export default function AdminPage() {
               <div>
                 <h3 className="text-sm font-bold text-[#0d2240] uppercase mb-2 border-b pb-1">Datos de la Carrera</h3>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                  <div><span className="text-gray-500">Dorsal:</span> {detalle.dorsal || '—'}</div>
                   <div><span className="text-gray-500">Evento:</span> <strong>{detalle.evento}</strong></div>
                   <div><span className="text-gray-500">Categoría:</span> <strong>{detalle.categoria}</strong></div>
                   <div><span className="text-gray-500">Equipo:</span> {detalle.equipo || '—'}</div>
@@ -638,15 +721,73 @@ export default function AdminPage() {
               {/* Check-in */}
               <div>
                 <h3 className="text-sm font-bold text-[#0d2240] uppercase mb-2 border-b pb-1">Check-in</h3>
-                <div className="text-sm">
-                  {detalle.checkin ? (
-                    <span className="text-green-600 font-medium">&#10003; Check-in realizado {detalle.checkin_fecha ? `— ${new Date(detalle.checkin_fecha).toLocaleString('es-CR')}` : ''}</span>
-                  ) : (
-                    <span className="text-gray-400">Sin check-in</span>
-                  )}
+                <div className="text-sm space-y-1">
+                  <div>XCC (Sábado): {detalle.checkin_xcc ? <span className="text-green-600 font-medium">&#10003; Realizado</span> : <span className="text-gray-400">Sin check-in</span>}</div>
+                  <div>XCO (Domingo): {detalle.checkin_xco ? <span className="text-green-600 font-medium">&#10003; Realizado</span> : <span className="text-gray-400">Sin check-in</span>}</div>
                 </div>
               </div>
             </div>
+            )}
+
+            {/* Cuerpo - MODO EDICIÓN */}
+            {editando && (
+            <div className="p-6 space-y-4">
+              <p className="text-xs text-gray-500 bg-amber-50 border border-amber-200 rounded p-2">Editá solo los campos necesarios y presioná Guardar.</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                <label className="block"><span className="text-gray-500 text-xs">Nombre</span>
+                  <input type="text" value={editForm.nombre || ''} onChange={(e) => setEditForm({ ...editForm, nombre: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 mt-1" /></label>
+                <label className="block"><span className="text-gray-500 text-xs">Primer Apellido</span>
+                  <input type="text" value={editForm.primer_apellido || ''} onChange={(e) => setEditForm({ ...editForm, primer_apellido: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 mt-1" /></label>
+                <label className="block"><span className="text-gray-500 text-xs">Segundo Apellido</span>
+                  <input type="text" value={editForm.segundo_apellido || ''} onChange={(e) => setEditForm({ ...editForm, segundo_apellido: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 mt-1" /></label>
+                <label className="block"><span className="text-gray-500 text-xs"># Identificación</span>
+                  <input type="text" value={editForm.numero_identificacion || ''} onChange={(e) => setEditForm({ ...editForm, numero_identificacion: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 mt-1" /></label>
+                <label className="block"><span className="text-gray-500 text-xs">Email</span>
+                  <input type="email" value={editForm.email || ''} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 mt-1" /></label>
+                <label className="block"><span className="text-gray-500 text-xs">Celular</span>
+                  <input type="text" value={editForm.celular || ''} onChange={(e) => setEditForm({ ...editForm, celular: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 mt-1" /></label>
+                <label className="block"><span className="text-gray-500 text-xs">Provincia</span>
+                  <input type="text" value={editForm.provincia || ''} onChange={(e) => setEditForm({ ...editForm, provincia: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 mt-1" /></label>
+                <label className="block"><span className="text-gray-500 text-xs">Dorsal</span>
+                  <input type="text" value={editForm.dorsal || ''} onChange={(e) => setEditForm({ ...editForm, dorsal: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 mt-1" /></label>
+                <label className="block"><span className="text-gray-500 text-xs">Evento</span>
+                  <input type="text" value={editForm.evento || ''} onChange={(e) => setEditForm({ ...editForm, evento: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 mt-1" /></label>
+                <label className="block"><span className="text-gray-500 text-xs">Categoría</span>
+                  <input type="text" value={editForm.categoria || ''} onChange={(e) => setEditForm({ ...editForm, categoria: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 mt-1" /></label>
+                <label className="block"><span className="text-gray-500 text-xs">Equipo</span>
+                  <input type="text" value={editForm.equipo || ''} onChange={(e) => setEditForm({ ...editForm, equipo: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 mt-1" /></label>
+                <label className="block"><span className="text-gray-500 text-xs">Tipo licencia</span>
+                  <input type="text" value={editForm.tipo_licencia || ''} onChange={(e) => setEditForm({ ...editForm, tipo_licencia: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 mt-1" /></label>
+                <label className="block"><span className="text-gray-500 text-xs">UCI ID</span>
+                  <input type="text" value={editForm.uci_id || ''} onChange={(e) => setEditForm({ ...editForm, uci_id: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 mt-1" /></label>
+                <label className="block"><span className="text-gray-500 text-xs">Estado de pago</span>
+                  <select value={editForm.estado_pago || 'pendiente'} onChange={(e) => setEditForm({ ...editForm, estado_pago: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 mt-1">
+                    <option value="pendiente">Pendiente</option>
+                    <option value="confirmado">Confirmado</option>
+                  </select></label>
+                <label className="block"><span className="text-gray-500 text-xs">Contacto emergencia - Nombre</span>
+                  <input type="text" value={editForm.beneficiario_nombre || ''} onChange={(e) => setEditForm({ ...editForm, beneficiario_nombre: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 mt-1" /></label>
+                <label className="block"><span className="text-gray-500 text-xs">Contacto emergencia - Teléfono</span>
+                  <input type="text" value={editForm.beneficiario_telefono || ''} onChange={(e) => setEditForm({ ...editForm, beneficiario_telefono: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 mt-1" /></label>
+              </div>
+            </div>
+            )}
           </div>
         </div>
       )}
