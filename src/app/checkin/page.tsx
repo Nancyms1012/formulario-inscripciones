@@ -35,10 +35,30 @@ interface StatCategoria {
   hechos: number;
 }
 
+// Modo de check-in seleccionado en pantalla.
+// KIDS es el domingo (usa columnas XCO) pero se filtra/cuenta aparte.
+type ModoCheckin = 'XCC' | 'XCO' | 'KIDS';
+
+// Día real (columnas de BD) según el modo elegido
+const diaDeModo = (modo: ModoCheckin): DiaEvento => (modo === 'XCC' ? 'XCC' : 'XCO');
+
+// ¿La inscripción pertenece a Copa Kids?
+const esKids = (evento: string): boolean => evento === 'Copa Kids';
+
+// ¿La inscripción corresponde al modo seleccionado?
+const perteneceAlModo = (evento: string, categoria: string, modo: ModoCheckin): boolean => {
+  const dia = diaDeModo(modo);
+  if (!getDiasParticipa(evento, categoria).includes(dia)) return false;
+  if (modo === 'KIDS') return esKids(evento);
+  if (modo === 'XCO') return !esKids(evento); // domingo sin Kids
+  return true; // XCC
+};
+
 export default function CheckinPage() {
   const [operador, setOperador] = useState<string | null>(null);
   const [operadorInput, setOperadorInput] = useState('');
-  const [dia, setDia] = useState<DiaEvento | null>(null); // XCC (sábado) o XCO (domingo)
+  const [modo, setModo] = useState<ModoCheckin | null>(null); // XCC (sábado), XCO (domingo) o KIDS (domingo aparte)
+  const dia: DiaEvento | null = modo ? diaDeModo(modo) : null; // día real de BD
   const [codigo, setCodigo] = useState('');
   const [busquedaTexto, setBusquedaTexto] = useState('');
   const [buscando, setBuscando] = useState(false);
@@ -72,13 +92,13 @@ export default function CheckinPage() {
     localStorage.removeItem('checkin_operador');
     setOperador(null);
     setOperadorInput('');
-    setDia(null);
+    setModo(null);
   };
 
-  // ¿La inscripción participa en el día seleccionado?
+  // ¿La inscripción corresponde al modo seleccionado (día + Kids/no Kids)?
   const participaHoy = (insc: InscripcionData): boolean => {
-    if (!dia) return true;
-    return getDiasParticipa(insc.evento, insc.categoria).includes(dia);
+    if (!modo) return true;
+    return perteneceAlModo(insc.evento, insc.categoria, modo);
   };
 
   // ¿Ya hizo check-in en el día seleccionado?
@@ -88,8 +108,8 @@ export default function CheckinPage() {
     return !!insc.checkin;
   };
 
-  // Calcular estadísticas del día seleccionado
-  const cargarStats = useCallback(async (diaActual: DiaEvento) => {
+  // Calcular estadísticas del modo seleccionado
+  const cargarStats = useCallback(async (modoActual: ModoCheckin) => {
     setCargandoStats(true);
     try {
       const { supabaseClient } = await import('@/lib/inscripcion-client');
@@ -100,9 +120,11 @@ export default function CheckinPage() {
       if (error) throw new Error(error.message);
       if (!data) return;
 
-      // Filtrar solo quienes participan en el día
+      const diaActual = diaDeModo(modoActual);
+
+      // Filtrar solo quienes corresponden al modo (día + Kids/no Kids)
       const participantes = data.filter((r) =>
-        getDiasParticipa(r.evento, r.categoria).includes(diaActual)
+        perteneceAlModo(r.evento, r.categoria, modoActual)
       );
 
       const hechoEn = (r: { checkin_xcc?: boolean; checkin_xco?: boolean }) =>
@@ -134,10 +156,10 @@ export default function CheckinPage() {
     }
   }, []);
 
-  // Recargar stats cuando cambia el día
+  // Recargar stats cuando cambia el modo
   useEffect(() => {
-    if (dia) cargarStats(dia);
-  }, [dia, cargarStats]);
+    if (modo) cargarStats(modo);
+  }, [modo, cargarStats]);
 
   // Buscar por código QR
   const buscarPorCodigo = async (codigoBuscar?: string) => {
@@ -227,7 +249,7 @@ export default function CheckinPage() {
       setCheckinExitoso(true);
       setInscripcion({ ...inscripcion, ...cambios });
       // Actualizar stats en vivo
-      cargarStats(dia);
+      if (modo) cargarStats(modo);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Error al confirmar');
     }
@@ -321,35 +343,45 @@ export default function CheckinPage() {
     );
   }
 
-  // ===== PANTALLA 1: SELECCIÓN DE DÍA =====
-  if (!dia) {
+  // ===== PANTALLA 1: SELECCIÓN DE DÍA / MODO =====
+  if (!modo) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-8">
+      <div className="max-w-3xl mx-auto px-4 py-8">
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-[#0d2240]">Check-in de Participantes</h1>
-          <p className="text-gray-600 mt-1">Seleccioná el día para hacer el check-in</p>
+          <p className="text-gray-600 mt-1">Seleccioná el grupo para hacer el check-in</p>
           <p className="text-sm text-gray-500 mt-2">
             Operador: <span className="font-medium text-[#1a4f8b]">{operador}</span>
             <button onClick={cambiarOperador} className="ml-2 text-[#1a4f8b] hover:underline">(cambiar)</button>
           </p>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <button onClick={() => setDia('XCC')}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <button onClick={() => setModo('XCC')}
             className="bg-white rounded-xl shadow-md p-8 hover:shadow-xl transition-shadow border-2 border-transparent hover:border-[#0d2240] text-center">
             <p className="text-2xl font-bold text-[#0d2240]">XCC</p>
             <p className="text-gray-500 mt-1">Sábado 12 Setiembre</p>
             <p className="text-xs text-gray-400 mt-2">Short Track</p>
           </button>
-          <button onClick={() => setDia('XCO')}
+          <button onClick={() => setModo('XCO')}
             className="bg-white rounded-xl shadow-md p-8 hover:shadow-xl transition-shadow border-2 border-transparent hover:border-[#0d2240] text-center">
             <p className="text-2xl font-bold text-[#0d2240]">XCO</p>
             <p className="text-gray-500 mt-1">Domingo 13 Setiembre</p>
-            <p className="text-xs text-gray-400 mt-2">Cross Country · Copa Kids</p>
+            <p className="text-xs text-gray-400 mt-2">Cross Country (sin Kids)</p>
+          </button>
+          <button onClick={() => setModo('KIDS')}
+            className="bg-white rounded-xl shadow-md p-8 hover:shadow-xl transition-shadow border-2 border-transparent hover:border-[#1a7a3a] text-center">
+            <p className="text-2xl font-bold text-[#1a7a3a]">Copa Kids</p>
+            <p className="text-gray-500 mt-1">Domingo 13 Setiembre</p>
+            <p className="text-xs text-gray-400 mt-2">Balance · Niños · Preinfantil</p>
           </button>
         </div>
       </div>
     );
   }
+
+  // Etiquetas según el modo
+  const modoLabel = modo === 'KIDS' ? 'Copa Kids' : modo;
+  const modoFecha = modo === 'XCC' ? 'Sábado 12 Setiembre' : 'Domingo 13 Setiembre';
 
   const pendientes = statTotal.total - statTotal.hechos;
   const pct = statTotal.total > 0 ? Math.round((statTotal.hechos / statTotal.total) * 100) : 0;
@@ -357,15 +389,15 @@ export default function CheckinPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
       <div className="text-center mb-6">
-        <h1 className="text-2xl font-bold text-[#0d2240]">Check-in · Día {dia}</h1>
+        <h1 className="text-2xl font-bold text-[#0d2240]">Check-in · {modoLabel}</h1>
         <p className="text-gray-600 mt-1">
-          {dia === 'XCC' ? 'Sábado 12 Setiembre' : 'Domingo 13 Setiembre'} · Escaneá el QR o buscá por código, nombre o cédula
+          {modoFecha} · Escaneá el QR o buscá por código, nombre o cédula
         </p>
         <p className="text-sm text-gray-500 mt-2">
           Operador: <span className="font-medium text-[#1a4f8b]">{operador}</span>
           <button onClick={cambiarOperador} className="ml-2 text-[#1a4f8b] hover:underline">(cambiar)</button>
           <span className="mx-2 text-gray-300">|</span>
-          <button onClick={() => { setDia(null); limpiar(); }} className="text-[#1a4f8b] hover:underline">Cambiar día</button>
+          <button onClick={() => { setModo(null); limpiar(); }} className="text-[#1a4f8b] hover:underline">Cambiar grupo</button>
         </p>
       </div>
 
@@ -376,9 +408,9 @@ export default function CheckinPage() {
             <svg className="w-5 h-5 text-[#1a4f8b]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            Check-in {dia}
+            Check-in {modoLabel}
           </h2>
-          <button onClick={() => cargarStats(dia)} className="text-xs text-[#1a4f8b] hover:underline">
+          <button onClick={() => cargarStats(modo)} className="text-xs text-[#1a4f8b] hover:underline">
             {cargandoStats ? 'Actualizando…' : 'Actualizar'}
           </button>
         </div>
@@ -505,7 +537,7 @@ export default function CheckinPage() {
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bold text-[#0d2240]">Datos del Participante</h2>
             {yaHizoCheckin(inscripcion) && (
-              <span className="bg-green-100 text-green-800 text-sm font-medium px-3 py-1 rounded-full">&#10003; Ya hizo check-in {dia}</span>
+              <span className="bg-green-100 text-green-800 text-sm font-medium px-3 py-1 rounded-full">&#10003; Ya hizo check-in {modoLabel}</span>
             )}
           </div>
           {/* Dorsal grande en azul (o código si aún no hay dorsal) */}
@@ -552,12 +584,21 @@ export default function CheckinPage() {
             </p>
           )}
 
-          {/* Aviso si NO participa el día seleccionado */}
+          {/* Aviso si NO corresponde al grupo seleccionado */}
           {!participaHoy(inscripcion) && (
             <div className="mt-6 bg-amber-50 border border-amber-200 text-amber-800 px-4 py-4 rounded-lg text-center font-medium">
-              ⚠️ Este participante NO compite el día {dia} ({dia === 'XCC' ? 'Sábado' : 'Domingo'}).
+              {modo === 'KIDS' ? (
+                <>⚠️ Este participante NO es de Copa Kids.</>
+              ) : modo === 'XCO' && esKids(inscripcion.evento) ? (
+                <>⚠️ Este participante es de Copa Kids. Usá el grupo <strong>Copa Kids</strong>.</>
+              ) : (
+                <>⚠️ Este participante NO compite el {modoFecha}.</>
+              )}
               <br />
-              <span className="text-sm font-normal">Participa en: {getDiasParticipa(inscripcion.evento, inscripcion.categoria).join(', ')}</span>
+              <span className="text-sm font-normal">
+                Participa en: {getDiasParticipa(inscripcion.evento, inscripcion.categoria).join(', ')}
+                {esKids(inscripcion.evento) ? ' (Copa Kids)' : ''}
+              </span>
             </div>
           )}
 
@@ -565,12 +606,12 @@ export default function CheckinPage() {
           {participaHoy(inscripcion) && !yaHizoCheckin(inscripcion) && !checkinExitoso && (
             <button onClick={confirmarCheckin}
               className="w-full mt-6 bg-green-600 text-white px-6 py-4 rounded-lg text-lg font-bold hover:bg-green-700 transition-colors">
-              &#10003; Confirmar Llegada · Día {dia}
+              &#10003; Confirmar Llegada · {modoLabel}
             </button>
           )}
           {checkinExitoso && (
             <div className="mt-6 bg-green-50 border border-green-200 text-green-700 px-4 py-4 rounded-lg text-center font-medium">
-              &#10003; Check-in {dia} confirmado exitosamente por {operador}
+              &#10003; Check-in {modoLabel} confirmado exitosamente por {operador}
             </div>
           )}
           <button onClick={limpiar}
