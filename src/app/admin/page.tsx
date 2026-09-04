@@ -6,19 +6,32 @@ import { EVENTS } from '@/lib/categories';
 interface Inscripcion {
   id: string;
   codigo_inscripcion: string;
+  nacionalidad?: string;
+  tipo_identificacion?: string;
+  numero_identificacion: string;
   nombre: string;
   primer_apellido: string;
   segundo_apellido: string;
-  numero_identificacion: string;
   email: string;
   celular: string;
-  evento: string;
-  categoria: string;
+  fecha_nacimiento?: string;
   genero: string;
   provincia: string;
+  equipo?: string;
+  tipo_licencia?: string;
+  uci_id?: string;
+  evento: string;
+  categoria: string;
+  beneficiario_nombre?: string;
+  beneficiario_cedula?: string;
+  beneficiario_telefono?: string;
+  beneficiario_parentesco?: string;
   metodo_pago: string;
   estado_pago: string;
   requiere_factura: boolean;
+  factura_nombre?: string;
+  factura_cedula?: string;
+  factura_email?: string;
   comprobante_sinpe_url: string | null;
   checkin: boolean;
   checkin_fecha: string | null;
@@ -33,6 +46,7 @@ export default function AdminPage() {
   const [filtroCategoria, setFiltroCategoria] = useState('');
   const [busqueda, setBusqueda] = useState('');
   const [tab, setTab] = useState<'inscripciones' | 'resumen'>('inscripciones');
+  const [detalle, setDetalle] = useState<Inscripcion | null>(null);
 
 
   const cargarInscripciones = async () => {
@@ -400,10 +414,12 @@ export default function AdminPage() {
                       {insc.codigo_inscripcion}
                     </td>
                     <td className="px-4 py-3">
-                      <div className="font-medium">
-                        {insc.nombre} {insc.primer_apellido}
-                      </div>
-                      <div className="text-xs text-gray-500">{insc.email}</div>
+                      <button onClick={() => setDetalle(insc)} className="text-left hover:underline">
+                        <div className="font-medium text-[#1a4f8b]">
+                          {insc.nombre} {insc.primer_apellido}
+                        </div>
+                        <div className="text-xs text-gray-500">{insc.email}</div>
+                      </button>
                     </td>
                     <td className="px-4 py-3">{insc.evento}</td>
                     <td className="px-4 py-3">{insc.categoria}</td>
@@ -437,13 +453,22 @@ export default function AdminPage() {
                       {new Date(insc.created_at).toLocaleDateString('es-CR')}
                     </td>
                     <td className="px-4 py-3">
-                      <button
-                        onClick={() => eliminarInscripcion(insc.id, `${insc.nombre} ${insc.primer_apellido}`, insc.codigo_inscripcion)}
-                        className="text-red-600 hover:text-red-800 hover:bg-red-50 rounded px-2 py-1 text-xs font-medium transition-colors"
-                        title="Eliminar inscripción"
-                      >
-                        Eliminar
-                      </button>
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => setDetalle(insc)}
+                          className="text-[#1a4f8b] hover:text-[#0d2240] hover:bg-blue-50 rounded px-2 py-1 text-xs font-medium transition-colors"
+                          title="Ver todos los datos"
+                        >
+                          Ver
+                        </button>
+                        <button
+                          onClick={() => eliminarInscripcion(insc.id, `${insc.nombre} ${insc.primer_apellido}`, insc.codigo_inscripcion)}
+                          className="text-red-600 hover:text-red-800 hover:bg-red-50 rounded px-2 py-1 text-xs font-medium transition-colors"
+                          title="Eliminar inscripción"
+                        >
+                          Eliminar
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -458,6 +483,103 @@ export default function AdminPage() {
         Mostrando {inscripcionesFiltradas.length} de {totalInscritos} inscripciones
       </p>
       </>
+      )}
+
+      {/* Modal de detalle completo */}
+      {detalle && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setDetalle(null)}>
+          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            {/* Header del modal */}
+            <div className="bg-[#0d2240] text-white px-6 py-4 rounded-t-xl flex items-center justify-between sticky top-0">
+              <div>
+                <p className="font-mono font-bold text-lg">{detalle.codigo_inscripcion}</p>
+                <p className="text-sm text-blue-200">{detalle.nombre} {detalle.primer_apellido} {detalle.segundo_apellido}</p>
+              </div>
+              <button onClick={() => setDetalle(null)} className="text-white hover:bg-white/20 rounded-lg w-8 h-8 flex items-center justify-center text-xl">
+                &times;
+              </button>
+            </div>
+
+            {/* Cuerpo */}
+            <div className="p-6 space-y-6">
+              {/* Datos Personales */}
+              <div>
+                <h3 className="text-sm font-bold text-[#0d2240] uppercase mb-2 border-b pb-1">Datos Personales</h3>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                  <div><span className="text-gray-500">Nacionalidad:</span> {detalle.nacionalidad || '—'}</div>
+                  <div><span className="text-gray-500">Tipo ID:</span> {detalle.tipo_identificacion || '—'}</div>
+                  <div><span className="text-gray-500"># Identificación:</span> <strong>{detalle.numero_identificacion}</strong></div>
+                  <div><span className="text-gray-500">Género:</span> {detalle.genero === 'F' ? 'Femenino' : 'Masculino'}</div>
+                  <div><span className="text-gray-500">Fecha nacimiento:</span> {detalle.fecha_nacimiento || '—'}</div>
+                  <div><span className="text-gray-500">Provincia:</span> {detalle.provincia}</div>
+                  <div><span className="text-gray-500">Celular:</span> {detalle.celular}</div>
+                  <div className="col-span-2"><span className="text-gray-500">Email:</span> {detalle.email}</div>
+                </div>
+              </div>
+
+              {/* Datos de la Carrera */}
+              <div>
+                <h3 className="text-sm font-bold text-[#0d2240] uppercase mb-2 border-b pb-1">Datos de la Carrera</h3>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                  <div><span className="text-gray-500">Evento:</span> <strong>{detalle.evento}</strong></div>
+                  <div><span className="text-gray-500">Categoría:</span> <strong>{detalle.categoria}</strong></div>
+                  <div><span className="text-gray-500">Equipo:</span> {detalle.equipo || '—'}</div>
+                  <div><span className="text-gray-500">Tipo licencia:</span> {detalle.tipo_licencia || '—'}</div>
+                  <div><span className="text-gray-500">UCI ID:</span> {detalle.uci_id || '—'}</div>
+                </div>
+              </div>
+
+              {/* Contacto de Emergencia */}
+              <div>
+                <h3 className="text-sm font-bold text-[#0d2240] uppercase mb-2 border-b pb-1">Contacto de Emergencia</h3>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                  <div><span className="text-gray-500">Nombre:</span> {detalle.beneficiario_nombre || '—'}</div>
+                  <div><span className="text-gray-500">Teléfono:</span> {detalle.beneficiario_telefono || '—'}</div>
+                  <div><span className="text-gray-500">Cédula:</span> {detalle.beneficiario_cedula || '—'}</div>
+                  <div><span className="text-gray-500">Parentesco:</span> {detalle.beneficiario_parentesco || '—'}</div>
+                </div>
+              </div>
+
+              {/* Pago */}
+              <div>
+                <h3 className="text-sm font-bold text-[#0d2240] uppercase mb-2 border-b pb-1">Pago y Factura</h3>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                  <div><span className="text-gray-500">Método:</span> {detalle.metodo_pago}</div>
+                  <div><span className="text-gray-500">Estado:</span>{' '}
+                    <span className={detalle.estado_pago === 'confirmado' ? 'text-green-600 font-medium' : 'text-amber-600 font-medium'}>
+                      {detalle.estado_pago === 'confirmado' ? 'Confirmado' : 'Pendiente'}
+                    </span>
+                  </div>
+                  <div className="col-span-2"><span className="text-gray-500">Comprobante Sinpe:</span>{' '}
+                    {detalle.comprobante_sinpe_url ? (
+                      <a href={detalle.comprobante_sinpe_url} target="_blank" rel="noopener noreferrer" className="text-[#1a4f8b] underline">Ver comprobante</a>
+                    ) : '—'}
+                  </div>
+                  <div><span className="text-gray-500">Requiere factura:</span> {detalle.requiere_factura ? 'Sí' : 'No'}</div>
+                  {detalle.requiere_factura && (
+                    <>
+                      <div><span className="text-gray-500">Factura nombre:</span> {detalle.factura_nombre || '—'}</div>
+                      <div><span className="text-gray-500">Factura cédula:</span> {detalle.factura_cedula || '—'}</div>
+                      <div><span className="text-gray-500">Factura email:</span> {detalle.factura_email || '—'}</div>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Check-in */}
+              <div>
+                <h3 className="text-sm font-bold text-[#0d2240] uppercase mb-2 border-b pb-1">Check-in</h3>
+                <div className="text-sm">
+                  {detalle.checkin ? (
+                    <span className="text-green-600 font-medium">&#10003; Check-in realizado {detalle.checkin_fecha ? `— ${new Date(detalle.checkin_fecha).toLocaleString('es-CR')}` : ''}</span>
+                  ) : (
+                    <span className="text-gray-400">Sin check-in</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
