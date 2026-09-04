@@ -178,9 +178,13 @@ export default function FormularioKids() {
         }),
       }).catch(() => {});
 
-      // Si pagó con tarjeta, abrir la página de pago de Tilopay
+      // Si pagó con tarjeta, guardar el código y redirigir a Tilopay
       if (metodoPago === 'Tarjeta' && paymentLink) {
-        window.open(paymentLink.url, '_blank');
+        try {
+          sessionStorage.setItem('inscripcionPendiente', resultado.codigoInscripcion);
+        } catch { /* ignore */ }
+        window.location.href = paymentLink.url;
+        return;
       }
 
       setExito(true);
