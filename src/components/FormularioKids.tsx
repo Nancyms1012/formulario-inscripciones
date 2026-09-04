@@ -493,15 +493,10 @@ export default function FormularioKids() {
 
           {/* Pago con Tarjeta (Tilopay) */}
           {metodoPago === 'Tarjeta' && paymentLink && (
-            <div className="bg-blue-50 p-4 rounded-lg text-center">
-              <p className="text-sm text-gray-700 mb-3">
-                Al enviar la inscripción se abrirá la página segura de pago de Tilopay para pagar ₡{paymentLink.monto.toLocaleString('es-CR')} con tarjeta.
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <p className="text-sm text-gray-700">
+                Al presionar <strong>&quot;Enviar Inscripción&quot;</strong> se abrirá la página segura de pago de Tilopay para pagar <strong>₡{paymentLink.monto.toLocaleString('es-CR')}</strong> con tarjeta. La inscripción se confirmará automáticamente al completar el pago.
               </p>
-              <a href={paymentLink.url} target="_blank" rel="noopener noreferrer"
-                className="inline-block bg-[#1a4f8b] text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-[#0d2240] transition-colors">
-                Abrir página de pago (₡{paymentLink.monto.toLocaleString('es-CR')})
-              </a>
-              <p className="text-xs text-gray-500 mt-2">La inscripción se guardará como &quot;pendiente de pago&quot; hasta que la organización confirme el pago.</p>
             </div>
           )}
 
