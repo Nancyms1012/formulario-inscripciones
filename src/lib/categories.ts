@@ -22,7 +22,7 @@ export const RACE_CATEGORIES: Category[] = [
   { name: 'Prejuvenil', gender: 'F/M', minAge: 15, maxAge: 16, availableCategories: ['Prejuvenil'] },
   { name: 'Juvenil', gender: 'F/M', minAge: 17, maxAge: 18, availableCategories: ['Juvenil'] },
   { name: 'Sub 23', gender: 'F/M', minAge: 19, maxAge: 22, availableCategories: ['Sub 23', 'Élite'] },
-  { name: 'Élite', gender: 'F/M', minAge: 23, maxAge: 34, availableCategories: ['Élite'] },
+  { name: 'Élite', gender: 'F/M', minAge: 19, maxAge: 34, availableCategories: ['Élite'] },
 
   // Categorías Máster Masculino
   { name: 'Máster A', gender: 'M', minAge: 30, maxAge: 34, availableCategories: ['Máster A', 'Élite', 'Open'] },
