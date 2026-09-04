@@ -16,6 +16,8 @@ interface InscripcionData {
   checkin_fecha: string | null;
   metodo_pago: string;
   estado_pago: string;
+  uci_id?: string;
+  tipo_licencia?: string;
 }
 
 export default function CheckinPage() {
@@ -298,13 +300,10 @@ export default function CheckinPage() {
               <p className="font-medium">{inscripcion.categoria}</p>
             </div>
             <div>
-              <span className="text-gray-500">Género:</span>
-              <p className="font-medium">{inscripcion.genero === 'F' ? 'Femenino' : 'Masculino'}</p>
-            </div>
-            <div>
-              <span className="text-gray-500">Pago:</span>
-              <p className={`font-medium ${inscripcion.estado_pago === 'confirmado' ? 'text-green-600' : 'text-amber-600'}`}>
-                {inscripcion.metodo_pago} - {inscripcion.estado_pago === 'confirmado' ? 'Confirmado' : 'Pendiente'}
+              <span className="text-gray-500">Licencia:</span>
+              <p className="font-medium">
+                {inscripcion.tipo_licencia || '—'}
+                {inscripcion.uci_id ? ` · UCI ID: ${inscripcion.uci_id}` : ''}
               </p>
             </div>
           </div>
