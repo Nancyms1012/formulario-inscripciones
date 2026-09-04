@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 
 interface Inscripcion {
   codigo_inscripcion: string;
+  dorsal?: string;
   nombre: string;
   primer_apellido: string;
   segundo_apellido: string;
@@ -35,7 +36,7 @@ function MiInscripcionContent() {
       const { supabaseClient } = await import('@/lib/inscripcion-client');
       const { data, error } = await supabaseClient
         .from('inscripciones')
-        .select('codigo_inscripcion, nombre, primer_apellido, segundo_apellido, evento, categoria, equipo')
+        .select('codigo_inscripcion, dorsal, nombre, primer_apellido, segundo_apellido, evento, categoria, equipo')
         .eq('codigo_inscripcion', cod);
 
       if (error) throw new Error(error.message);
@@ -92,9 +93,16 @@ function MiInscripcionContent() {
         {/* Card del inscrito */}
         {inscripcion && (
           <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 text-center">
-            <p className="text-4xl font-extrabold text-[#1a4f8b] mb-4 font-mono tracking-wide">
-              {inscripcion.codigo_inscripcion}
-            </p>
+            {inscripcion.dorsal ? (
+              <>
+                <p className="text-6xl font-extrabold text-[#1a4f8b] leading-none mb-1">#{inscripcion.dorsal}</p>
+                <p className="text-xs text-gray-400 font-mono mb-4">{inscripcion.codigo_inscripcion}</p>
+              </>
+            ) : (
+              <p className="text-4xl font-extrabold text-[#1a4f8b] mb-4 font-mono tracking-wide">
+                {inscripcion.codigo_inscripcion}
+              </p>
+            )}
             <h2 className="text-xl font-bold text-gray-800 uppercase mb-4">
               {inscripcion.nombre} {inscripcion.primer_apellido} {inscripcion.segundo_apellido}
             </h2>

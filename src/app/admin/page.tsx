@@ -6,6 +6,7 @@ import { EVENTS } from '@/lib/categories';
 interface Inscripcion {
   id: string;
   codigo_inscripcion: string;
+  dorsal?: string;
   nacionalidad?: string;
   tipo_identificacion?: string;
   numero_identificacion: string;
@@ -164,6 +165,65 @@ export default function AdminPage() {
     }, {} as Record<string, { evento: string; categoria: string; inscritos: number; pagoPendiente: number; factura: number }>)
   ).sort((a, b) => a.evento.localeCompare(b.evento) || a.categoria.localeCompare(b.categoria));
 
+  // Subir CSV de dorsales (match por número de identificación)
+  const [subiendoDorsales, setSubiendoDorsales] = useState(false);
+
+  const subirDorsales = async (file: File) => {
+    setSubiendoDorsales(true);
+    try {
+      const texto = await file.text();
+      const lineas = texto.split(/\r?\n/).filter((l) => l.trim());
+      if (lineas.length < 2) {
+        alert('El archivo está vacío o no tiene datos.');
+        setSubiendoDorsales(false);
+        return;
+      }
+
+      // Detectar columnas del encabezado
+      const encabezado = lineas[0].split(',').map((h) => h.trim().toLowerCase());
+      const idxId = encabezado.findIndex((h) => h.includes('identificacion') || h.includes('identificación') || h.includes('cedula') || h.includes('cédula') || h === 'id');
+      const idxDorsal = encabezado.findIndex((h) => h.includes('dorsal') || h.includes('numero') || h.includes('número') || h === 'placa');
+
+      if (idxId === -1 || idxDorsal === -1) {
+        alert('El CSV debe tener una columna de identificación (cédula) y una de dorsal.\n\nEjemplo de encabezado:\nidentificacion,dorsal');
+        setSubiendoDorsales(false);
+        return;
+      }
+
+      const { supabaseClient } = await import('@/lib/inscripcion-client');
+      let actualizados = 0;
+      let noEncontrados = 0;
+
+      for (let i = 1; i < lineas.length; i++) {
+        const cols = lineas[i].split(',');
+        const idVal = (cols[idxId] || '').trim().replace(/["']/g, '');
+        const dorsalVal = (cols[idxDorsal] || '').trim().replace(/["']/g, '');
+        if (!idVal || !dorsalVal) continue;
+
+        const { data, error } = await supabaseClient
+          .from('inscripciones')
+          .update({ dorsal: dorsalVal })
+          .eq('numero_identificacion', idVal)
+          .select('id');
+
+        if (!error && data && data.length > 0) {
+          actualizados += data.length;
+        } else {
+          noEncontrados++;
+        }
+      }
+
+      alert(`Dorsales actualizados: ${actualizados}\nNo encontrados: ${noEncontrados}`);
+      cargarInscripciones();
+      cargarTodas();
+    } catch (err) {
+      alert('Error al procesar el CSV.');
+      console.error(err);
+    } finally {
+      setSubiendoDorsales(false);
+    }
+  };
+
   // Descargar CSV con todas las columnas
   const descargarCSV = async () => {
     // Traer TODOS los datos (sin filtros) con todas las columnas
@@ -232,13 +292,18 @@ export default function AdminPage() {
           <h1 className="text-2xl font-bold text-[#0d2240]">Panel de Administración</h1>
           <p className="text-gray-600">Gestión de inscripciones - La Copa</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <button
             onClick={descargarCSV}
             className="bg-[#1a4f8b] text-white px-4 py-2 rounded-lg hover:bg-[#0d2240] transition-colors text-sm"
           >
             Descargar CSV
           </button>
+          <label className="bg-[#1a4f8b] text-white px-4 py-2 rounded-lg hover:bg-[#0d2240] transition-colors text-sm cursor-pointer">
+            {subiendoDorsales ? 'Subiendo...' : 'Subir dorsales (CSV)'}
+            <input type="file" accept=".csv" className="hidden" disabled={subiendoDorsales}
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) subirDorsales(f); e.target.value = ''; }} />
+          </label>
           <a
             href="/checkin"
             className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm"
@@ -492,7 +557,11 @@ export default function AdminPage() {
             {/* Header del modal */}
             <div className="bg-[#0d2240] text-white px-6 py-4 rounded-t-xl flex items-center justify-between sticky top-0">
               <div>
-                <p className="font-mono font-bold text-lg">{detalle.codigo_inscripcion}</p>
+                {detalle.dorsal ? (
+                  <p className="font-bold text-2xl">#{detalle.dorsal} <span className="font-mono font-normal text-sm text-blue-200">({detalle.codigo_inscripcion})</span></p>
+                ) : (
+                  <p className="font-mono font-bold text-lg">{detalle.codigo_inscripcion}</p>
+                )}
                 <p className="text-sm text-blue-200">{detalle.nombre} {detalle.primer_apellido} {detalle.segundo_apellido}</p>
               </div>
               <button onClick={() => setDetalle(null)} className="text-white hover:bg-white/20 rounded-lg w-8 h-8 flex items-center justify-center text-xl">

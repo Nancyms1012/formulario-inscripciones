@@ -5,6 +5,7 @@ import { useState, useRef, useEffect } from 'react';
 interface InscripcionData {
   id: string;
   codigo_inscripcion: string;
+  dorsal?: string;
   nombre: string;
   primer_apellido: string;
   segundo_apellido: string;
@@ -278,11 +279,18 @@ export default function CheckinPage() {
               <span className="bg-green-100 text-green-800 text-sm font-medium px-3 py-1 rounded-full">&#10003; Ya hizo check-in</span>
             )}
           </div>
+          {/* Dorsal grande en azul (o código si aún no hay dorsal) */}
+          <div className="text-center mb-4">
+            {inscripcion.dorsal ? (
+              <>
+                <p className="text-5xl font-extrabold text-[#1a4f8b] leading-none">#{inscripcion.dorsal}</p>
+                <p className="text-xs text-gray-400 font-mono mt-1">{inscripcion.codigo_inscripcion}</p>
+              </>
+            ) : (
+              <p className="text-3xl font-mono font-bold text-[#1a4f8b]">{inscripcion.codigo_inscripcion}</p>
+            )}
+          </div>
           <div className="grid grid-cols-2 gap-3 text-sm">
-            <div>
-              <span className="text-gray-500">Código:</span>
-              <p className="font-mono font-bold text-[#1a4f8b]">{inscripcion.codigo_inscripcion}</p>
-            </div>
             <div>
               <span className="text-gray-500">Identificación:</span>
               <p className="font-medium">{inscripcion.numero_identificacion}</p>
