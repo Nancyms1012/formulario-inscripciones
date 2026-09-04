@@ -27,10 +27,12 @@ interface Inscripcion {
 
 export default function AdminPage() {
   const [inscripciones, setInscripciones] = useState<Inscripcion[]>([]);
+  const [todasInscripciones, setTodasInscripciones] = useState<Inscripcion[]>([]);
   const [cargando, setCargando] = useState(true);
   const [filtroEvento, setFiltroEvento] = useState('');
   const [filtroCategoria, setFiltroCategoria] = useState('');
   const [busqueda, setBusqueda] = useState('');
+  const [tab, setTab] = useState<'inscripciones' | 'resumen'>('inscripciones');
 
 
   const cargarInscripciones = async () => {
@@ -56,9 +58,29 @@ export default function AdminPage() {
     }
   };
 
+  // Cargar TODAS las inscripciones (sin filtro) para el resumen
+  const cargarTodas = async () => {
+    try {
+      const { supabaseClient } = await import('@/lib/inscripcion-client');
+      const { data, error } = await supabaseClient
+        .from('inscripciones')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (!error && data) {
+        setTodasInscripciones(data);
+      }
+    } catch (err) {
+      console.error('Error cargando todas las inscripciones:', err);
+    }
+  };
+
   useEffect(() => {
     cargarInscripciones();
   }, [filtroEvento, filtroCategoria]);
+
+  useEffect(() => {
+    cargarTodas();
+  }, []);
 
   // Eliminar una inscripción
   const eliminarInscripcion = async (id: string, nombre: string, codigo: string) => {
@@ -78,8 +100,9 @@ export default function AdminPage() {
         alert('Error al eliminar: ' + error.message);
         return;
       }
-      // Quitar de la lista local sin recargar todo
+      // Quitar de las listas locales sin recargar todo
       setInscripciones((prev) => prev.filter((i) => i.id !== id));
+      setTodasInscripciones((prev) => prev.filter((i) => i.id !== id));
     } catch (err) {
       alert('Error al eliminar la inscripción.');
       console.error(err);
@@ -105,6 +128,27 @@ export default function AdminPage() {
   const totalCheckin = inscripciones.filter((i) => i.checkin).length;
   const totalPagoPendiente = inscripciones.filter((i) => i.estado_pago === 'pendiente').length;
   const totalFactura = inscripciones.filter((i) => i.requiere_factura).length;
+
+  // ===== RESUMEN (usa TODAS las inscripciones, sin filtro) =====
+  // Total inscritos por evento
+  const totalPorEvento = todasInscripciones.reduce((acc, i) => {
+    acc[i.evento] = (acc[i.evento] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  // Tabla evento + categoría con inscritos, pago pendiente y factura
+  const resumenPorCategoria = Object.values(
+    todasInscripciones.reduce((acc, i) => {
+      const key = `${i.evento}|${i.categoria}`;
+      if (!acc[key]) {
+        acc[key] = { evento: i.evento, categoria: i.categoria, inscritos: 0, pagoPendiente: 0, factura: 0 };
+      }
+      acc[key].inscritos += 1;
+      if (i.estado_pago === 'pendiente') acc[key].pagoPendiente += 1;
+      if (i.requiere_factura) acc[key].factura += 1;
+      return acc;
+    }, {} as Record<string, { evento: string; categoria: string; inscritos: number; pagoPendiente: number; factura: number }>)
+  ).sort((a, b) => a.evento.localeCompare(b.evento) || a.categoria.localeCompare(b.categoria));
 
   // Descargar CSV con todas las columnas
   const descargarCSV = async () => {
@@ -190,6 +234,90 @@ export default function AdminPage() {
         </div>
       </div>
 
+      {/* Tabs */}
+      <div className="flex gap-2 mb-6 border-b border-gray-200">
+        <button
+          onClick={() => setTab('inscripciones')}
+          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+            tab === 'inscripciones' ? 'border-[#0d2240] text-[#0d2240]' : 'border-transparent text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          Inscripciones
+        </button>
+        <button
+          onClick={() => setTab('resumen')}
+          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+            tab === 'resumen' ? 'border-[#0d2240] text-[#0d2240]' : 'border-transparent text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          Resumen
+        </button>
+      </div>
+
+      {/* ===== TAB RESUMEN ===== */}
+      {tab === 'resumen' && (
+        <div>
+          {/* Total inscritos por evento */}
+          <h2 className="text-lg font-bold text-[#0d2240] mb-3">Total inscritos por evento</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            {Object.entries(totalPorEvento).length === 0 ? (
+              <p className="text-gray-500 text-sm col-span-4">No hay inscripciones aún.</p>
+            ) : (
+              Object.entries(totalPorEvento).map(([ev, cant]) => (
+                <div key={ev} className="bg-white rounded-xl shadow p-4 text-center">
+                  <p className="text-3xl font-bold text-[#0d2240]">{cant}</p>
+                  <p className="text-sm text-gray-500">{ev}</p>
+                </div>
+              ))
+            )}
+            <div className="bg-[#0d2240] rounded-xl shadow p-4 text-center">
+              <p className="text-3xl font-bold text-white">{todasInscripciones.length}</p>
+              <p className="text-sm text-blue-200">Total general</p>
+            </div>
+          </div>
+
+          {/* Tabla por evento y categoría */}
+          <h2 className="text-lg font-bold text-[#0d2240] mb-3">Detalle por evento y categoría</h2>
+          <div className="bg-white rounded-xl shadow-md overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-[#0d2240] text-white">
+                  <tr>
+                    <th className="px-4 py-3 text-left">Evento</th>
+                    <th className="px-4 py-3 text-left">Categoría</th>
+                    <th className="px-4 py-3 text-center">Inscritos</th>
+                    <th className="px-4 py-3 text-center">Pago Pendiente</th>
+                    <th className="px-4 py-3 text-center">Requieren Factura</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {resumenPorCategoria.length === 0 ? (
+                    <tr><td colSpan={5} className="text-center py-8 text-gray-500">No hay inscripciones registradas.</td></tr>
+                  ) : (
+                    resumenPorCategoria.map((r) => (
+                      <tr key={`${r.evento}-${r.categoria}`} className="hover:bg-gray-50">
+                        <td className="px-4 py-3 font-medium">{r.evento}</td>
+                        <td className="px-4 py-3">{r.categoria}</td>
+                        <td className="px-4 py-3 text-center font-bold text-[#0d2240]">{r.inscritos}</td>
+                        <td className="px-4 py-3 text-center">
+                          {r.pagoPendiente > 0 ? <span className="text-amber-600 font-medium">{r.pagoPendiente}</span> : <span className="text-gray-400">0</span>}
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          {r.factura > 0 ? <span className="text-[#1a4f8b] font-medium">{r.factura}</span> : <span className="text-gray-400">0</span>}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ===== TAB INSCRIPCIONES ===== */}
+      {tab === 'inscripciones' && (
+      <>
       {/* Estadísticas */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <div className="bg-white rounded-xl shadow p-4 text-center">
@@ -329,6 +457,8 @@ export default function AdminPage() {
       <p className="text-sm text-gray-500 mt-4 text-center">
         Mostrando {inscripcionesFiltradas.length} de {totalInscritos} inscripciones
       </p>
+      </>
+      )}
     </div>
   );
 }
