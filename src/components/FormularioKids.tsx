@@ -137,24 +137,6 @@ export default function FormularioKids() {
       return;
     }
 
-    // Validar edad mínima: debe tener al menos 1 año CUMPLIDO a la fecha actual
-    if (anio && mes && dia) {
-      const fechaNac = new Date(parseInt(anio), parseInt(mes) - 1, parseInt(dia));
-      const hoy = new Date();
-      if (isNaN(fechaNac.getTime()) || fechaNac > hoy) {
-        setError('La fecha de nacimiento no es válida.');
-        return;
-      }
-      // Calcular edad en años cumplidos
-      let edad = hoy.getFullYear() - fechaNac.getFullYear();
-      const cumpleEsteAnio = new Date(hoy.getFullYear(), fechaNac.getMonth(), fechaNac.getDate());
-      if (hoy < cumpleEsteAnio) edad--; // aún no ha cumplido años este año
-      if (edad < 1) {
-        setError('El participante debe tener al menos 1 año cumplido para inscribirse.');
-        return;
-      }
-    }
-
     // Validar comprobante Sinpe obligatorio
     if (metodoPago === 'Sinpe' && !comprobante) {
       setError('Debés adjuntar el comprobante de Sinpe para continuar.');
@@ -458,7 +440,12 @@ export default function FormularioKids() {
         </div>
         {categoriasDisponibles.length > 0 && (
           <p className="text-xs text-gray-500 mt-2">
-            {`Categorías disponibles según edad competitiva (${CURRENT_YEAR} - ${anio} = ${CURRENT_YEAR - parseInt(anio)} años) y género.`}
+            {`Categorías disponibles según edad competitiva (${CURRENT_YEAR} - ${anio} = ${CURRENT_YEAR - parseInt(anio)} años al 31 de diciembre) y género.`}
+          </p>
+        )}
+        {categoriasDisponibles.length === 0 && genero && anio && (
+          <p className="text-xs text-amber-600 mt-2">
+            {`No hay categoría disponible. La edad mínima es 1 año cumplido al 31 de diciembre de ${CURRENT_YEAR}.`}
           </p>
         )}
       </section>
