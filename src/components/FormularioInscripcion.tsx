@@ -15,7 +15,7 @@ import {
 } from '@/lib/categories';
 import type { Gender, EventType } from '@/lib/categories';
 import { getPaymentLink } from '@/lib/payment-links';
-import { sanitizeNombre, sanitizeApellido, sanitizeCedula, pareceCorreo, MAX_NOMBRE, MAX_APELLIDO, MAX_CEDULA } from '@/lib/sanitize';
+import { sanitizeNombre, sanitizeApellido, sanitizeCedula, sanitizeNombreCompleto, pareceCorreo, MAX_NOMBRE, MAX_APELLIDO, MAX_CEDULA, MAX_NOMBRE_COMPLETO } from '@/lib/sanitize';
 
 export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' }) {
   // Control de T&C
@@ -509,8 +509,10 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">Nombre y Apellidos *</label>
-            <input type="text" value={benefNombre} onChange={(e) => setBenefNombre(e.target.value.replace(/@/g, ''))} required
+            <input type="text" value={benefNombre} onChange={(e) => setBenefNombre(sanitizeNombreCompleto(e.target.value))} required
+              maxLength={MAX_NOMBRE_COMPLETO}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent" />
+            <p className="text-xs text-gray-400 mt-1">Solo letras. Máx {MAX_NOMBRE_COMPLETO} caracteres.</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1"># Teléfono *</label>

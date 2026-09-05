@@ -65,3 +65,20 @@ export function sanitizeCedula(value: string): string {
 export function pareceCorreo(value: string): boolean {
   return /@/.test(value) || /gmail|hotmail|yahoo|outlook|icloud|\.com|\.cr/i.test(value);
 }
+
+
+export const MAX_NOMBRE_COMPLETO = 50;
+
+/**
+ * Limpia un NOMBRE COMPLETO (nombre + apellidos, ej: encargado/beneficiario):
+ * - Permite solo letras (incluye acentos y ñ), espacios, apóstrofo y guion.
+ * - Elimina "@", números y cualquier otro símbolo.
+ * - Colapsa espacios múltiples a uno y no permite espacio al inicio.
+ * - Recorta a máximo 50 caracteres.
+ */
+export function sanitizeNombreCompleto(value: string): string {
+  let v = value.replace(/[^a-zA-ZÀ-ÿñÑ'\- ]/g, ''); // solo letras, acentos, ' - y espacio
+  v = v.replace(/\s{2,}/g, ' ');                      // colapsar espacios múltiples
+  v = v.replace(/^\s+/, '');                          // sin espacio al inicio
+  return v.slice(0, MAX_NOMBRE_COMPLETO);
+}
