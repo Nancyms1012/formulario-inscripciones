@@ -74,6 +74,7 @@ export default function AdminPage() {
         primer_apellido: editForm.primer_apellido,
         segundo_apellido: editForm.segundo_apellido,
         numero_identificacion: editForm.numero_identificacion,
+        fecha_nacimiento: editForm.fecha_nacimiento,
         email: editForm.email,
         celular: editForm.celular,
         provincia: editForm.provincia,
@@ -745,6 +746,9 @@ export default function AdminPage() {
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 mt-1" /></label>
                 <label className="block"><span className="text-gray-500 text-xs"># Identificación</span>
                   <input type="text" value={editForm.numero_identificacion || ''} onChange={(e) => setEditForm({ ...editForm, numero_identificacion: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 mt-1" /></label>
+                <label className="block"><span className="text-gray-500 text-xs">Fecha de nacimiento</span>
+                  <input type="date" value={editForm.fecha_nacimiento || ''} onChange={(e) => setEditForm({ ...editForm, fecha_nacimiento: e.target.value })}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 mt-1" /></label>
                 <label className="block"><span className="text-gray-500 text-xs">Email</span>
                   <input type="email" value={editForm.email || ''} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
