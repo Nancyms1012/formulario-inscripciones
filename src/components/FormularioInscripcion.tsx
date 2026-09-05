@@ -102,9 +102,9 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
         setNumeroId(cleaned.slice(0, 9));
       }
     } else {
-      // Extranjeros: letras y números sin límite
+      // Extranjero / sin nacionalidad aún: solo letras y números (sin @, espacios ni símbolos)
       const cleaned = value.replace(/[^a-zA-Z0-9]/g, '');
-      setNumeroId(cleaned);
+      setNumeroId(cleaned.slice(0, 20));
     }
   };
 
@@ -133,6 +133,12 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
         setError('La cédula física debe tener exactamente 9 dígitos.');
         return;
       }
+    }
+
+    // La identificación no puede contener @ ni espacios (evita correos)
+    if (/[@\s]/.test(numeroId)) {
+      setError('La identificación no puede contener @ ni espacios. Revisá el número de identificación.');
+      return;
     }
 
     // Validar comprobante Sinpe obligatorio

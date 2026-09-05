@@ -93,8 +93,9 @@ export default function FormularioKids() {
         setNumeroId(cleaned.slice(0, 9));
       }
     } else {
+      // Extranjero / sin nacionalidad aún: solo letras y números (sin @, espacios ni símbolos)
       const cleaned = value.replace(/[^a-zA-Z0-9]/g, '');
-      setNumeroId(cleaned);
+      setNumeroId(cleaned.slice(0, 20));
     }
   };
 
@@ -116,6 +117,12 @@ export default function FormularioKids() {
         setError('La cédula física debe tener exactamente 9 dígitos.');
         return;
       }
+    }
+
+    // La identificación no puede contener @ ni espacios (evita correos)
+    if (/[@\s]/.test(numeroId)) {
+      setError('La identificación no puede contener @ ni espacios. Revisá el número de identificación.');
+      return;
     }
 
     // Validar que la cédula del encargado no sea igual a la del menor
