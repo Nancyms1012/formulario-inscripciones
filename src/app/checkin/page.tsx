@@ -74,6 +74,10 @@ export default function CheckinPage() {
   const [statTotal, setStatTotal] = useState({ total: 0, hechos: 0 });
   const [statsPorCategoria, setStatsPorCategoria] = useState<StatCategoria[]>([]);
   const [cargandoStats, setCargandoStats] = useState(false);
+  // Lista de participantes del grupo (para mostrar quiénes hicieron check-in)
+  const [lista, setLista] = useState<InscripcionData[]>([]);
+  const [mostrarLista, setMostrarLista] = useState(false);
+  const [filtroLista, setFiltroLista] = useState<'todos' | 'hechos' | 'pendientes'>('todos');
 
   // Cargar operador guardado en el navegador
   useEffect(() => {
@@ -115,7 +119,7 @@ export default function CheckinPage() {
       const { supabaseClient } = await import('@/lib/inscripcion-client');
       const { data, error } = await supabaseClient
         .from('inscripciones')
-        .select('evento, categoria, checkin_xcc, checkin_xco');
+        .select('*');
 
       if (error) throw new Error(error.message);
       if (!data) return;
@@ -126,6 +130,15 @@ export default function CheckinPage() {
       const participantes = data.filter((r) =>
         perteneceAlModo(r.evento, r.categoria, modoActual)
       );
+
+      // Guardar la lista ordenada (por dorsal numérico, luego apellido)
+      const listaOrdenada = [...participantes].sort((a, b) => {
+        const da = parseInt(a.dorsal || '', 10);
+        const db = parseInt(b.dorsal || '', 10);
+        if (!isNaN(da) && !isNaN(db)) return da - db;
+        return `${a.primer_apellido} ${a.nombre}`.localeCompare(`${b.primer_apellido} ${b.nombre}`);
+      });
+      setLista(listaOrdenada as InscripcionData[]);
 
       const hechoEn = (r: { checkin_xcc?: boolean; checkin_xco?: boolean }) =>
         diaActual === 'XCC' ? !!r.checkin_xcc : !!r.checkin_xco;
@@ -252,6 +265,32 @@ export default function CheckinPage() {
       if (modo) cargarStats(modo);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Error al confirmar');
+    }
+  };
+
+  // Reversar check-in (por si se aplicó por error)
+  const reversarCheckin = async () => {
+    if (!inscripcion || !dia) return;
+    if (!confirm('¿Reversar el check-in de este participante? Podrá volver a hacer check-in.')) return;
+
+    const cambios = dia === 'XCC'
+      ? { checkin_xcc: false, checkin_xcc_fecha: null, checkin_xcc_por: null }
+      : { checkin_xco: false, checkin_xco_fecha: null, checkin_xco_por: null };
+
+    try {
+      const { supabaseClient } = await import('@/lib/inscripcion-client');
+      const { error } = await supabaseClient
+        .from('inscripciones')
+        .update(cambios)
+        .eq('id', inscripcion.id);
+
+      if (error) throw new Error(error.message);
+
+      setCheckinExitoso(false);
+      setInscripcion({ ...inscripcion, ...cambios });
+      if (modo) cargarStats(modo);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Error al reversar');
     }
   };
 
@@ -448,6 +487,79 @@ export default function CheckinPage() {
         </div>
       )}
 
+      {/* ===== LISTA DE PARTICIPANTES ===== */}
+      <div className="bg-white rounded-xl shadow-md p-4 mb-6">
+        <button onClick={() => setMostrarLista((v) => !v)}
+          className="w-full flex items-center justify-between text-left">
+          <span className="text-sm font-bold text-[#0d2240] uppercase">
+            Lista de participantes ({lista.length})
+          </span>
+          <span className="text-[#1a4f8b] text-sm">{mostrarLista ? 'Ocultar ▲' : 'Ver lista ▼'}</span>
+        </button>
+
+        {mostrarLista && (
+          <div className="mt-4">
+            {/* Filtro del listado */}
+            <div className="flex gap-2 mb-3">
+              {([
+                { k: 'todos', label: `Todos (${lista.length})` },
+                { k: 'hechos', label: `Con check-in (${lista.filter(yaHizoCheckin).length})` },
+                { k: 'pendientes', label: `Pendientes (${lista.filter((r) => !yaHizoCheckin(r)).length})` },
+              ] as const).map((f) => (
+                <button key={f.k} onClick={() => setFiltroLista(f.k)}
+                  className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                    filtroLista === f.k ? 'bg-[#1a4f8b] text-white border-[#1a4f8b]' : 'bg-white text-gray-700 border-gray-300 hover:bg-blue-50'
+                  }`}>
+                  {f.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="overflow-x-auto -mx-4">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
+                  <tr>
+                    <th className="text-left px-4 py-2">Dorsal</th>
+                    <th className="text-left px-4 py-2">Nombre</th>
+                    <th className="text-left px-4 py-2 hidden sm:table-cell">Categoría</th>
+                    <th className="text-left px-4 py-2">Estado</th>
+                    <th className="text-left px-4 py-2 hidden md:table-cell">Operador</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {lista
+                    .filter((r) => {
+                      if (filtroLista === 'hechos') return yaHizoCheckin(r);
+                      if (filtroLista === 'pendientes') return !yaHizoCheckin(r);
+                      return true;
+                    })
+                    .map((r) => {
+                      const hecho = yaHizoCheckin(r);
+                      const por = dia === 'XCC' ? r.checkin_xcc_por : r.checkin_xco_por;
+                      return (
+                        <tr key={r.id} className="border-t border-gray-100">
+                          <td className="px-4 py-2 font-bold text-[#1a4f8b]">{r.dorsal || '—'}</td>
+                          <td className="px-4 py-2">
+                            {r.nombre} {r.primer_apellido} {r.segundo_apellido}
+                            <div className="text-xs text-gray-400 sm:hidden">{r.categoria}</div>
+                          </td>
+                          <td className="px-4 py-2 hidden sm:table-cell text-gray-600">{r.categoria}</td>
+                          <td className="px-4 py-2">
+                            {hecho
+                              ? <span className="text-green-600 font-medium">✓ Llegó</span>
+                              : <span className="text-gray-400">Pendiente</span>}
+                          </td>
+                          <td className="px-4 py-2 hidden md:table-cell text-gray-500">{por || '—'}</td>
+                        </tr>
+                      );
+                    })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Scanner QR */}
       <div className="bg-white rounded-xl shadow-md p-6 mb-6">
         <div className="flex gap-3 mb-4">
@@ -577,11 +689,22 @@ export default function CheckinPage() {
             </div>
           </div>
 
-          {/* Quién aplicó el check-in (si ya está hecho) */}
-          {yaHizoCheckin(inscripcion) && (dia === 'XCC' ? inscripcion.checkin_xcc_por : inscripcion.checkin_xco_por) && (
-            <p className="mt-3 text-xs text-gray-400">
-              Check-in aplicado por: {dia === 'XCC' ? inscripcion.checkin_xcc_por : inscripcion.checkin_xco_por}
-            </p>
+          {/* Quién aplicó el check-in (si ya está hecho) + botón reversar */}
+          {yaHizoCheckin(inscripcion) && (
+            <div className="mt-4 bg-green-50 border border-green-200 rounded-lg px-4 py-3 flex items-center justify-between gap-3">
+              <div className="text-sm">
+                <p className="text-green-700 font-medium">&#10003; Check-in {modoLabel} ya realizado</p>
+                {(dia === 'XCC' ? inscripcion.checkin_xcc_por : inscripcion.checkin_xco_por) && (
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Aplicado por: {dia === 'XCC' ? inscripcion.checkin_xcc_por : inscripcion.checkin_xco_por}
+                  </p>
+                )}
+              </div>
+              <button onClick={reversarCheckin}
+                className="shrink-0 border border-red-300 text-red-600 text-sm px-3 py-2 rounded-lg hover:bg-red-50 transition-colors">
+                Reversar
+              </button>
+            </div>
           )}
 
           {/* Aviso si NO corresponde al grupo seleccionado */}
