@@ -13,7 +13,7 @@ import {
 } from '@/lib/categories';
 import type { Gender, EventType } from '@/lib/categories';
 import { getPaymentLink } from '@/lib/payment-links';
-import { sanitizeNombre, sanitizeApellido, MAX_NOMBRE, MAX_APELLIDO } from '@/lib/sanitize';
+import { sanitizeNombre, sanitizeApellido, sanitizeCedula, pareceCorreo, MAX_NOMBRE, MAX_APELLIDO, MAX_CEDULA } from '@/lib/sanitize';
 
 export default function FormularioKids() {
   // Control de T&C
@@ -122,6 +122,12 @@ export default function FormularioKids() {
     // La identificación no puede contener @ ni espacios (evita correos)
     if (/[@\s]/.test(numeroId)) {
       setError('La identificación no puede contener @ ni espacios. Revisá el número de identificación.');
+      return;
+    }
+
+    // La cédula del encargado no debe parecer un correo
+    if (pareceCorreo(encargadoCedula)) {
+      setError('En "# Cédula" del encargado escribí solo el número de cédula, no un correo electrónico.');
       return;
     }
 
@@ -448,15 +454,17 @@ export default function FormularioKids() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">{"Nombre y Apellidos *"}</label>
-            <input type="text" value={encargadoNombre} onChange={(e) => setEncargadoNombre(e.target.value)} required
+            <input type="text" value={encargadoNombre} onChange={(e) => setEncargadoNombre(e.target.value.replace(/@/g, ''))} required
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">{"# Cédula *"}</label>
             <input type="text" value={encargadoCedula}
-              onChange={(e) => setEncargadoCedula(e.target.value.replace(/[^a-zA-Z0-9]/g, ''))} required
+              onChange={(e) => setEncargadoCedula(sanitizeCedula(e.target.value))} required
               placeholder="Número de cédula"
+              maxLength={MAX_CEDULA}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent" />
+            <p className="text-xs text-gray-400 mt-1">Solo el número de cédula. No es un correo.</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">{"# Teléfono *"}</label>

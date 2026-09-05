@@ -43,3 +43,25 @@ export function sanitizeApellido(value: string): string {
   v = v.replace(/\s+/g, '');              // quitar todos los espacios
   return v.slice(0, MAX_APELLIDO);
 }
+
+
+export const MAX_CEDULA = 20;
+
+/**
+ * Limpia un valor de CÉDULA/identificación genérica (ej: cédula del encargado):
+ * - Elimina "@", puntos, espacios y cualquier símbolo.
+ * - Permite letras y números (para soportar pasaportes de extranjeros).
+ * - Recorta a máximo 20 caracteres.
+ * Nota: NO garantiza formato de cédula CR; solo evita que se ingrese un correo/símbolos.
+ */
+export function sanitizeCedula(value: string): string {
+  const v = value.replace(/[^a-zA-Z0-9]/g, '');
+  return v.slice(0, MAX_CEDULA);
+}
+
+/**
+ * ¿El texto parece un correo electrónico? (para bloquear al enviar)
+ */
+export function pareceCorreo(value: string): boolean {
+  return /@/.test(value) || /gmail|hotmail|yahoo|outlook|icloud|\.com|\.cr/i.test(value);
+}

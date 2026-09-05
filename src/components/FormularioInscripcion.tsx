@@ -15,7 +15,7 @@ import {
 } from '@/lib/categories';
 import type { Gender, EventType } from '@/lib/categories';
 import { getPaymentLink } from '@/lib/payment-links';
-import { sanitizeNombre, sanitizeApellido, MAX_NOMBRE, MAX_APELLIDO } from '@/lib/sanitize';
+import { sanitizeNombre, sanitizeApellido, sanitizeCedula, pareceCorreo, MAX_NOMBRE, MAX_APELLIDO, MAX_CEDULA } from '@/lib/sanitize';
 
 export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' }) {
   // Control de T&C
@@ -110,8 +110,7 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
 
   // Validar cédula beneficiario
   const handleBenefCedulaChange = (value: string) => {
-    const cleaned = value.replace(/[^a-zA-Z0-9]/g, '');
-    setBenefCedula(cleaned);
+    setBenefCedula(sanitizeCedula(value));
   };
 
   // Reset numero de ID cuando cambia nacionalidad o tipo de identificación
@@ -138,6 +137,12 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
     // La identificación no puede contener @ ni espacios (evita correos)
     if (/[@\s]/.test(numeroId)) {
       setError('La identificación no puede contener @ ni espacios. Revisá el número de identificación.');
+      return;
+    }
+
+    // La cédula del beneficiario no debe parecer un correo
+    if (pareceCorreo(benefCedula)) {
+      setError('En la cédula del beneficiario escribí solo el número de cédula, no un correo electrónico.');
       return;
     }
 
@@ -504,7 +509,7 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">Nombre y Apellidos *</label>
-            <input type="text" value={benefNombre} onChange={(e) => setBenefNombre(e.target.value)} required
+            <input type="text" value={benefNombre} onChange={(e) => setBenefNombre(e.target.value.replace(/@/g, ''))} required
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent" />
           </div>
           <div>
