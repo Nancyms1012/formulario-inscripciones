@@ -340,7 +340,7 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
             <input type="text" value={nombre} onChange={(e) => setNombre(sanitizeNombre(e.target.value))} required
               maxLength={MAX_NOMBRE}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent" />
-            <p className="text-xs text-gray-400 mt-1">Sin @. Máx {MAX_NOMBRE} caracteres, un solo espacio.</p>
+            <p className="text-xs text-gray-400 mt-1">Sin @. Máx {MAX_NOMBRE} caracteres, hasta 4 palabras.</p>
           </div>
           {/* Primer Apellido */}
           <div>
