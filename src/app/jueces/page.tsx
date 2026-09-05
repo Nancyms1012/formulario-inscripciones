@@ -48,6 +48,7 @@ export default function JuecesPage() {
   const [categoriasSel, setCategoriasSel] = useState<string[]>([]);
   const [dia, setDia] = useState<DiaEvento>('XCO');
   const [busqueda, setBusqueda] = useState('');
+  const [dropdownAbierto, setDropdownAbierto] = useState(false);
 
   const cargar = useCallback(async () => {
     setCargando(true);
@@ -75,12 +76,14 @@ export default function JuecesPage() {
     return Array.from(set).sort();
   }, [registros]);
 
-  // Categorías disponibles para el evento seleccionado
+  // Categorías disponibles según el DÍA seleccionado y el evento
   const categoriasDisponibles = useMemo(() => {
-    const base = filtroEvento ? registros.filter((r) => r.evento === filtroEvento) : registros;
+    // Solo categorías de quienes participan en el día elegido
+    let base = registros.filter((r) => getDiasParticipa(r.evento, r.categoria).includes(dia));
+    if (filtroEvento) base = base.filter((r) => r.evento === filtroEvento);
     const set = new Set(base.map((r) => r.categoria).filter(Boolean));
     return Array.from(set).sort();
-  }, [registros, filtroEvento]);
+  }, [registros, filtroEvento, dia]);
 
   // Al cambiar de evento, limpiar categorías que ya no existen
   useEffect(() => {
@@ -150,28 +153,55 @@ export default function JuecesPage() {
           {eventos.map((ev) => <option key={ev} value={ev}>{ev}</option>)}
         </select>
 
-        {/* Categorías (selección múltiple) */}
+        {/* Categorías (desplegable con selección múltiple) */}
         <div className="flex items-center justify-between mb-2">
           <label className="block text-sm font-medium text-gray-700">Categorías (podés elegir varias)</label>
           {categoriasSel.length > 0 && (
             <button onClick={() => setCategoriasSel([])} className="text-xs text-[#1a4f8b] hover:underline">Limpiar</button>
           )}
         </div>
-        {categoriasDisponibles.length === 0 ? (
-          <p className="text-sm text-gray-400">No hay categorías para mostrar.</p>
-        ) : (
-          <div className="flex flex-wrap gap-2">
-            {categoriasDisponibles.map((cat) => {
-              const activa = categoriasSel.includes(cat);
-              return (
-                <button key={cat} onClick={() => toggleCategoria(cat)}
-                  className={`text-sm px-3 py-1.5 rounded-full border transition-colors ${
-                    activa ? 'bg-[#1a4f8b] text-white border-[#1a4f8b]' : 'bg-white text-gray-700 border-gray-300 hover:bg-blue-50'
-                  }`}>
-                  {activa ? '✓ ' : ''}{cat}
-                </button>
-              );
-            })}
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setDropdownAbierto((v) => !v)}
+            disabled={categoriasDisponibles.length === 0}
+            className="w-full flex items-center justify-between border border-gray-300 rounded-lg px-4 py-2 text-left bg-white disabled:bg-gray-100 disabled:text-gray-400 focus:ring-2 focus:ring-[#1a4f8b]">
+            <span className="text-sm truncate">
+              {categoriasDisponibles.length === 0
+                ? 'No hay categorías para este día/evento'
+                : categoriasSel.length === 0
+                ? 'Seleccioná una o más categorías…'
+                : `${categoriasSel.length} categoría${categoriasSel.length !== 1 ? 's' : ''} seleccionada${categoriasSel.length !== 1 ? 's' : ''}`}
+            </span>
+            <span className="text-gray-400 ml-2">{dropdownAbierto ? '▲' : '▼'}</span>
+          </button>
+
+          {dropdownAbierto && categoriasDisponibles.length > 0 && (
+            <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-64 overflow-y-auto">
+              {categoriasDisponibles.map((cat) => {
+                const activa = categoriasSel.includes(cat);
+                return (
+                  <label key={cat}
+                    className="flex items-center gap-2 px-4 py-2 hover:bg-blue-50 cursor-pointer text-sm">
+                    <input type="checkbox" checked={activa} onChange={() => toggleCategoria(cat)}
+                      className="accent-[#1a4f8b] w-4 h-4" />
+                    <span>{cat}</span>
+                  </label>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Chips de las seleccionadas (para quitarlas rápido) */}
+        {categoriasSel.length > 0 && (
+          <div className="flex flex-wrap gap-2 mt-2">
+            {categoriasSel.map((cat) => (
+              <button key={cat} onClick={() => toggleCategoria(cat)}
+                className="text-xs px-3 py-1 rounded-full bg-[#1a4f8b] text-white flex items-center gap-1">
+                {cat} <span className="font-bold">×</span>
+              </button>
+            ))}
           </div>
         )}
 
