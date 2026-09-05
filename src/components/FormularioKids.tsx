@@ -137,6 +137,24 @@ export default function FormularioKids() {
       return;
     }
 
+    // Validar edad mínima: debe tener al menos 1 año CUMPLIDO a la fecha actual
+    if (anio && mes && dia) {
+      const fechaNac = new Date(parseInt(anio), parseInt(mes) - 1, parseInt(dia));
+      const hoy = new Date();
+      if (isNaN(fechaNac.getTime()) || fechaNac > hoy) {
+        setError('La fecha de nacimiento no es válida.');
+        return;
+      }
+      // Calcular edad en años cumplidos
+      let edad = hoy.getFullYear() - fechaNac.getFullYear();
+      const cumpleEsteAnio = new Date(hoy.getFullYear(), fechaNac.getMonth(), fechaNac.getDate());
+      if (hoy < cumpleEsteAnio) edad--; // aún no ha cumplido años este año
+      if (edad < 1) {
+        setError('El participante debe tener al menos 1 año cumplido para inscribirse.');
+        return;
+      }
+    }
+
     // Validar comprobante Sinpe obligatorio
     if (metodoPago === 'Sinpe' && !comprobante) {
       setError('Debés adjuntar el comprobante de Sinpe para continuar.');
