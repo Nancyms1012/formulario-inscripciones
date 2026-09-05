@@ -13,6 +13,7 @@ import {
 } from '@/lib/categories';
 import type { Gender, EventType } from '@/lib/categories';
 import { getPaymentLink } from '@/lib/payment-links';
+import { sanitizeNombre, sanitizeApellido, MAX_NOMBRE, MAX_APELLIDO } from '@/lib/sanitize';
 
 export default function FormularioKids() {
   // Control de T&C
@@ -317,20 +318,26 @@ export default function FormularioKids() {
           {/* Nombre */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">{"Nombre *"}</label>
-            <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} required
+            <input type="text" value={nombre} onChange={(e) => setNombre(sanitizeNombre(e.target.value))} required
+              maxLength={MAX_NOMBRE}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent" />
+            <p className="text-xs text-gray-400 mt-1">Sin @. Máx {MAX_NOMBRE} caracteres, un solo espacio.</p>
           </div>
           {/* Primer Apellido */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">{"Primer Apellido *"}</label>
-            <input type="text" value={primerApellido} onChange={(e) => setPrimerApellido(e.target.value)} required
+            <input type="text" value={primerApellido} onChange={(e) => setPrimerApellido(sanitizeApellido(e.target.value))} required
+              maxLength={MAX_APELLIDO}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent" />
+            <p className="text-xs text-gray-400 mt-1">Sin @ ni espacios. Máx {MAX_APELLIDO} caracteres.</p>
           </div>
           {/* Segundo Apellido */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">{"Segundo Apellido *"}</label>
-            <input type="text" value={segundoApellido} onChange={(e) => setSegundoApellido(e.target.value)} required
+            <input type="text" value={segundoApellido} onChange={(e) => setSegundoApellido(sanitizeApellido(e.target.value))} required
+              maxLength={MAX_APELLIDO}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent" />
+            <p className="text-xs text-gray-400 mt-1">Sin @ ni espacios. Máx {MAX_APELLIDO} caracteres.</p>
           </div>
 
           {/* Fecha de Nacimiento */}
