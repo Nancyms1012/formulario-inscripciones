@@ -15,7 +15,7 @@ import {
 } from '@/lib/categories';
 import type { Gender, EventType } from '@/lib/categories';
 import { getPaymentLink } from '@/lib/payment-links';
-import { sanitizeNombre, sanitizeApellido, sanitizeCedula, sanitizeNombreCompleto, pareceCorreo, MAX_NOMBRE, MAX_APELLIDO, MAX_CEDULA, MAX_NOMBRE_COMPLETO } from '@/lib/sanitize';
+import { sanitizeNombre, sanitizeApellido, sanitizeCedulaSmart, sanitizeNombreCompleto, pareceCorreo, MAX_NOMBRE, MAX_APELLIDO, MAX_NOMBRE_COMPLETO } from '@/lib/sanitize';
 
 export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' }) {
   // Control de T&C
@@ -110,7 +110,7 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
 
   // Validar cédula beneficiario
   const handleBenefCedulaChange = (value: string) => {
-    setBenefCedula(sanitizeCedula(value));
+    setBenefCedula(sanitizeCedulaSmart(value));
   };
 
   // Reset numero de ID cuando cambia nacionalidad o tipo de identificación

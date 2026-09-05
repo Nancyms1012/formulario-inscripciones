@@ -13,7 +13,7 @@ import {
 } from '@/lib/categories';
 import type { Gender, EventType } from '@/lib/categories';
 import { getPaymentLink } from '@/lib/payment-links';
-import { sanitizeNombre, sanitizeApellido, sanitizeCedula, sanitizeNombreCompleto, pareceCorreo, MAX_NOMBRE, MAX_APELLIDO, MAX_CEDULA, MAX_NOMBRE_COMPLETO } from '@/lib/sanitize';
+import { sanitizeNombre, sanitizeApellido, sanitizeCedulaSmart, sanitizeNombreCompleto, pareceCorreo, MAX_NOMBRE, MAX_APELLIDO, MAX_CEDULA, MAX_NOMBRE_COMPLETO } from '@/lib/sanitize';
 
 export default function FormularioKids() {
   // Control de T&C
@@ -462,11 +462,11 @@ export default function FormularioKids() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">{"# Cédula *"}</label>
             <input type="text" value={encargadoCedula}
-              onChange={(e) => setEncargadoCedula(sanitizeCedula(e.target.value))} required
-              placeholder="Número de cédula"
+              onChange={(e) => setEncargadoCedula(sanitizeCedulaSmart(e.target.value))} required
+              placeholder="Número de cédula o pasaporte"
               maxLength={MAX_CEDULA}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent" />
-            <p className="text-xs text-gray-400 mt-1">Solo el número de cédula. No es un correo.</p>
+            <p className="text-xs text-gray-400 mt-1">Cédula: solo números. Pasaporte: puede iniciar con letras. Sin símbolos.</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">{"# Teléfono *"}</label>

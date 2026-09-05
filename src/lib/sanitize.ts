@@ -60,6 +60,30 @@ export function sanitizeCedula(value: string): string {
 }
 
 /**
+ * Limpia una cédula/identificación aplicando reglas según el PRIMER carácter:
+ * - Si empieza con NÚMERO: solo se permiten números (cédula nacional).
+ * - Si empieza con LETRA: se permiten letras y números (pasaporte/extranjero).
+ * - Nunca se permiten símbolos, espacios ni "@".
+ * - Máximo 20 caracteres.
+ */
+export function sanitizeCedulaSmart(value: string): string {
+  // Primero quitar todo lo que no sea letra o número
+  const limpio = value.replace(/[^a-zA-Z0-9]/g, '');
+  if (limpio.length === 0) return '';
+
+  const primero = limpio[0];
+  let v: string;
+  if (/[0-9]/.test(primero)) {
+    // Empieza con número → solo números
+    v = limpio.replace(/[^0-9]/g, '');
+  } else {
+    // Empieza con letra → letras y números
+    v = limpio; // ya está limpio de símbolos
+  }
+  return v.slice(0, MAX_CEDULA);
+}
+
+/**
  * ¿El texto parece un correo electrónico? (para bloquear al enviar)
  */
 export function pareceCorreo(value: string): boolean {
