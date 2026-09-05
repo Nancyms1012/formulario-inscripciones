@@ -79,10 +79,21 @@ export default function CheckinPage() {
   const [mostrarLista, setMostrarLista] = useState(false);
   const [filtroLista, setFiltroLista] = useState<'todos' | 'hechos' | 'pendientes'>('todos');
 
+  // QR hacia la página de consulta para jueces
+  const [qrJueces, setQrJueces] = useState('');
+  const [urlJueces, setUrlJueces] = useState('');
+
   // Cargar operador guardado en el navegador
   useEffect(() => {
     const guardado = typeof window !== 'undefined' ? localStorage.getItem('checkin_operador') : null;
     if (guardado) setOperador(guardado);
+
+    // Generar QR de /jueces con el dominio actual
+    if (typeof window !== 'undefined') {
+      const url = `${window.location.origin}/jueces`;
+      setUrlJueces(url);
+      setQrJueces(`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(url)}`);
+    }
   }, []);
 
   const guardarOperador = () => {
@@ -414,6 +425,19 @@ export default function CheckinPage() {
             <p className="text-xs text-gray-400 mt-2">Balance · Niños · Preinfantil</p>
           </button>
         </div>
+
+        {/* QR para jueces (consulta de solo lectura) */}
+        <div className="bg-white rounded-xl shadow-md p-6 mt-6 text-center">
+          <h2 className="text-sm font-bold text-[#0d2240] uppercase mb-1">Consulta para Jueces</h2>
+          <p className="text-gray-500 text-sm mb-4">Escaneá este código para ver el listado (solo consulta)</p>
+          {qrJueces && (
+            <img src={qrJueces} alt="QR consulta jueces" className="mx-auto rounded-lg" width={180} height={180} />
+          )}
+          <a href="/jueces" target="_blank" rel="noopener noreferrer"
+            className="inline-block mt-3 text-sm text-[#1a4f8b] hover:underline break-all">
+            {urlJueces || '/jueces'}
+          </a>
+        </div>
       </div>
     );
   }
@@ -437,6 +461,8 @@ export default function CheckinPage() {
           <button onClick={cambiarOperador} className="ml-2 text-[#1a4f8b] hover:underline">(cambiar)</button>
           <span className="mx-2 text-gray-300">|</span>
           <button onClick={() => { setModo(null); limpiar(); }} className="text-[#1a4f8b] hover:underline">Cambiar grupo</button>
+          <span className="mx-2 text-gray-300">|</span>
+          <a href="/jueces" target="_blank" rel="noopener noreferrer" className="text-[#1a4f8b] hover:underline">Consulta jueces</a>
         </p>
       </div>
 
