@@ -40,6 +40,12 @@ export async function POST(request: NextRequest) {
             </div>
           </div>
           <p style="color: #4a5568; font-size: 14px;">Toca el QR o el boton para ver tus datos, o presentalo el dia del evento para tu check-in.</p>
+          <div style="text-align: center; margin: 24px 0; padding-top: 8px; border-top: 1px dashed #e2e8f0;">
+            <p style="color: #4a5568; font-size: 14px; margin-bottom: 12px;">Podes ver la lista de inscritos aqui:</p>
+            <a href="https://inscripciones.raceclubhub.com/inscritos" target="_blank" style="display: inline-block; background: #1a4f8b; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: bold; font-size: 14px;">
+              Ver lista de inscritos
+            </a>
+          </div>
           <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
           <p style="color: #94a3b8; font-size: 12px; text-align: center;">La Copa - Carreras de Ciclismo</p>
         </div>
