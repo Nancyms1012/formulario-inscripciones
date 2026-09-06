@@ -13,6 +13,10 @@ export async function POST(request: NextRequest) {
     const urlMiInscripcion = `https://inscripciones.raceclubhub.com/mi-inscripcion?codigo=${encodeURIComponent(codigoInscripcion)}`;
     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(urlMiInscripcion)}`;
 
+    // Enlace a la lista de inscritos del grupo que corresponde (Kids o La Copa)
+    const grupoInscritos = evento === 'Copa Kids' ? 'kids' : 'copa';
+    const urlInscritos = `https://inscripciones.raceclubhub.com/inscritos/lista?grupo=${grupoInscritos}`;
+
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f8fafc; padding: 20px;">
         <div style="background: #0d2240; padding: 20px; border-radius: 12px 12px 0 0; text-align: center;">
@@ -42,7 +46,7 @@ export async function POST(request: NextRequest) {
           <p style="color: #4a5568; font-size: 14px;">Toca el QR o el boton para ver tus datos, o presentalo el dia del evento para tu check-in.</p>
           <div style="text-align: center; margin: 24px 0; padding-top: 8px; border-top: 1px dashed #e2e8f0;">
             <p style="color: #4a5568; font-size: 14px; margin-bottom: 12px;">Podes ver la lista de inscritos aqui:</p>
-            <a href="https://inscripciones.raceclubhub.com/inscritos" target="_blank" style="display: inline-block; background: #1a4f8b; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: bold; font-size: 14px;">
+            <a href="${urlInscritos}" target="_blank" style="display: inline-block; background: #1a4f8b; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: bold; font-size: 14px;">
               Ver lista de inscritos
             </a>
           </div>
