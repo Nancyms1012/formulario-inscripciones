@@ -30,6 +30,7 @@ export interface InscripcionData {
   fechaNacimiento: string;
   genero: string;
   provincia: string;
+  canton: string;
   equipo: string;
   tipoLicencia: string;
   uciId: string;
@@ -86,6 +87,7 @@ export async function guardarInscripcion(datos: InscripcionData): Promise<{ codi
       fecha_nacimiento: datos.fechaNacimiento,
       genero: datos.genero,
       provincia: datos.provincia,
+      canton: datos.canton,
       equipo: datos.equipo,
       tipo_licencia: datos.tipoLicencia,
       uci_id: datos.uciId,
@@ -122,6 +124,7 @@ export interface InscripcionKidsData {
   fechaNacimiento: string;
   genero: string;
   provincia: string;
+  canton: string;
   lateralidad: string;
   categoria: string;
   equipo: string;
@@ -177,6 +180,7 @@ export async function guardarInscripcionKids(datos: InscripcionKidsData): Promis
       fecha_nacimiento: datos.fechaNacimiento,
       genero: datos.genero,
       provincia: datos.provincia,
+      canton: datos.canton,
       equipo: datos.equipo,
       tipo_licencia: '',
       uci_id: '',

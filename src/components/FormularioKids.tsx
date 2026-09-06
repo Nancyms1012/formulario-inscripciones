@@ -14,6 +14,7 @@ import {
 import type { Gender, EventType } from '@/lib/categories';
 import { getPaymentLink } from '@/lib/payment-links';
 import { sanitizeNombre, sanitizeApellido, sanitizeCedulaSmart, sanitizeNombreCompleto, pareceCorreo, MAX_NOMBRE, MAX_APELLIDO, MAX_CEDULA, MAX_NOMBRE_COMPLETO } from '@/lib/sanitize';
+import { getCantones } from '@/lib/cantones';
 
 export default function FormularioKids() {
   // Control de T&C
@@ -32,6 +33,7 @@ export default function FormularioKids() {
   const [anio, setAnio] = useState('');
   const [genero, setGenero] = useState<Gender | ''>('');
   const [provincia, setProvincia] = useState('');
+  const [canton, setCanton] = useState('');
   const [lateralidad, setLateralidad] = useState('');
 
   // Categoría
@@ -159,6 +161,7 @@ export default function FormularioKids() {
       fechaNacimiento: `${anio}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`,
       genero,
       provincia,
+      canton,
       lateralidad,
       categoria,
       equipo,
@@ -395,10 +398,20 @@ export default function FormularioKids() {
           {/* Provincia */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">{"Provincia *"}</label>
-            <select value={provincia} onChange={(e) => setProvincia(e.target.value)} required
+            <select value={provincia} onChange={(e) => { setProvincia(e.target.value); setCanton(''); }} required
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent">
               <option value="">{"Seleccionar..."}</option>
               {PROVINCIAS.map((p) => (<option key={p} value={p}>{p}</option>))}
+            </select>
+          </div>
+          {/* Cantón (depende de la provincia) */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{"Cantón *"}</label>
+            <select value={canton} onChange={(e) => setCanton(e.target.value)} required
+              disabled={!provincia}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent disabled:bg-gray-100 disabled:text-gray-400">
+              <option value="">{provincia ? 'Seleccionar...' : 'Elegí primero la provincia'}</option>
+              {getCantones(provincia).map((c) => (<option key={c} value={c}>{c}</option>))}
             </select>
           </div>
           {/* Lateralidad */}

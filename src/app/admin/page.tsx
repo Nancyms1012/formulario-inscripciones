@@ -18,6 +18,7 @@ interface Inscripcion {
   fecha_nacimiento?: string;
   genero: string;
   provincia: string;
+  canton?: string;
   equipo?: string;
   tipo_licencia?: string;
   uci_id?: string;
@@ -50,7 +51,8 @@ export default function AdminPage() {
   const [filtroEvento, setFiltroEvento] = useState('');
   const [filtroCategoria, setFiltroCategoria] = useState('');
   const [busqueda, setBusqueda] = useState('');
-  const [tab, setTab] = useState<'inscripciones' | 'resumen'>('inscripciones');
+  const [tab, setTab] = useState<'inscripciones' | 'resumen' | 'cantones'>('inscripciones');
+  const [cantonEvento, setCantonEvento] = useState(''); // filtro de evento para la gráfica de cantones
   const [detalle, setDetalle] = useState<Inscripcion | null>(null);
   const [editando, setEditando] = useState(false);
   const [editForm, setEditForm] = useState<Partial<Inscripcion>>({});
@@ -78,6 +80,7 @@ export default function AdminPage() {
         email: editForm.email,
         celular: editForm.celular,
         provincia: editForm.provincia,
+        canton: editForm.canton,
         equipo: editForm.equipo,
         tipo_licencia: editForm.tipo_licencia,
         uci_id: editForm.uci_id,
@@ -229,6 +232,24 @@ export default function AdminPage() {
     }, {} as Record<string, { evento: string; categoria: string; inscritos: number; pagoPendiente: number; factura: number }>)
   ).sort((a, b) => a.evento.localeCompare(b.evento) || a.categoria.localeCompare(b.categoria));
 
+  // ===== Datos para la gráfica por cantón (uso interno de la organización) =====
+  // Inscritos por cantón, filtrable por evento
+  const inscritosCanton = cantonEvento
+    ? todasInscripciones.filter((i) => i.evento === cantonEvento)
+    : todasInscripciones;
+
+  const conteoPorCanton = inscritosCanton.reduce((acc, i) => {
+    const c = (i.canton && i.canton.trim()) ? i.canton.trim() : 'Sin cantón';
+    acc[c] = (acc[c] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const cantonesOrdenados = Object.entries(conteoPorCanton)
+    .map(([canton, cantidad]) => ({ canton, cantidad }))
+    .sort((a, b) => b.cantidad - a.cantidad); // de mayor a menor
+
+  const maxCanton = cantonesOrdenados.length > 0 ? cantonesOrdenados[0].cantidad : 0;
+
   // Subir CSV de dorsales (match por número de identificación)
   const [subiendoDorsales, setSubiendoDorsales] = useState(false);
 
@@ -306,7 +327,7 @@ export default function AdminPage() {
     const columnas = [
       'codigo_inscripcion', 'nacionalidad', 'tipo_identificacion', 'numero_identificacion',
       'nombre', 'primer_apellido', 'segundo_apellido', 'celular', 'email',
-      'fecha_nacimiento', 'genero', 'provincia', 'equipo', 'tipo_licencia', 'uci_id',
+      'fecha_nacimiento', 'genero', 'provincia', 'canton', 'equipo', 'tipo_licencia', 'uci_id',
       'evento', 'categoria', 'beneficiario_nombre', 'beneficiario_cedula',
       'beneficiario_telefono', 'beneficiario_parentesco', 'metodo_pago',
       'estado_pago', 'requiere_factura', 'checkin', 'checkin_fecha', 'created_at'
@@ -315,7 +336,7 @@ export default function AdminPage() {
     const encabezados = [
       'Código', 'Nacionalidad', 'Tipo ID', '# Identificación',
       'Nombre', 'Primer Apellido', 'Segundo Apellido', 'Celular', 'Email',
-      'Fecha Nacimiento', 'Género', 'Provincia', 'Equipo', 'Tipo Licencia', 'UCI ID',
+      'Fecha Nacimiento', 'Género', 'Provincia', 'Cantón', 'Equipo', 'Tipo Licencia', 'UCI ID',
       'Evento', 'Categoría', 'Beneficiario Nombre', 'Beneficiario Cédula',
       'Beneficiario Teléfono', 'Beneficiario Parentesco', 'Método Pago',
       'Estado Pago', 'Requiere Factura', 'Check-in', 'Fecha Check-in', 'Fecha Inscripción'
@@ -395,7 +416,63 @@ export default function AdminPage() {
         >
           Resumen
         </button>
+        <button
+          onClick={() => setTab('cantones')}
+          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+            tab === 'cantones' ? 'border-[#0d2240] text-[#0d2240]' : 'border-transparent text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          Cantones
+        </button>
       </div>
+
+      {/* ===== TAB CANTONES (gráfica por evento y cantón - uso interno organización) ===== */}
+      {tab === 'cantones' && (
+        <div>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+            <div>
+              <h2 className="text-lg font-bold text-[#0d2240]">Inscritos por cantón</h2>
+              <p className="text-sm text-gray-500">Para planificar sedes de próximas fechas.</p>
+            </div>
+            <div>
+              <label className="text-sm text-gray-600 mr-2">Evento:</label>
+              <select value={cantonEvento} onChange={(e) => setCantonEvento(e.target.value)}
+                className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#1a4f8b]">
+                <option value="">Todos los eventos</option>
+                {Object.keys(totalPorEvento).sort().map((ev) => <option key={ev} value={ev}>{ev}</option>)}
+              </select>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-md p-5">
+            <p className="text-sm text-gray-500 mb-4">
+              {inscritosCanton.length} inscrito{inscritosCanton.length !== 1 ? 's' : ''}
+              {cantonEvento ? ` en ${cantonEvento}` : ' (todos los eventos)'} · {cantonesOrdenados.length} cantón(es)
+            </p>
+
+            {cantonesOrdenados.length === 0 ? (
+              <p className="text-gray-400 text-center py-6">No hay datos para mostrar.</p>
+            ) : (
+              <div className="space-y-2">
+                {cantonesOrdenados.map(({ canton, cantidad }) => {
+                  const pct = maxCanton > 0 ? Math.round((cantidad / maxCanton) * 100) : 0;
+                  return (
+                    <div key={canton} className="flex items-center gap-3">
+                      <div className="w-40 shrink-0 text-sm text-gray-700 text-right truncate" title={canton}>{canton}</div>
+                      <div className="flex-1 bg-gray-100 rounded-full h-6 overflow-hidden">
+                        <div className="bg-[#1a4f8b] h-6 rounded-full flex items-center justify-end px-2 transition-all"
+                          style={{ width: `${Math.max(pct, 6)}%` }}>
+                          <span className="text-xs font-bold text-white">{cantidad}</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* ===== TAB RESUMEN ===== */}
       {tab === 'resumen' && (
@@ -664,6 +741,7 @@ export default function AdminPage() {
                   <div><span className="text-gray-500">Género:</span> {detalle.genero === 'F' ? 'Femenino' : 'Masculino'}</div>
                   <div><span className="text-gray-500">Fecha nacimiento:</span> {detalle.fecha_nacimiento || '—'}</div>
                   <div><span className="text-gray-500">Provincia:</span> {detalle.provincia}</div>
+                  <div><span className="text-gray-500">Cantón:</span> {detalle.canton || '—'}</div>
                   <div><span className="text-gray-500">Celular:</span> {detalle.celular}</div>
                   <div className="col-span-2"><span className="text-gray-500">Email:</span> {detalle.email}</div>
                 </div>
@@ -758,6 +836,9 @@ export default function AdminPage() {
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 mt-1" /></label>
                 <label className="block"><span className="text-gray-500 text-xs">Provincia</span>
                   <input type="text" value={editForm.provincia || ''} onChange={(e) => setEditForm({ ...editForm, provincia: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 mt-1" /></label>
+                <label className="block"><span className="text-gray-500 text-xs">Cantón</span>
+                  <input type="text" value={editForm.canton || ''} onChange={(e) => setEditForm({ ...editForm, canton: e.target.value })}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 mt-1" /></label>
                 <label className="block"><span className="text-gray-500 text-xs">Dorsal</span>
                   <input type="text" value={editForm.dorsal || ''} onChange={(e) => setEditForm({ ...editForm, dorsal: e.target.value })}
