@@ -25,6 +25,56 @@ export async function getCuposKids(): Promise<{ inscritos: number; disponibles: 
   return { inscritos, disponibles, maximo: CUPO_MAXIMO_KIDS };
 }
 
+export interface DatosCorreo {
+  id?: string; // id de la inscripción (para marcar email_enviado)
+  email: string;
+  nombre: string;
+  primerApellido: string;
+  codigoInscripcion: string;
+  evento: string;
+  categoria: string;
+}
+
+/**
+ * Envía el correo de confirmación vía la API route y marca email_enviado en Supabase.
+ * Devuelve true si el correo se envió correctamente, false si falló (límite, error, etc.).
+ * Si falla, la inscripción queda con email_enviado = false para reenviar luego.
+ */
+export async function enviarCorreoConfirmacion(datos: DatosCorreo): Promise<boolean> {
+  let enviado = false;
+  try {
+    const res = await fetch('/api/email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: datos.email,
+        nombre: datos.nombre,
+        primerApellido: datos.primerApellido,
+        codigoInscripcion: datos.codigoInscripcion,
+        evento: datos.evento,
+        categoria: datos.categoria,
+      }),
+    });
+    enviado = res.ok;
+  } catch {
+    enviado = false;
+  }
+
+  // Marcar el estado del correo en la BD (si tenemos el id de la inscripción)
+  if (datos.id) {
+    try {
+      await supabaseClient
+        .from('inscripciones')
+        .update({ email_enviado: enviado })
+        .eq('id', datos.id);
+    } catch {
+      /* no bloquear por error al marcar */
+    }
+  }
+
+  return enviado;
+}
+
 /**
  * Verifica si ya existe una inscripción duplicada.
  * - La Copa: se pasa `categoria` → bloquea por cédula + evento + categoría
@@ -102,7 +152,7 @@ export interface InscripcionData {
   estadoPagoInicial?: 'pendiente' | 'confirmado';
 }
 
-export async function guardarInscripcion(datos: InscripcionData): Promise<{ codigoInscripcion: string }> {
+export async function guardarInscripcion(datos: InscripcionData): Promise<{ codigoInscripcion: string; id?: string }> {
   const codigoInscripcion = generarCodigo();
 
   // Subir comprobante si existe
@@ -125,7 +175,7 @@ export async function guardarInscripcion(datos: InscripcionData): Promise<{ codi
   }
 
   // Insertar inscripción
-  const { error } = await supabaseClient
+  const { data: insertData, error } = await supabaseClient
     .from('inscripciones')
     .insert({
       codigo_inscripcion: codigoInscripcion,
@@ -157,13 +207,15 @@ export async function guardarInscripcion(datos: InscripcionData): Promise<{ codi
       factura_cedula: datos.facturaCedula,
       factura_email: datos.facturaEmail,
       estado_pago: datos.estadoPagoInicial || 'pendiente',
-    });
+    })
+    .select('id')
+    .single();
 
   if (error) {
     throw new Error(`Error al guardar: ${error.message}`);
   }
 
-  return { codigoInscripcion };
+  return { codigoInscripcion, id: insertData?.id as string | undefined };
 }
 
 
@@ -195,7 +247,7 @@ export interface InscripcionKidsData {
   estadoPagoInicial?: 'pendiente' | 'confirmado';
 }
 
-export async function guardarInscripcionKids(datos: InscripcionKidsData): Promise<{ codigoInscripcion: string }> {
+export async function guardarInscripcionKids(datos: InscripcionKidsData): Promise<{ codigoInscripcion: string; id?: string }> {
   const codigoInscripcion = generarCodigo();
 
   // Subir comprobante si existe
@@ -218,7 +270,7 @@ export async function guardarInscripcionKids(datos: InscripcionKidsData): Promis
   }
 
   // Insertar inscripción Kids
-  const { error } = await supabaseClient
+  const { data: insertData, error } = await supabaseClient
     .from('inscripciones')
     .insert({
       codigo_inscripcion: codigoInscripcion,
@@ -250,11 +302,13 @@ export async function guardarInscripcionKids(datos: InscripcionKidsData): Promis
       factura_cedula: datos.facturaCedula,
       factura_email: datos.facturaEmail,
       estado_pago: datos.estadoPagoInicial || 'pendiente',
-    });
+    })
+    .select('id')
+    .single();
 
   if (error) {
     throw new Error(`Error al guardar: ${error.message}`);
   }
 
-  return { codigoInscripcion };
+  return { codigoInscripcion, id: insertData?.id as string | undefined };
 }

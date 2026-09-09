@@ -247,18 +247,16 @@ export default function FormularioKids() {
 
       setCodigoInscripcion(resultado.codigoInscripcion);
 
-      // Enviar email de confirmación al encargado
-      fetch('/api/email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: encargadoEmail,
-          nombre,
-          primerApellido,
-          codigoInscripcion: resultado.codigoInscripcion,
-          evento: 'Copa Kids',
-          categoria,
-        }),
+      // Enviar email de confirmación al encargado y marcar email_enviado (para reenvío si falla)
+      const { enviarCorreoConfirmacion } = await import('@/lib/inscripcion-client');
+      enviarCorreoConfirmacion({
+        id: resultado.id,
+        email: encargadoEmail,
+        nombre,
+        primerApellido,
+        codigoInscripcion: resultado.codigoInscripcion,
+        evento: 'Copa Kids',
+        categoria,
       }).catch(() => {});
 
       setExito(true);

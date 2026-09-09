@@ -37,6 +37,7 @@ interface Inscripcion {
   factura_cedula?: string;
   factura_email?: string;
   comprobante_sinpe_url: string | null;
+  email_enviado?: boolean;
   checkin: boolean;
   checkin_fecha: string | null;
   checkin_xcc?: boolean;
@@ -53,6 +54,9 @@ export default function AdminPage() {
   const [filtroEvento, setFiltroEvento] = useState('');
   const [filtroCategoria, setFiltroCategoria] = useState('');
   const [filtroFactura, setFiltroFactura] = useState(false);
+  const [filtroCorreoPendiente, setFiltroCorreoPendiente] = useState(false);
+  const [reenviando, setReenviando] = useState<string | null>(null); // id en proceso
+  const [reenviandoLote, setReenviandoLote] = useState(false);
   const [busqueda, setBusqueda] = useState('');
   const [tab, setTab] = useState<'inscripciones' | 'resumen' | 'cantones'>('inscripciones');
   const [cantonEvento, setCantonEvento] = useState(''); // filtro de evento para la gráfica de cantones
@@ -208,9 +212,78 @@ export default function AdminPage() {
     )
   ).sort((a, b) => a.localeCompare(b));
 
-  // Filtrar por búsqueda local + filtro de factura
+  // Reenviar el correo de confirmación de UNA inscripción
+  const reenviarCorreo = async (insc: Inscripcion) => {
+    setReenviando(insc.id);
+    try {
+      const { enviarCorreoConfirmacion } = await import('@/lib/inscripcion-client');
+      const ok = await enviarCorreoConfirmacion({
+        id: insc.id,
+        email: insc.email,
+        nombre: insc.nombre,
+        primerApellido: insc.primer_apellido,
+        codigoInscripcion: insc.codigo_inscripcion,
+        evento: insc.evento,
+        categoria: insc.categoria,
+      });
+      const actualizar = (arr: Inscripcion[]) => arr.map((i) => i.id === insc.id ? { ...i, email_enviado: ok } : i);
+      setInscripciones(actualizar);
+      setTodasInscripciones(actualizar);
+      alert(ok ? 'Correo reenviado correctamente.' : 'No se pudo enviar el correo (posible límite de Resend). Intentá más tarde.');
+    } catch {
+      alert('Error al reenviar el correo.');
+    } finally {
+      setReenviando(null);
+    }
+  };
+
+  // Reenviar en LOTE a todos los que tienen el correo pendiente (con la vista filtrada actual)
+  const reenviarPendientes = async (lista: Inscripcion[]) => {
+    const pendientes = lista.filter((i) => i.email_enviado === false && i.email);
+    if (pendientes.length === 0) {
+      alert('No hay correos pendientes en la vista actual.');
+      return;
+    }
+    if (!window.confirm(`¿Reenviar el correo a ${pendientes.length} inscrito(s) con correo pendiente?`)) return;
+
+    setReenviandoLote(true);
+    try {
+      const { enviarCorreoConfirmacion } = await import('@/lib/inscripcion-client');
+      let enviados = 0;
+      let fallidos = 0;
+      for (const insc of pendientes) {
+        const ok = await enviarCorreoConfirmacion({
+          id: insc.id,
+          email: insc.email,
+          nombre: insc.nombre,
+          primerApellido: insc.primer_apellido,
+          codigoInscripcion: insc.codigo_inscripcion,
+          evento: insc.evento,
+          categoria: insc.categoria,
+        });
+        if (ok) {
+          enviados++;
+          const actualizar = (arr: Inscripcion[]) => arr.map((i) => i.id === insc.id ? { ...i, email_enviado: true } : i);
+          setInscripciones(actualizar);
+          setTodasInscripciones(actualizar);
+        } else {
+          fallidos++;
+        }
+        // Pequeña pausa para no saturar
+        await new Promise((r) => setTimeout(r, 300));
+      }
+      alert(`Reenvío terminado.\nEnviados: ${enviados}\nFallidos (reintentá luego): ${fallidos}`);
+    } catch {
+      alert('Error durante el reenvío en lote.');
+    } finally {
+      setReenviandoLote(false);
+    }
+  };
+
+  // Filtrar por búsqueda local + filtro de factura + filtro de correo pendiente
   const inscripcionesFiltradas = inscripciones.filter((insc) => {
     if (filtroFactura && !insc.requiere_factura) return false;
+    if (filtroCorreoPendiente && insc.email_enviado !== false) return false;
     if (!busqueda) return true;
     const texto = busqueda.toLowerCase();
     return (
@@ -667,16 +740,35 @@ export default function AdminPage() {
             ))}
           </select>
         </div>
-        <div className="mt-4 pt-3 border-t border-gray-100">
-          <label className="inline-flex items-center gap-2 cursor-pointer text-sm text-gray-700">
-            <input
-              type="checkbox"
-              checked={filtroFactura}
-              onChange={(e) => setFiltroFactura(e.target.checked)}
-              className="h-4 w-4 text-[#1a4f8b] rounded focus:ring-[#1a4f8b]"
-            />
-            Mostrar solo los que requieren Factura Electrónica
-          </label>
+        <div className="mt-4 pt-3 border-t border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="flex flex-col gap-2">
+            <label className="inline-flex items-center gap-2 cursor-pointer text-sm text-gray-700">
+              <input
+                type="checkbox"
+                checked={filtroFactura}
+                onChange={(e) => setFiltroFactura(e.target.checked)}
+                className="h-4 w-4 text-[#1a4f8b] rounded focus:ring-[#1a4f8b]"
+              />
+              Mostrar solo los que requieren Factura Electrónica
+            </label>
+            <label className="inline-flex items-center gap-2 cursor-pointer text-sm text-gray-700">
+              <input
+                type="checkbox"
+                checked={filtroCorreoPendiente}
+                onChange={(e) => setFiltroCorreoPendiente(e.target.checked)}
+                className="h-4 w-4 text-[#1a4f8b] rounded focus:ring-[#1a4f8b]"
+              />
+              Mostrar solo los que tienen el correo pendiente
+            </label>
+          </div>
+          <button
+            onClick={() => reenviarPendientes(inscripcionesFiltradas)}
+            disabled={reenviandoLote}
+            className="bg-amber-500 text-white px-4 py-2 rounded-lg hover:bg-amber-600 transition-colors text-sm font-medium disabled:opacity-50 whitespace-nowrap"
+            title="Reenvía el correo a los inscritos con correo pendiente en la vista actual"
+          >
+            {reenviandoLote ? 'Reenviando...' : 'Reenviar correos pendientes'}
+          </button>
         </div>
       </div>
 
@@ -700,6 +792,7 @@ export default function AdminPage() {
                   <th className="px-4 py-3 text-left">Categoría</th>
                   <th className="px-4 py-3 text-left">Pago</th>
                   <th className="px-4 py-3 text-left">Comprobante</th>
+                  <th className="px-4 py-3 text-left">Correo</th>
                   <th className="px-4 py-3 text-left">Check-in</th>
                   <th className="px-4 py-3 text-left">Fecha</th>
                   <th className="px-4 py-3 text-left">Acciones</th>
@@ -738,6 +831,20 @@ export default function AdminPage() {
                         </a>
                       ) : (
                         <span className="text-gray-400 text-xs">{insc.metodo_pago === 'Sinpe' ? 'Sin archivo' : '—'}</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      {insc.email_enviado === false ? (
+                        <button
+                          onClick={() => reenviarCorreo(insc)}
+                          disabled={reenviando === insc.id}
+                          className="text-amber-700 bg-amber-50 hover:bg-amber-100 rounded px-2 py-1 text-xs font-medium transition-colors disabled:opacity-50"
+                          title="El correo no se envió. Clic para reenviar."
+                        >
+                          {reenviando === insc.id ? 'Enviando...' : 'Pendiente · Reenviar'}
+                        </button>
+                      ) : (
+                        <span className="text-green-600 text-xs font-medium" title="Correo enviado">&#10003; Enviado</span>
                       )}
                     </td>
                     <td className="px-4 py-3">

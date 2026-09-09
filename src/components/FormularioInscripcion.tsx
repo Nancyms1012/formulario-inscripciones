@@ -224,18 +224,16 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
 
       setCodigoInscripcion(resultado.codigoInscripcion);
 
-      // Enviar email de confirmación con QR (via API route)
-      fetch('/api/email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email,
-          nombre,
-          primerApellido,
-          codigoInscripcion: resultado.codigoInscripcion,
-          evento,
-          categoria,
-        }),
+      // Enviar email de confirmación con QR y marcar email_enviado (para reenvío si falla)
+      const { enviarCorreoConfirmacion } = await import('@/lib/inscripcion-client');
+      enviarCorreoConfirmacion({
+        id: resultado.id,
+        email,
+        nombre,
+        primerApellido,
+        codigoInscripcion: resultado.codigoInscripcion,
+        evento,
+        categoria,
       }).catch(() => {}); // No bloquear si falla
 
       setExito(true);
