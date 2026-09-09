@@ -118,6 +118,16 @@ export default function FormularioKids() {
       return;
     }
 
+    // Validar que haya una categoría seleccionada
+    if (!categoria) {
+      if (categoriasDisponibles.length === 0) {
+        setError('La edad del participante no corresponde a ninguna categoría de Copa Kids (máximo 12 años). Verificá la fecha de nacimiento.');
+      } else {
+        setError('Debés seleccionar una categoría para continuar.');
+      }
+      return;
+    }
+
     // Validar comprobante Sinpe obligatorio
     if (metodoPago === 'Sinpe' && !comprobante) {
       setError('Debés adjuntar el comprobante de Sinpe para continuar.');
@@ -329,7 +339,8 @@ export default function FormularioKids() {
               <select value={anio} onChange={(e) => setAnio(e.target.value)} required
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent">
                 <option value="">{"Año"}</option>
-                {Array.from({ length: 15 }, (_, i) => CURRENT_YEAR - i).map((y) => (
+                {/* Copa Kids: edad máxima 12 años → desde CURRENT_YEAR hasta CURRENT_YEAR-12 */}
+                {Array.from({ length: 13 }, (_, i) => CURRENT_YEAR - i).map((y) => (
                   <option key={y} value={y.toString()}>{y}</option>
                 ))}
               </select>
