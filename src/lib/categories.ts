@@ -38,7 +38,8 @@ export const RACE_CATEGORIES: Category[] = [
   // Categorías adicionales
   { name: 'Open', gender: 'F/M', minAge: 18, maxAge: null, availableCategories: ['Open'] },
   { name: 'E-Bike', gender: 'F/M', minAge: 18, maxAge: null, availableCategories: ['E-Bike'] },
-  { name: 'Cyclocross', gender: 'F/M', minAge: 17, maxAge: null, availableCategories: ['Cyclocross'] },
+  // Cyclocross desactivado: no se corre en esta fecha. Descomentar para reactivar.
+  // { name: 'Cyclocross', gender: 'F/M', minAge: 17, maxAge: null, availableCategories: ['Cyclocross'] },
   { name: 'Pasados de línea', gender: 'M', minAge: 18, maxAge: null, availableCategories: ['Pasados de línea'] },
 ];
 
@@ -65,7 +66,8 @@ export function getCompetitiveAge(birthYear: number): number {
 // Estas NO dependen de la edad exacta más allá de un mínimo, y aparecen como opción extra
 export const CATEGORIAS_ESPECIALES: { name: string; gender: 'F' | 'M' | 'F/M'; minAge: number; eventos: EventType[] }[] = [
   { name: 'E-Bike', gender: 'F/M', minAge: 18, eventos: ['XCO', 'XCO+XCC'] },
-  { name: 'Cyclocross', gender: 'F/M', minAge: 17, eventos: ['XCO', 'XCC', 'XCO+XCC'] },
+  // Cyclocross desactivado: no se corre en esta fecha. Descomentar para reactivar.
+  // { name: 'Cyclocross', gender: 'F/M', minAge: 17, eventos: ['XCO', 'XCC', 'XCO+XCC'] },
   { name: 'Pasados de línea', gender: 'M', minAge: 18, eventos: ['XCO', 'XCC', 'XCO+XCC'] },
   { name: 'Ligas menores', gender: 'F/M', minAge: 0, eventos: ['XCC'] },
 
