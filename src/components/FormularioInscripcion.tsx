@@ -209,10 +209,10 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
     try {
       const { guardarInscripcion, verificarInscripcionExistente } = await import('@/lib/inscripcion-client');
 
-      // Verificar si ya está inscrito en este evento (evita duplicados por ID)
-      const existente = await verificarInscripcionExistente(numeroId, evento);
+      // Verificar duplicado por cédula + evento + categoría (permite misma cédula en otra categoría/evento)
+      const existente = await verificarInscripcionExistente(numeroId, evento, categoria);
       if (existente) {
-        setError(`Ya existe una inscripción para esta identificación en ${evento}: ${existente.nombre} ${existente.primer_apellido} (código ${existente.codigo_inscripcion}, categoría ${existente.categoria}). Si creés que es un error, contactá a la organización.`);
+        setError(`Ya existe una inscripción para esta identificación en ${evento} - ${existente.categoria}: ${existente.nombre} ${existente.primer_apellido} (código ${existente.codigo_inscripcion}). Si creés que es un error, contactá a la organización.`);
         setEnviando(false);
         return;
       }

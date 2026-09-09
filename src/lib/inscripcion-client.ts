@@ -9,21 +9,31 @@ const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 export const supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
 
 /**
- * Verifica si ya existe una inscripción con el mismo número de identificación en el mismo evento.
+ * Verifica si ya existe una inscripción duplicada.
+ * - La Copa: se pasa `categoria` → bloquea por cédula + evento + categoría
+ *   (permite la misma cédula en otra categoría o en otro evento).
+ * - Kids: se omite `categoria` → bloquea por cédula + evento (Copa Kids).
  * Devuelve los datos de la inscripción existente si la encuentra, o null si no existe.
  */
 export async function verificarInscripcionExistente(
   numeroIdentificacion: string,
-  evento: string
+  evento: string,
+  categoria?: string
 ): Promise<{ codigo_inscripcion: string; nombre: string; primer_apellido: string; categoria: string } | null> {
   if (!numeroIdentificacion || !evento) return null;
 
-  const { data, error } = await supabaseClient
+  let query = supabaseClient
     .from('inscripciones')
     .select('codigo_inscripcion, nombre, primer_apellido, categoria')
     .eq('numero_identificacion', numeroIdentificacion)
-    .eq('evento', evento)
-    .limit(1);
+    .eq('evento', evento);
+
+  // Si se pasa categoría (La Copa), también se filtra por categoría
+  if (categoria) {
+    query = query.eq('categoria', categoria);
+  }
+
+  const { data, error } = await query.limit(1);
 
   if (error) {
     // Si la consulta falla, no bloqueamos el registro (mejor permitir que bloquear por un error de red)
