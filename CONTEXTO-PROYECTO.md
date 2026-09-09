@@ -3,7 +3,7 @@
 > Documento de contexto/handoff. Resume decisiones, arquitectura, archivos clave, base de datos,
 > despliegue y pendientes del proyecto de inscripciones de ciclismo de montaña.
 >
-> Última actualización: 2 de agosto de 2026
+> Última actualización: 11 de agosto de 2026
 
 ---
 
@@ -60,6 +60,10 @@ Nacional de Ciclismo de Montaña de Costa Rica (ANCM), para el evento **"La Copa
 | `contador-visitas.sql` | Tabla + función de contador de visitas | ✅ Corrida por el usuario |
 | `migracion-dorsal.sql` | Agrega columna `dorsal` | ✅ Corrida por el usuario |
 | `migracion-checkin-por-dia.sql` | Columnas `checkin_xcc`, `checkin_xcc_fecha`, `checkin_xco`, `checkin_xco_fecha` | ⚠️ **PENDIENTE DE CONFIRMAR** |
+| `migracion-factura.sql` | Columnas `factura_nombre`, `factura_celular`, `factura_email` | ✅ Corrida por el usuario (11 ago) |
+| `migracion-factura-cedula.sql` | Columna `factura_cedula` | ⚠️ Revisar si se corrió |
+| `migracion-canton.sql` | Columna `canton` | ⚠️ Revisar si se corrió |
+| `migracion-checkin-operador.sql` | Datos del operador de check-in | ⚠️ Revisar si se corrió |
 
 ---
 
@@ -107,9 +111,48 @@ El evento dura 2 días. Definido en `src/lib/dias-evento.ts`:
 - Copa Kids: según Guía Técnica.
 - Se eliminó la categoría de prueba **"Prueba"** de Kids.
 
+#### Categorías Copa Kids (definitivas, edad = 2026 - año nacimiento)
+| Categoría | Edad |
+|---|---|
+| Balance (Niños A) | 1 a 4 años |
+| 0 a 4 años (Niños A) | 1 a 4 años |
+| 5 a 6 años (Niños B) | 5 a 6 años |
+| 7 a 8 años (Niños C) | 7 a 8 años |
+| 9 a 10 años (Niños D) | 9 a 10 años |
+| 11 a 12 años (Preinfantil) | 11 a 12 años |
+
+- **Edad máxima Kids: 12 años.** El selector de año en el formulario Kids muestra solo
+  años válidos (edad 1 a 12, o sea 2025 a 2014). Es esperado y correcto que Balance y
+  "0 a 4 años" compartan el mismo rango (ambas aparecen para 1-4 años).
+- **Validación:** el formulario Kids **bloquea el envío si no hay categoría seleccionada**
+  (el select `disabled` saltaba el `required` del navegador, lo que permitía inscribir sin
+  categoría; se corrigió con una validación explícita en el submit).
+
+### Formulario Copa Kids (`src/components/FormularioKids.tsx`)
+Componente **separado** de `FormularioInscripcion.tsx` (La Copa). Diferencias:
+- Datos personales del menor **sin celular ni email**, **con lateralidad** (Diestro/Zurdo/Ambidiestro).
+- Datos de la carrera: **solo categoría** (evento fijo "Copa Kids").
+- Sección **"Datos del Encargado"** (en lugar de Contacto de Emergencia): nombre, # cédula,
+  # teléfono, e-mail, parentesco.
+- **Validación:** la cédula del encargado no puede ser igual a la del menor.
+- El **correo de confirmación (QR) llega al correo del encargado** (el menor no tiene).
+- Header/layout propio **verde** (`#1a7a3a`) con logo Copa Kids (La Copa usa azul `#0d2240`).
+- Ambos formularios tienen botón **"Volver a la portada"** en el header.
+
+### Factura electrónica (NO automática con GTI todavía)
+- Al activar el check **"Requiero Factura Electrónica"** aparece un selector:
+  usar **datos del formulario** o **usar otros datos**.
+- Si elige "otros datos": campos obligatorios **nombre, # celular (506+8), correo**.
+- En La Copa "datos del formulario" = datos del participante; en Kids = datos del encargado.
+- Se guarda en Supabase: `factura_nombre`, `factura_celular`, `factura_email`.
+
 ### Pagos
 - Links de Tilopay mapeados en `payment-links.ts` por `"EVENTO|categoriaBase"`.
+- Función `getPaymentLink(evento, categoria)` normaliza quitando sufijo de género.
+- **68 combinaciones** configuradas. Copa Kids: todas ₡8.000, mismo link.
 - Juvenil XCO usa el mismo link que Prejuvenil (`https://tp.cr/l/MTQ5Nzc=`, ₡15000).
+- **Nota:** los links incluyen eventos **XCE / XCO+XCC+XCE / "Ligas menores"** que NO se usan
+  en este evento (el formulario solo ofrece XCO, XCC, XCO+XCC). Se dejaron para futuras fechas.
 
 ---
 
@@ -146,22 +189,48 @@ estado de pago, y contacto de emergencia (nombre, teléfono, cédula, parentesco
 | `f894645` | Fix: E-Bike solo sábado (XCC) |
 | `5de5c5e` | Quitar categoría "Prueba" de Kids |
 | `8fd122a` | **feat: Opción editar inscripción en Admin** |
+| — | Fix parse Turbopack/Cloudflare en T&C (texto movido a `src/lib/terminos.ts` y render dinámico) |
+| — | Formulario Kids separado (`FormularioKids.tsx`): sin celular/email, con lateralidad, Datos del Encargado, header verde |
+| — | Validación cédula encargado ≠ cédula menor (Kids) |
+| — | Factura electrónica con campos condicionales (usar datos del formulario u otros) + `migracion-factura.sql` |
+| — | Botón "Volver a la portada" en headers de Copa y Kids |
+| — | Fix Kids sin categoría + limitar edad a 12 años (selector de año 2025-2014) |
+| — | Fix nombres categorías Kids: 7-8 = Niños C, 9-10 = Niños D (en `categories.ts` y `payment-links.ts`) |
+| — | Fix filtro de categoría en Admin (el desplegable estaba vacío; ahora se llena con categorías reales) |
 
 ---
 
 ## 8. Pendientes / Puntos abiertos
 
-1. **Verificar deploy de Cloudflare del check-in por día.**
-   El usuario reportó que la pantalla de selección de día (XCC/XCO) no aparecía tras el deploy,
-   aunque el código está correcto en el repo (commit `520e0c6` / `f894645`).
-   Sospecha: auto-deploy de Cloudflare quedó desactualizado o desconectado.
-   → Confirmar que el deploy activo en Cloudflare tenga el último hash.
+1. **Confirmar que las migraciones SQL estén corridas en Supabase** (ver tabla sección 3):
+   `migracion-checkin-por-dia.sql`, `migracion-factura-cedula.sql`, `migracion-canton.sql`,
+   `migracion-checkin-operador.sql`. La de `migracion-factura.sql` ya se corrió (11 ago).
 
-2. **Confirmar migración `migracion-checkin-por-dia.sql` en Supabase.**
-   Sin esta migración, el check-in por día falla (faltan las columnas `checkin_xcc`/`checkin_xco`).
+2. **Facturación electrónica automática con GTI Costa Rica.**
+   Por ahora la factura solo captura datos (nombre/celular/correo); NO se emite automáticamente.
+   Requiere integración con GTI (pendiente de info del usuario).
 
-3. **Página de solo consulta para jueces (read-only).**
-   Vista de solo lectura del estado de check-in, pendiente de implementar.
+3. **Conectar dominio principal de La Copa.**
+   El dominio de La Copa NO está en la cuenta de Cloudflare del usuario (está en otra cuenta).
+   Decisión: usar **subdominio** (ej. `inscripciones.dominio-lacopa.com`), no ruta.
+   Requiere que quien administra ese dominio agregue un registro DNS (CNAME al Worker).
+   El usuario controla el código; solo el DNS depende de la otra persona.
+
+4. **Página de solo consulta para jueces (read-only).**
+   Existe `/jueces` (revisar estado). Vista de solo lectura del check-in.
+
+5. **Nota Supabase (plan gratuito):** el proyecto se **pausa por inactividad** (~7 días) y el
+   subdominio deja de resolver DNS → los formularios dan "Failed to fetch". Ya pasó una vez y
+   el usuario lo reactivó. Antes del evento, verificar que esté activo (o considerar plan Pro
+   / un keep-alive para que no se pause).
+
+## 8.b Estado FUNCIONANDO (a 11 ago 2026)
+- Formularios Copa y Kids funcionando y separados.
+- Pago con Tilopay (links por categoría-evento) integrado; tras pago exitoso vuelve a `/pago-exitoso`.
+- Sinpe: número + comprobante obligatorio. Efectivo y Tarjeta disponibles.
+- Factura electrónica (captura de datos) funcionando en ambos formularios.
+- Panel Admin: filtros (evento + categoría), resumen, cantones, edición, dorsales CSV, eliminar.
+- Fecha del evento: **VI Fecha Orosi · 12 y 13 Setiembre**.
 
 ---
 
