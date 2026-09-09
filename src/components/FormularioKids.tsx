@@ -12,6 +12,9 @@ import {
   CURRENT_YEAR,
 } from '@/lib/categories';
 import type { Gender, EventType } from '@/lib/categories';
+import { getPaymentLink } from '@/lib/payment-links';
+import { sanitizeNombre, sanitizeApellido, sanitizeCedulaSmart, sanitizeNombreCompleto, pareceCorreo, MAX_NOMBRE, MAX_APELLIDO, MAX_CEDULA, MAX_NOMBRE_COMPLETO } from '@/lib/sanitize';
+import { getCantones } from '@/lib/cantones';
 
 export default function FormularioKids() {
   // Control de T&C
@@ -30,11 +33,16 @@ export default function FormularioKids() {
   const [anio, setAnio] = useState('');
   const [genero, setGenero] = useState<Gender | ''>('');
   const [provincia, setProvincia] = useState('');
+  const [canton, setCanton] = useState('');
   const [lateralidad, setLateralidad] = useState('');
 
   // Categoría
   const [categoria, setCategoria] = useState('');
   const [categoriasDisponibles, setCategoriasDisponibles] = useState<string[]>([]);
+  const [equipo, setEquipo] = useState('');
+
+  // Link y monto de pago (Copa Kids)
+  const paymentLink = categoria ? getPaymentLink('Copa Kids', categoria) : null;
 
 
   // Datos del Encargado
@@ -52,7 +60,7 @@ export default function FormularioKids() {
   // Factura Electrónica
   const [facturaDatos, setFacturaDatos] = useState<'formulario' | 'otros'>('formulario');
   const [facturaNombre, setFacturaNombre] = useState('');
-  const [facturaCelular, setFacturaCelular] = useState('');
+  const [facturaCedula, setFacturaCedula] = useState('');
   const [facturaEmail, setFacturaEmail] = useState('');
 
   // UI State
@@ -87,8 +95,9 @@ export default function FormularioKids() {
         setNumeroId(cleaned.slice(0, 9));
       }
     } else {
+      // Extranjero / sin nacionalidad aún: solo letras y números (sin @, espacios ni símbolos)
       const cleaned = value.replace(/[^a-zA-Z0-9]/g, '');
-      setNumeroId(cleaned);
+      setNumeroId(cleaned.slice(0, 20));
     }
   };
 
@@ -110,6 +119,18 @@ export default function FormularioKids() {
         setError('La cédula física debe tener exactamente 9 dígitos.');
         return;
       }
+    }
+
+    // La identificación no puede contener @ ni espacios (evita correos)
+    if (/[@\s]/.test(numeroId)) {
+      setError('La identificación no puede contener @ ni espacios. Revisá el número de identificación.');
+      return;
+    }
+
+    // La cédula del encargado no debe parecer un correo
+    if (pareceCorreo(encargadoCedula)) {
+      setError('En "# Cédula" del encargado escribí solo el número de cédula, no un correo electrónico.');
+      return;
     }
 
     // Validar que la cédula del encargado no sea igual a la del menor
@@ -136,35 +157,56 @@ export default function FormularioKids() {
 
     // Determinar datos de factura (para Kids, "del formulario" = datos del encargado)
     const facturaNombreFinal = !requiereFactura ? '' : (facturaDatos === 'otros' ? facturaNombre : encargadoNombre);
-    const facturaCelularFinal = !requiereFactura ? '' : (facturaDatos === 'otros' ? facturaCelular : encargadoTelefono);
+    const facturaCedulaFinal = !requiereFactura ? '' : (facturaDatos === 'otros' ? facturaCedula : encargadoCedula);
     const facturaEmailFinal = !requiereFactura ? '' : (facturaDatos === 'otros' ? facturaEmail : encargadoEmail);
 
+    // Datos de la inscripción Kids
+    const datosKids = {
+      nacionalidad,
+      tipoIdentificacion: tipoId,
+      numeroIdentificacion: numeroId,
+      nombre,
+      primerApellido,
+      segundoApellido,
+      fechaNacimiento: `${anio}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`,
+      genero,
+      provincia,
+      canton,
+      lateralidad,
+      categoria,
+      equipo,
+      encargadoNombre,
+      encargadoCedula,
+      encargadoTelefono,
+      encargadoEmail,
+      encargadoParentesco,
+      metodoPago,
+      requiereFactura,
+      facturaNombre: facturaNombreFinal,
+      facturaCedula: facturaCedulaFinal,
+      facturaEmail: facturaEmailFinal,
+    };
+
+    // ===== TARJETA: NO se guarda hasta que el pago sea exitoso =====
+    if (metodoPago === 'Tarjeta') {
+      if (!paymentLink) {
+        setError('No se encontró el link de pago para esta categoría.');
+        return;
+      }
+      try {
+        localStorage.setItem('inscripcionTarjetaKids', JSON.stringify(datosKids));
+      } catch { /* ignore */ }
+      window.location.href = paymentLink.url;
+      return;
+    }
+
+    // ===== SINPE / EFECTIVO: se guarda de una vez =====
     setEnviando(true);
     try {
       const { guardarInscripcionKids } = await import('@/lib/inscripcion-client');
 
       const resultado = await guardarInscripcionKids({
-        nacionalidad,
-        tipoIdentificacion: tipoId,
-        numeroIdentificacion: numeroId,
-        nombre,
-        primerApellido,
-        segundoApellido,
-        fechaNacimiento: `${anio}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`,
-        genero,
-        provincia,
-        lateralidad,
-        categoria,
-        encargadoNombre,
-        encargadoCedula,
-        encargadoTelefono,
-        encargadoEmail,
-        encargadoParentesco,
-        metodoPago,
-        requiereFactura,
-        facturaNombre: facturaNombreFinal,
-        facturaCelular: facturaCelularFinal,
-        facturaEmail: facturaEmailFinal,
+        ...datosKids,
         comprobante,
       });
 
@@ -302,20 +344,26 @@ export default function FormularioKids() {
           {/* Nombre */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">{"Nombre *"}</label>
-            <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} required
+            <input type="text" value={nombre} onChange={(e) => setNombre(sanitizeNombre(e.target.value))} required
+              maxLength={MAX_NOMBRE}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent" />
+            <p className="text-xs text-gray-400 mt-1">Sin @. Máx {MAX_NOMBRE} caracteres, hasta 4 palabras.</p>
           </div>
           {/* Primer Apellido */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">{"Primer Apellido *"}</label>
-            <input type="text" value={primerApellido} onChange={(e) => setPrimerApellido(e.target.value)} required
+            <input type="text" value={primerApellido} onChange={(e) => setPrimerApellido(sanitizeApellido(e.target.value))} required
+              maxLength={MAX_APELLIDO}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent" />
+            <p className="text-xs text-gray-400 mt-1">Sin @ ni espacios. Máx {MAX_APELLIDO} caracteres.</p>
           </div>
           {/* Segundo Apellido */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">{"Segundo Apellido *"}</label>
-            <input type="text" value={segundoApellido} onChange={(e) => setSegundoApellido(e.target.value)} required
+            <input type="text" value={segundoApellido} onChange={(e) => setSegundoApellido(sanitizeApellido(e.target.value))} required
+              maxLength={MAX_APELLIDO}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent" />
+            <p className="text-xs text-gray-400 mt-1">Sin @ ni espacios. Máx {MAX_APELLIDO} caracteres.</p>
           </div>
 
           {/* Fecha de Nacimiento */}
@@ -361,10 +409,20 @@ export default function FormularioKids() {
           {/* Provincia */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">{"Provincia *"}</label>
-            <select value={provincia} onChange={(e) => setProvincia(e.target.value)} required
+            <select value={provincia} onChange={(e) => { setProvincia(e.target.value); setCanton(''); }} required
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent">
               <option value="">{"Seleccionar..."}</option>
               {PROVINCIAS.map((p) => (<option key={p} value={p}>{p}</option>))}
+            </select>
+          </div>
+          {/* Cantón (depende de la provincia) */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{"Cantón *"}</label>
+            <select value={canton} onChange={(e) => setCanton(e.target.value)} required
+              disabled={!provincia}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent disabled:bg-gray-100 disabled:text-gray-400">
+              <option value="">{provincia ? 'Seleccionar...' : 'Elegí primero la provincia'}</option>
+              {getCantones(provincia).map((c) => (<option key={c} value={c}>{c}</option>))}
             </select>
           </div>
           {/* Lateralidad */}
@@ -387,18 +445,31 @@ export default function FormularioKids() {
         <h2 className="text-xl font-bold text-[#0d2240] mb-6 pb-2 border-b-2 border-[#0d2240]">
           {"Datos de la Carrera"}
         </h2>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">{"Categoría *"}</label>
-          <select value={categoria} onChange={(e) => setCategoria(e.target.value)} required
-            disabled={categoriasDisponibles.length === 0}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent disabled:bg-gray-100 disabled:text-gray-400">
-            <option value="">{categoriasDisponibles.length === 0 ? 'Completá género y fecha de nacimiento primero' : 'Seleccionar categoría...'}</option>
-            {categoriasDisponibles.map((cat) => (<option key={cat} value={cat}>{cat}</option>))}
-          </select>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{"Categoría *"}</label>
+            <select value={categoria} onChange={(e) => setCategoria(e.target.value)} required
+              disabled={categoriasDisponibles.length === 0}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent disabled:bg-gray-100 disabled:text-gray-400">
+              <option value="">{categoriasDisponibles.length === 0 ? 'Completá género y fecha de nacimiento primero' : 'Seleccionar categoría...'}</option>
+              {categoriasDisponibles.map((cat) => (<option key={cat} value={cat}>{cat}</option>))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{"Equipo *"}</label>
+            <input type="text" value={equipo} onChange={(e) => setEquipo(e.target.value)} required
+              placeholder="Nombre del equipo"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent" />
+          </div>
         </div>
         {categoriasDisponibles.length > 0 && (
           <p className="text-xs text-gray-500 mt-2">
-            {`Categorías disponibles según edad competitiva (${CURRENT_YEAR} - ${anio} = ${CURRENT_YEAR - parseInt(anio)} años) y género.`}
+            {`Categorías disponibles según edad competitiva (${CURRENT_YEAR} - ${anio} = ${CURRENT_YEAR - parseInt(anio)} años al 31 de diciembre) y género.`}
+          </p>
+        )}
+        {categoriasDisponibles.length === 0 && genero && anio && (
+          <p className="text-xs text-amber-600 mt-2">
+            {`No hay categoría disponible. La edad mínima es 1 año cumplido al 31 de diciembre de ${CURRENT_YEAR}.`}
           </p>
         )}
       </section>
@@ -412,15 +483,19 @@ export default function FormularioKids() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">{"Nombre y Apellidos *"}</label>
-            <input type="text" value={encargadoNombre} onChange={(e) => setEncargadoNombre(e.target.value)} required
+            <input type="text" value={encargadoNombre} onChange={(e) => setEncargadoNombre(sanitizeNombreCompleto(e.target.value))} required
+              maxLength={MAX_NOMBRE_COMPLETO}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent" />
+            <p className="text-xs text-gray-400 mt-1">Solo letras. Máx {MAX_NOMBRE_COMPLETO} caracteres.</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">{"# Cédula *"}</label>
             <input type="text" value={encargadoCedula}
-              onChange={(e) => setEncargadoCedula(e.target.value.replace(/[^a-zA-Z0-9]/g, ''))} required
-              placeholder="Número de cédula"
+              onChange={(e) => setEncargadoCedula(sanitizeCedulaSmart(e.target.value))} required
+              placeholder="Número de cédula o pasaporte"
+              maxLength={MAX_CEDULA}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent" />
+            <p className="text-xs text-gray-400 mt-1">Cédula: solo números. Pasaporte: puede iniciar con letras. Sin símbolos.</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">{"# Teléfono *"}</label>
@@ -455,30 +530,17 @@ export default function FormularioKids() {
       <section className="bg-white rounded-xl shadow-md p-6">
         <h2 className="text-xl font-bold text-[#0d2240] mb-6 pb-2 border-b-2 border-[#0d2240]">{"Pago"}</h2>
         <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">{"Método de pago *"}</label>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {METODOS_PAGO.map((metodo) => (
-                <label key={metodo}
-                  className={`flex items-center justify-center p-3 border-2 rounded-lg cursor-pointer transition-all ${
-                    metodoPago === metodo ? 'border-[#1a4f8b] bg-blue-50 text-[#0d2240] font-medium' : 'border-gray-200 hover:border-gray-300'
-                  }`}>
-                  <input type="radio" name="metodoPago" value={metodo} checked={metodoPago === metodo}
-                    onChange={(e) => setMetodoPago(e.target.value)} required className="sr-only" />
-                  <span>{metodo}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-          {metodoPago === 'Sinpe' && (
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <label className="block text-sm font-medium text-gray-700 mb-2">{"Comprobante de Sinpe *"}</label>
-              <input type="file" accept="image/*,.pdf" onChange={(e) => setComprobante(e.target.files?.[0] || null)} required
-                className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-[#0d2240] file:text-white hover:file:bg-[#1a4f8b]" />
-              <p className="text-xs text-gray-500 mt-1">{"Sube una imagen o PDF del comprobante de pago."}</p>
+          {/* Monto a pagar */}
+          {categoria && paymentLink && (
+            <div className="bg-[#0d2240] text-white rounded-lg p-4 text-center">
+              <p className="text-sm text-blue-200">Monto a pagar</p>
+              <p className="text-3xl font-bold">₡{paymentLink.monto.toLocaleString('es-CR')}</p>
+              <p className="text-xs text-blue-200 mt-1">Copa Kids · {categoria}</p>
             </div>
           )}
-          <div className="flex items-center gap-3 pt-2">
+
+          {/* Factura Electrónica (ANTES del método de pago) */}
+          <div className="flex items-center gap-3">
             <input type="checkbox" id="factura" checked={requiereFactura}
               onChange={(e) => setRequiereFactura(e.target.checked)}
               className="h-4 w-4 text-[#1a4f8b] rounded focus:ring-[#1a4f8b]" />
@@ -486,7 +548,7 @@ export default function FormularioKids() {
           </div>
 
           {requiereFactura && (
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-4 mt-2">
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">{"¿Qué datos usar para la factura?"}</label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -516,15 +578,11 @@ export default function FormularioKids() {
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{"# Celular *"}</label>
-                    <div className="flex gap-2">
-                      <input type="text" value="506" disabled
-                        className="w-16 border border-gray-300 rounded-lg px-3 py-2 bg-gray-100 text-gray-600 text-center" />
-                      <input type="tel" value={facturaCelular}
-                        onChange={(e) => setFacturaCelular(e.target.value.replace(/[^0-9]/g, '').slice(0, 8))} required={requiereFactura && facturaDatos === 'otros'}
-                        placeholder="88888888" maxLength={8}
-                        className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent" />
-                    </div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{"# Cédula (física o jurídica) *"}</label>
+                    <input type="text" value={facturaCedula}
+                      onChange={(e) => setFacturaCedula(e.target.value.replace(/[^0-9]/g, ''))} required={requiereFactura && facturaDatos === 'otros'}
+                      placeholder="Solo números"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">{"Correo electrónico *"}</label>
@@ -534,6 +592,48 @@ export default function FormularioKids() {
                   </div>
                 </div>
               )}
+            </div>
+          )}
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">{"Método de pago *"}</label>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {METODOS_PAGO.map((metodo) => (
+                <label key={metodo}
+                  className={`flex items-center justify-center p-3 border-2 rounded-lg cursor-pointer transition-all ${
+                    metodoPago === metodo ? 'border-[#1a4f8b] bg-blue-50 text-[#0d2240] font-medium' : 'border-gray-200 hover:border-gray-300'
+                  }`}>
+                  <input type="radio" name="metodoPago" value={metodo} checked={metodoPago === metodo}
+                    onChange={(e) => setMetodoPago(e.target.value)} required className="sr-only" />
+                  <span>{metodo}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Pago con Tarjeta (Tilopay) */}
+          {metodoPago === 'Tarjeta' && paymentLink && (
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <p className="text-sm text-gray-700">
+                Al presionar <strong>&quot;Enviar Inscripción&quot;</strong> se abrirá la página segura de pago de Tilopay para pagar <strong>₡{paymentLink.monto.toLocaleString('es-CR')}</strong> con tarjeta. La inscripción se confirmará automáticamente al completar el pago.
+              </p>
+            </div>
+          )}
+
+          {metodoPago === 'Sinpe' && (
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <div className="bg-white border border-blue-200 rounded-lg p-3 mb-3 text-center">
+                <p className="text-sm text-gray-600">Realizá tu Sinpe Móvil al número:</p>
+                <p className="text-2xl font-bold text-[#0d2240]">6349-0950</p>
+                <p className="text-xs text-gray-500">Asociación Nacional de Ciclismo de Montaña</p>
+                {paymentLink && (
+                  <p className="text-sm font-medium text-[#1a4f8b] mt-1">Monto: ₡{paymentLink.monto.toLocaleString('es-CR')}</p>
+                )}
+              </div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{"Comprobante de Sinpe *"}</label>
+              <input type="file" accept="image/*,.pdf" onChange={(e) => setComprobante(e.target.files?.[0] || null)} required
+                className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-[#0d2240] file:text-white hover:file:bg-[#1a4f8b]" />
+              <p className="text-xs text-gray-500 mt-1">{"Subí una imagen o PDF del comprobante de pago."}</p>
             </div>
           )}
         </div>

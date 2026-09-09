@@ -18,8 +18,23 @@ export default function LandingPage() {
       <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-2xl w-full">
         {/* Título */}
         <h1 className="text-2xl font-bold text-[#0d2240] text-center mb-2">
-          VI Fecha 13-14 Setiembre
+          VI Fecha Orosi · 12 y 13 Setiembre
         </h1>
+
+        {/* Leyenda Guía Técnica */}
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4 text-center">
+          <p className="text-sm text-amber-800 font-medium mb-2">
+            Favor leer la Guía Técnica antes de inscribirse
+          </p>
+          <a
+            href="/guia-tecnica.pdf"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block bg-[#0d2240] text-white text-sm font-medium px-5 py-2 rounded-lg hover:bg-[#1a4f8b] transition-colors"
+          >
+            Ver Guía Técnica
+          </a>
+        </div>
         <p className="text-gray-600 text-center mb-8">
           Escaneá el código QR para inscribirte
         </p>
@@ -34,7 +49,7 @@ export default function LandingPage() {
               className="h-20 w-20 mx-auto rounded-xl object-cover shadow-md mb-4"
             />
             <h2 className="text-lg font-bold text-[#0d2240] mb-1">La Copa</h2>
-            <p className="text-xs text-gray-500 mb-4">XCO · XCC · XCE</p>
+            <p className="text-xs text-gray-500 mb-4">XCO · XCC</p>
             {qrCopa && (
               <img
                 src={qrCopa}

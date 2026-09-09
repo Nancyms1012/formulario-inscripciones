@@ -30,6 +30,7 @@ export interface InscripcionData {
   fechaNacimiento: string;
   genero: string;
   provincia: string;
+  canton: string;
   equipo: string;
   tipoLicencia: string;
   uciId: string;
@@ -42,9 +43,10 @@ export interface InscripcionData {
   metodoPago: string;
   requiereFactura: boolean;
   facturaNombre: string;
-  facturaCelular: string;
+  facturaCedula: string;
   facturaEmail: string;
   comprobante: File | null;
+  estadoPagoInicial?: 'pendiente' | 'confirmado';
 }
 
 export async function guardarInscripcion(datos: InscripcionData): Promise<{ codigoInscripcion: string }> {
@@ -85,6 +87,7 @@ export async function guardarInscripcion(datos: InscripcionData): Promise<{ codi
       fecha_nacimiento: datos.fechaNacimiento,
       genero: datos.genero,
       provincia: datos.provincia,
+      canton: datos.canton,
       equipo: datos.equipo,
       tipo_licencia: datos.tipoLicencia,
       uci_id: datos.uciId,
@@ -98,9 +101,9 @@ export async function guardarInscripcion(datos: InscripcionData): Promise<{ codi
       comprobante_sinpe_url: comprobanteUrl,
       requiere_factura: datos.requiereFactura,
       factura_nombre: datos.facturaNombre,
-      factura_celular: datos.facturaCelular,
+      factura_cedula: datos.facturaCedula,
       factura_email: datos.facturaEmail,
-      estado_pago: 'pendiente',
+      estado_pago: datos.estadoPagoInicial || 'pendiente',
     });
 
   if (error) {
@@ -121,8 +124,10 @@ export interface InscripcionKidsData {
   fechaNacimiento: string;
   genero: string;
   provincia: string;
+  canton: string;
   lateralidad: string;
   categoria: string;
+  equipo: string;
   encargadoNombre: string;
   encargadoCedula: string;
   encargadoTelefono: string;
@@ -131,9 +136,10 @@ export interface InscripcionKidsData {
   metodoPago: string;
   requiereFactura: boolean;
   facturaNombre: string;
-  facturaCelular: string;
+  facturaCedula: string;
   facturaEmail: string;
   comprobante: File | null;
+  estadoPagoInicial?: 'pendiente' | 'confirmado';
 }
 
 export async function guardarInscripcionKids(datos: InscripcionKidsData): Promise<{ codigoInscripcion: string }> {
@@ -174,7 +180,8 @@ export async function guardarInscripcionKids(datos: InscripcionKidsData): Promis
       fecha_nacimiento: datos.fechaNacimiento,
       genero: datos.genero,
       provincia: datos.provincia,
-      equipo: '',
+      canton: datos.canton,
+      equipo: datos.equipo,
       tipo_licencia: '',
       uci_id: '',
       evento: 'Copa Kids',
@@ -187,9 +194,9 @@ export async function guardarInscripcionKids(datos: InscripcionKidsData): Promis
       comprobante_sinpe_url: comprobanteUrl,
       requiere_factura: datos.requiereFactura,
       factura_nombre: datos.facturaNombre,
-      factura_celular: datos.facturaCelular,
+      factura_cedula: datos.facturaCedula,
       factura_email: datos.facturaEmail,
-      estado_pago: 'pendiente',
+      estado_pago: datos.estadoPagoInicial || 'pendiente',
     });
 
   if (error) {
