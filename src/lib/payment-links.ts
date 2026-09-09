@@ -94,8 +94,8 @@ export const PAYMENT_LINKS: Record<string, PaymentLink> = {
   'Copa Kids|Balance (Niños A)': { url: 'https://tp.cr/l/MTQ5OTA=', monto: 8000 },
   'Copa Kids|0 a 4 años (Niños A)': { url: 'https://tp.cr/l/MTQ5OTA=', monto: 8000 },
   'Copa Kids|5 a 6 años (Niños B)': { url: 'https://tp.cr/l/MTQ5OTA=', monto: 8000 },
-  'Copa Kids|7 a 8 años (Niños B)': { url: 'https://tp.cr/l/MTQ5OTA=', monto: 8000 },
-  'Copa Kids|9 a 10 años (Niños C)': { url: 'https://tp.cr/l/MTQ5OTA=', monto: 8000 },
+  'Copa Kids|7 a 8 años (Niños C)': { url: 'https://tp.cr/l/MTQ5OTA=', monto: 8000 },
+  'Copa Kids|9 a 10 años (Niños D)': { url: 'https://tp.cr/l/MTQ5OTA=', monto: 8000 },
   'Copa Kids|11 a 12 años (Preinfantil)': { url: 'https://tp.cr/l/MTQ5OTA=', monto: 8000 },
 
 };
