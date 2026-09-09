@@ -49,8 +49,8 @@ export const KIDS_CATEGORIES: Category[] = [
   { name: 'Balance (Niños A)', gender: 'F/M', minAge: 1, maxAge: 4, availableCategories: ['Balance (Niños A)'] },
   { name: '0 a 4 años (Niños A)', gender: 'F/M', minAge: 1, maxAge: 4, availableCategories: ['0 a 4 años (Niños A)'] },
   { name: '5 a 6 años (Niños B)', gender: 'F/M', minAge: 5, maxAge: 6, availableCategories: ['5 a 6 años (Niños B)'] },
-  { name: '7 a 8 años (Niños B)', gender: 'F/M', minAge: 7, maxAge: 8, availableCategories: ['7 a 8 años (Niños B)'] },
-  { name: '9 a 10 años (Niños C)', gender: 'F/M', minAge: 9, maxAge: 10, availableCategories: ['9 a 10 años (Niños C)'] },
+  { name: '7 a 8 años (Niños C)', gender: 'F/M', minAge: 7, maxAge: 8, availableCategories: ['7 a 8 años (Niños C)'] },
+  { name: '9 a 10 años (Niños D)', gender: 'F/M', minAge: 9, maxAge: 10, availableCategories: ['9 a 10 años (Niños D)'] },
   { name: '11 a 12 años (Preinfantil)', gender: 'F/M', minAge: 11, maxAge: 12, availableCategories: ['11 a 12 años (Preinfantil)'] },
 ];
 
