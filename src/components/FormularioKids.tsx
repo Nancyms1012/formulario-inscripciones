@@ -387,8 +387,8 @@ export default function FormularioKids() {
               <select value={anio} onChange={(e) => setAnio(e.target.value)} required
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent">
                 <option value="">{"Año"}</option>
-                {/* Copa Kids: edad máxima 12 años → desde CURRENT_YEAR hasta CURRENT_YEAR-12 */}
-                {Array.from({ length: 13 }, (_, i) => CURRENT_YEAR - i).map((y) => (
+                {/* Copa Kids: edades válidas 1 a 12 años → desde CURRENT_YEAR-1 (edad 1) hasta CURRENT_YEAR-12 (edad 12) */}
+                {Array.from({ length: 12 }, (_, i) => CURRENT_YEAR - 1 - i).map((y) => (
                   <option key={y} value={y.toString()}>{y}</option>
                 ))}
               </select>
