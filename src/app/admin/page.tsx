@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { EVENTS } from '@/lib/categories';
+import MapaProvincias from '@/components/MapaProvincias';
 
 interface Inscripcion {
   id: string;
@@ -50,6 +51,7 @@ export default function AdminPage() {
   const [cargando, setCargando] = useState(true);
   const [filtroEvento, setFiltroEvento] = useState('');
   const [filtroCategoria, setFiltroCategoria] = useState('');
+  const [filtroFactura, setFiltroFactura] = useState(false);
   const [busqueda, setBusqueda] = useState('');
   const [tab, setTab] = useState<'inscripciones' | 'resumen' | 'cantones'>('inscripciones');
   const [cantonEvento, setCantonEvento] = useState(''); // filtro de evento para la gráfica de cantones
@@ -204,8 +206,9 @@ export default function AdminPage() {
     )
   ).sort((a, b) => a.localeCompare(b));
 
-  // Filtrar por búsqueda local
+  // Filtrar por búsqueda local + filtro de factura
   const inscripcionesFiltradas = inscripciones.filter((insc) => {
+    if (filtroFactura && !insc.requiere_factura) return false;
     if (!busqueda) return true;
     const texto = busqueda.toLowerCase();
     return (
@@ -279,6 +282,13 @@ export default function AdminPage() {
     .sort((a, b) => b.cantidad - a.cantidad); // de mayor a menor
 
   const maxCanton = cantonesOrdenados.length > 0 ? cantonesOrdenados[0].cantidad : 0;
+
+  // Conteo por provincia (para el mapa) — respeta el filtro de evento del tab
+  const conteoPorProvincia = inscritosCanton.reduce((acc, i) => {
+    const p = (i.provincia && i.provincia.trim()) ? i.provincia.trim() : 'Sin provincia';
+    acc[p] = (acc[p] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
 
   // Subir CSV de dorsales (match por número de identificación)
   const [subiendoDorsales, setSubiendoDorsales] = useState(false);
@@ -474,6 +484,17 @@ export default function AdminPage() {
             </div>
           </div>
 
+          {/* Mapa por provincia */}
+          <div className="bg-white rounded-xl shadow-md p-5 mb-6">
+            <h3 className="text-sm font-bold text-[#0d2240] mb-1">Mapa por provincia</h3>
+            <p className="text-xs text-gray-500 mb-3">
+              Distribución geográfica de inscritos{cantonEvento ? ` en ${cantonEvento}` : ' (todos los eventos)'}.
+            </p>
+            <div className="max-w-lg mx-auto">
+              <MapaProvincias conteo={conteoPorProvincia} />
+            </div>
+          </div>
+
           <div className="bg-white rounded-xl shadow-md p-5">
             <p className="text-sm text-gray-500 mb-4">
               {inscritosCanton.length} inscrito{inscritosCanton.length !== 1 ? 's' : ''}
@@ -618,6 +639,17 @@ export default function AdminPage() {
               <option key={cat} value={cat}>{cat}</option>
             ))}
           </select>
+        </div>
+        <div className="mt-4 pt-3 border-t border-gray-100">
+          <label className="inline-flex items-center gap-2 cursor-pointer text-sm text-gray-700">
+            <input
+              type="checkbox"
+              checked={filtroFactura}
+              onChange={(e) => setFiltroFactura(e.target.checked)}
+              className="h-4 w-4 text-[#1a4f8b] rounded focus:ring-[#1a4f8b]"
+            />
+            Mostrar solo los que requieren Factura Electrónica
+          </label>
         </div>
       </div>
 
