@@ -76,7 +76,7 @@ export default function InscritosPortada() {
             <h2 className="text-lg font-bold text-green-700 mb-1">Copa Kids</h2>
             <p className="text-xs text-gray-500 mb-2">Balance · Niños · Preinfantil</p>
             {cuposKids !== null && (
-              <p className={`text-xs font-bold mb-3 ${cuposKids > 0 ? 'text-green-700' : 'text-red-600'}`}>
+              <p className="text-xs font-bold mb-3 text-red-600">
                 {cuposKids > 0 ? `Quedan ${cuposKids} cupo${cuposKids !== 1 ? 's' : ''}` : 'Cupos agotados'}
               </p>
             )}

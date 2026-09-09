@@ -57,7 +57,7 @@ export default function Home() {
             <h2 className="text-lg font-bold text-green-700">Copa Kids</h2>
             <p className="text-sm text-gray-500 mt-1">Balance · Niños · Preinfantil</p>
             {cuposKids !== null && (
-              <p className={`text-sm font-bold mt-2 ${cuposKids > 0 ? 'text-green-700' : 'text-red-600'}`}>
+              <p className="text-sm font-bold mt-2 text-red-600">
                 {cuposKids > 0 ? `Quedan ${cuposKids} cupo${cuposKids !== 1 ? 's' : ''}` : 'Cupos agotados'}
               </p>
             )}

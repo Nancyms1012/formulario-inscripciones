@@ -299,11 +299,9 @@ export default function FormularioKids() {
     return (
       <div className="max-w-3xl mx-auto px-4 py-8">
         {cuposDisponibles !== null && (
-          <div className={`rounded-xl shadow-md p-4 mb-6 text-center ${
-            cuposDisponibles > 0 ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'
-          }`}>
+          <div className="rounded-xl shadow-md p-4 mb-6 text-center bg-red-50 border border-red-200">
             {cuposDisponibles > 0 ? (
-              <p className="text-lg font-bold text-[#1a7a3a]">
+              <p className="text-lg font-bold text-red-600">
                 {`Quedan ${cuposDisponibles} cupo${cuposDisponibles !== 1 ? 's' : ''}`}
                 <span className="block text-xs font-normal text-gray-500 mt-1">{`de ${cupoMaximo} disponibles para Copa Kids`}</span>
               </p>
