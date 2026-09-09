@@ -1,6 +1,23 @@
+'use client';
+
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 
 export default function Home() {
+  const [cuposKids, setCuposKids] = useState<number | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { getCuposKids } = await import('@/lib/inscripcion-client');
+        const { disponibles } = await getCuposKids();
+        setCuposKids(disponibles);
+      } catch {
+        /* ignore */
+      }
+    })();
+  }, []);
+
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-12">
       <div className="max-w-lg w-full text-center">
@@ -39,6 +56,11 @@ export default function Home() {
               className="h-24 w-24 mx-auto rounded-xl object-contain mb-4" />
             <h2 className="text-lg font-bold text-green-700">Copa Kids</h2>
             <p className="text-sm text-gray-500 mt-1">Balance · Niños · Preinfantil</p>
+            {cuposKids !== null && (
+              <p className={`text-sm font-bold mt-2 ${cuposKids > 0 ? 'text-green-700' : 'text-red-600'}`}>
+                {cuposKids > 0 ? `Quedan ${cuposKids} cupo${cuposKids !== 1 ? 's' : ''}` : 'Cupos agotados'}
+              </p>
+            )}
           </Link>
         </div>
       </div>

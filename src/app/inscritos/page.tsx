@@ -1,19 +1,15 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import QRCode from 'react-qr-code';
+
+const BASE_URL = 'https://inscripciones.raceclubhub.com';
 
 export default function InscritosPortada() {
-  const [qrCopa, setQrCopa] = useState('');
-  const [qrKids, setQrKids] = useState('');
   const [visitas, setVisitas] = useState<number | null>(null);
   const [cuposKids, setCuposKids] = useState<number | null>(null);
 
   useEffect(() => {
-    const base = 'https://inscripciones.raceclubhub.com';
-    const qrApi = 'https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=';
-    setQrCopa(`${qrApi}${encodeURIComponent(`${base}/inscritos/lista?grupo=copa`)}`);
-    setQrKids(`${qrApi}${encodeURIComponent(`${base}/inscritos/lista?grupo=kids`)}`);
-
     // Cupos disponibles de Copa Kids
     (async () => {
       try {
@@ -64,9 +60,9 @@ export default function InscritosPortada() {
               className="h-20 w-20 mx-auto rounded-xl object-cover shadow-md mb-4" />
             <h2 className="text-lg font-bold text-[#0d2240] mb-1">La Copa</h2>
             <p className="text-xs text-gray-500 mb-4">XCO · XCC</p>
-            {qrCopa && (
-              <img src={qrCopa} alt="QR Inscritos La Copa" className="w-48 h-48 mx-auto rounded-lg shadow-lg" />
-            )}
+            <div className="w-48 h-48 mx-auto p-3 bg-white rounded-lg shadow-lg">
+              <QRCode value={`${BASE_URL}/inscritos/lista?grupo=copa`} className="w-full h-full" style={{ width: '100%', height: '100%' }} />
+            </div>
             <a href="/inscritos/lista?grupo=copa"
               className="inline-block mt-4 bg-[#0d2240] text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-[#1a4f8b] transition-colors">
               Ver inscritos
@@ -84,9 +80,9 @@ export default function InscritosPortada() {
                 {cuposKids > 0 ? `Quedan ${cuposKids} cupo${cuposKids !== 1 ? 's' : ''}` : 'Cupos agotados'}
               </p>
             )}
-            {qrKids && (
-              <img src={qrKids} alt="QR Inscritos Copa Kids" className="w-48 h-48 mx-auto rounded-lg shadow-lg" />
-            )}
+            <div className="w-48 h-48 mx-auto p-3 bg-white rounded-lg shadow-lg">
+              <QRCode value={`${BASE_URL}/inscritos/lista?grupo=kids`} className="w-full h-full" style={{ width: '100%', height: '100%' }} />
+            </div>
             <a href="/inscritos/lista?grupo=kids"
               className="inline-block mt-4 bg-green-600 text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors">
               Ver inscritos
