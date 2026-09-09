@@ -53,6 +53,8 @@ export default function AdminPage() {
   const [busqueda, setBusqueda] = useState('');
   const [tab, setTab] = useState<'inscripciones' | 'resumen' | 'cantones'>('inscripciones');
   const [cantonEvento, setCantonEvento] = useState(''); // filtro de evento para la gráfica de cantones
+  // Ordenamiento de la tabla "Detalle por evento y categoría"
+  const [resumenOrden, setResumenOrden] = useState<{ col: 'evento' | 'categoria' | 'inscritos' | 'pagoPendiente' | 'factura'; asc: boolean }>({ col: 'evento', asc: true });
   const [detalle, setDetalle] = useState<Inscripcion | null>(null);
   const [editando, setEditando] = useState(false);
   const [editForm, setEditForm] = useState<Partial<Inscripcion>>({});
@@ -230,7 +232,24 @@ export default function AdminPage() {
       if (i.requiere_factura) acc[key].factura += 1;
       return acc;
     }, {} as Record<string, { evento: string; categoria: string; inscritos: number; pagoPendiente: number; factura: number }>)
-  ).sort((a, b) => a.evento.localeCompare(b.evento) || a.categoria.localeCompare(b.categoria));
+  );
+
+  // Ordenar la tabla de detalle según la columna elegida
+  const resumenPorCategoriaOrdenado = [...resumenPorCategoria].sort((a, b) => {
+    const { col, asc } = resumenOrden;
+    let cmp = 0;
+    if (col === 'evento') cmp = a.evento.localeCompare(b.evento) || a.categoria.localeCompare(b.categoria);
+    else if (col === 'categoria') cmp = a.categoria.localeCompare(b.categoria) || a.evento.localeCompare(b.evento);
+    else cmp = (a[col] as number) - (b[col] as number);
+    return asc ? cmp : -cmp;
+  });
+
+  // Cambiar columna/dirección de ordenamiento al hacer clic en el encabezado
+  const ordenarResumen = (col: typeof resumenOrden.col) => {
+    setResumenOrden((prev) => prev.col === col ? { col, asc: !prev.asc } : { col, asc: true });
+  };
+  const flechaOrden = (col: typeof resumenOrden.col) =>
+    resumenOrden.col === col ? (resumenOrden.asc ? ' ▲' : ' ▼') : '';
 
   // ===== Datos para la gráfica por cantón (uso interno de la organización) =====
   // Inscritos por cantón, filtrable por evento
@@ -503,18 +522,18 @@ export default function AdminPage() {
               <table className="w-full text-sm">
                 <thead className="bg-[#0d2240] text-white">
                   <tr>
-                    <th className="px-4 py-3 text-left">Evento</th>
-                    <th className="px-4 py-3 text-left">Categoría</th>
-                    <th className="px-4 py-3 text-center">Inscritos</th>
-                    <th className="px-4 py-3 text-center">Pago Pendiente</th>
-                    <th className="px-4 py-3 text-center">Requieren Factura</th>
+                    <th onClick={() => ordenarResumen('evento')} className="px-4 py-3 text-left cursor-pointer select-none hover:bg-[#1a4f8b]">Evento{flechaOrden('evento')}</th>
+                    <th onClick={() => ordenarResumen('categoria')} className="px-4 py-3 text-left cursor-pointer select-none hover:bg-[#1a4f8b]">Categoría{flechaOrden('categoria')}</th>
+                    <th onClick={() => ordenarResumen('inscritos')} className="px-4 py-3 text-center cursor-pointer select-none hover:bg-[#1a4f8b]">Inscritos{flechaOrden('inscritos')}</th>
+                    <th onClick={() => ordenarResumen('pagoPendiente')} className="px-4 py-3 text-center cursor-pointer select-none hover:bg-[#1a4f8b]">Pago Pendiente{flechaOrden('pagoPendiente')}</th>
+                    <th onClick={() => ordenarResumen('factura')} className="px-4 py-3 text-center cursor-pointer select-none hover:bg-[#1a4f8b]">Requieren Factura{flechaOrden('factura')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {resumenPorCategoria.length === 0 ? (
+                  {resumenPorCategoriaOrdenado.length === 0 ? (
                     <tr><td colSpan={5} className="text-center py-8 text-gray-500">No hay inscripciones registradas.</td></tr>
                   ) : (
-                    resumenPorCategoria.map((r) => (
+                    resumenPorCategoriaOrdenado.map((r) => (
                       <tr key={`${r.evento}-${r.categoria}`} className="hover:bg-gray-50">
                         <td className="px-4 py-3 font-medium">{r.evento}</td>
                         <td className="px-4 py-3">{r.categoria}</td>
