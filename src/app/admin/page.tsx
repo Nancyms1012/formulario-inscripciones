@@ -193,6 +193,17 @@ export default function AdminPage() {
     }
   };
 
+  // Categorías disponibles para el filtro (de las inscripciones reales)
+  // Si hay un evento seleccionado, solo muestra las categorías de ese evento
+  const categoriasDisponibles = Array.from(
+    new Set(
+      todasInscripciones
+        .filter((i) => !filtroEvento || i.evento === filtroEvento)
+        .map((i) => i.categoria)
+        .filter((c) => c && c.trim())
+    )
+  ).sort((a, b) => a.localeCompare(b));
+
   // Filtrar por búsqueda local
   const inscripcionesFiltradas = inscripciones.filter((insc) => {
     if (!busqueda) return true;
@@ -589,7 +600,7 @@ export default function AdminPage() {
           />
           <select
             value={filtroEvento}
-            onChange={(e) => setFiltroEvento(e.target.value)}
+            onChange={(e) => { setFiltroEvento(e.target.value); setFiltroCategoria(''); }}
             className="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent"
           >
             <option value="">Todos los eventos</option>
@@ -603,6 +614,9 @@ export default function AdminPage() {
             className="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent"
           >
             <option value="">Todas las categorías</option>
+            {categoriasDisponibles.map((cat) => (
+              <option key={cat} value={cat}>{cat}</option>
+            ))}
           </select>
         </div>
       </div>
