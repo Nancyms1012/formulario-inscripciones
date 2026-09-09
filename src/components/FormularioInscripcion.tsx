@@ -207,7 +207,15 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
     // ===== SINPE / EFECTIVO: se guarda de una vez =====
     setEnviando(true);
     try {
-      const { guardarInscripcion } = await import('@/lib/inscripcion-client');
+      const { guardarInscripcion, verificarInscripcionExistente } = await import('@/lib/inscripcion-client');
+
+      // Verificar si ya está inscrito en este evento (evita duplicados por ID)
+      const existente = await verificarInscripcionExistente(numeroId, evento);
+      if (existente) {
+        setError(`Ya existe una inscripción para esta identificación en ${evento}: ${existente.nombre} ${existente.primer_apellido} (código ${existente.codigo_inscripcion}, categoría ${existente.categoria}). Si creés que es un error, contactá a la organización.`);
+        setEnviando(false);
+        return;
+      }
 
       const resultado = await guardarInscripcion({
         ...datosInscripcion,

@@ -203,7 +203,15 @@ export default function FormularioKids() {
     // ===== SINPE / EFECTIVO: se guarda de una vez =====
     setEnviando(true);
     try {
-      const { guardarInscripcionKids } = await import('@/lib/inscripcion-client');
+      const { guardarInscripcionKids, verificarInscripcionExistente } = await import('@/lib/inscripcion-client');
+
+      // Verificar si el menor ya está inscrito en Copa Kids (evita duplicados por ID)
+      const existente = await verificarInscripcionExistente(numeroId, 'Copa Kids');
+      if (existente) {
+        setError(`Este participante ya está inscrito en Copa Kids: ${existente.nombre} ${existente.primer_apellido} (código ${existente.codigo_inscripcion}, categoría ${existente.categoria}). Si creés que es un error, contactá a la organización.`);
+        setEnviando(false);
+        return;
+      }
 
       const resultado = await guardarInscripcionKids({
         ...datosKids,

@@ -8,6 +8,32 @@ const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 
 export const supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
 
+/**
+ * Verifica si ya existe una inscripción con el mismo número de identificación en el mismo evento.
+ * Devuelve los datos de la inscripción existente si la encuentra, o null si no existe.
+ */
+export async function verificarInscripcionExistente(
+  numeroIdentificacion: string,
+  evento: string
+): Promise<{ codigo_inscripcion: string; nombre: string; primer_apellido: string; categoria: string } | null> {
+  if (!numeroIdentificacion || !evento) return null;
+
+  const { data, error } = await supabaseClient
+    .from('inscripciones')
+    .select('codigo_inscripcion, nombre, primer_apellido, categoria')
+    .eq('numero_identificacion', numeroIdentificacion)
+    .eq('evento', evento)
+    .limit(1);
+
+  if (error) {
+    // Si la consulta falla, no bloqueamos el registro (mejor permitir que bloquear por un error de red)
+    console.error('Error verificando inscripción existente:', error);
+    return null;
+  }
+
+  return data && data.length > 0 ? data[0] : null;
+}
+
 // Generar código de inscripción único
 function generarCodigo(): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
