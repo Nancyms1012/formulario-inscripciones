@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { EVENTS } from '@/lib/categories';
 import MapaProvincias from '@/components/MapaProvincias';
+import { CANTONES_POR_PROVINCIA } from '@/lib/cantones';
 
 interface Inscripcion {
   id: string;
@@ -55,6 +56,7 @@ export default function AdminPage() {
   const [busqueda, setBusqueda] = useState('');
   const [tab, setTab] = useState<'inscripciones' | 'resumen' | 'cantones'>('inscripciones');
   const [cantonEvento, setCantonEvento] = useState(''); // filtro de evento para la gráfica de cantones
+  const [cantonProvincia, setCantonProvincia] = useState(''); // filtro de provincia para el detalle de cantones
   // Ordenamiento de la tabla "Detalle por evento y categoría"
   const [resumenOrden, setResumenOrden] = useState<{ col: 'evento' | 'categoria' | 'inscritos' | 'pagoPendiente' | 'factura'; asc: boolean }>({ col: 'evento', asc: true });
   const [detalle, setDetalle] = useState<Inscripcion | null>(null);
@@ -271,7 +273,12 @@ export default function AdminPage() {
     ? todasInscripciones.filter((i) => i.evento === cantonEvento)
     : todasInscripciones;
 
-  const conteoPorCanton = inscritosCanton.reduce((acc, i) => {
+  // Si hay provincia seleccionada, solo cuenta cantones de esa provincia
+  const inscritosCantonProvincia = cantonProvincia
+    ? inscritosCanton.filter((i) => (i.provincia && i.provincia.trim()) === cantonProvincia)
+    : inscritosCanton;
+
+  const conteoPorCanton = inscritosCantonProvincia.reduce((acc, i) => {
     const c = (i.canton && i.canton.trim()) ? i.canton.trim() : 'Sin cantón';
     acc[c] = (acc[c] || 0) + 1;
     return acc;
@@ -490,15 +497,35 @@ export default function AdminPage() {
             <p className="text-xs text-gray-500 mb-3">
               Distribución geográfica de inscritos{cantonEvento ? ` en ${cantonEvento}` : ' (todos los eventos)'}.
             </p>
-            <div className="max-w-lg mx-auto">
-              <MapaProvincias conteo={conteoPorProvincia} />
+            <div className="max-w-2xl mx-auto">
+              <MapaProvincias
+                conteo={conteoPorProvincia}
+                provinciaActiva={cantonProvincia}
+                onSelectProvincia={setCantonProvincia}
+              />
             </div>
           </div>
 
           <div className="bg-white rounded-xl shadow-md p-5">
+            {/* Filtro por provincia para el detalle de cantones */}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-4">
+              <label className="text-sm text-gray-600">Provincia:</label>
+              <select value={cantonProvincia} onChange={(e) => setCantonProvincia(e.target.value)}
+                className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#1a4f8b]">
+                <option value="">Todas las provincias</option>
+                {Object.keys(CANTONES_POR_PROVINCIA).map((prov) => (
+                  <option key={prov} value={prov}>{prov}</option>
+                ))}
+              </select>
+              {cantonProvincia && (
+                <button onClick={() => setCantonProvincia('')}
+                  className="text-xs text-[#1a4f8b] hover:underline sm:ml-2">Ver todas</button>
+              )}
+            </div>
             <p className="text-sm text-gray-500 mb-4">
-              {inscritosCanton.length} inscrito{inscritosCanton.length !== 1 ? 's' : ''}
-              {cantonEvento ? ` en ${cantonEvento}` : ' (todos los eventos)'} · {cantonesOrdenados.length} cantón(es)
+              {inscritosCantonProvincia.length} inscrito{inscritosCantonProvincia.length !== 1 ? 's' : ''}
+              {cantonProvincia ? ` en ${cantonProvincia}` : ''}
+              {cantonEvento ? ` · evento ${cantonEvento}` : ''} · {cantonesOrdenados.length} cantón(es)
             </p>
 
             {cantonesOrdenados.length === 0 ? (
