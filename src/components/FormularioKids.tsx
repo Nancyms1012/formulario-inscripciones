@@ -69,6 +69,24 @@ export default function FormularioKids() {
   const [error, setError] = useState('');
   const [codigoInscripcion, setCodigoInscripcion] = useState('');
 
+  // Cupos Kids
+  const [cuposDisponibles, setCuposDisponibles] = useState<number | null>(null);
+  const [cupoMaximo, setCupoMaximo] = useState<number>(150);
+
+  // Cargar cupos disponibles al abrir el formulario
+  useEffect(() => {
+    (async () => {
+      try {
+        const { getCuposKids } = await import('@/lib/inscripcion-client');
+        const { disponibles, maximo } = await getCuposKids();
+        setCuposDisponibles(disponibles);
+        setCupoMaximo(maximo);
+      } catch {
+        /* si falla, no mostramos el contador */
+      }
+    })();
+  }, []);
+
   // Calcular categorías disponibles
   useEffect(() => {
     if (genero && anio) {
@@ -203,7 +221,16 @@ export default function FormularioKids() {
     // ===== SINPE / EFECTIVO: se guarda de una vez =====
     setEnviando(true);
     try {
-      const { guardarInscripcionKids, verificarInscripcionExistente } = await import('@/lib/inscripcion-client');
+      const { guardarInscripcionKids, verificarInscripcionExistente, getCuposKids } = await import('@/lib/inscripcion-client');
+
+      // Re-verificar cupos por si se llenaron mientras completaba el formulario
+      const { disponibles } = await getCuposKids();
+      setCuposDisponibles(disponibles);
+      if (disponibles <= 0) {
+        setError('Lo sentimos, los cupos de Copa Kids se agotaron mientras completabas el formulario.');
+        setEnviando(false);
+        return;
+      }
 
       // Verificar si el menor ya está inscrito en Copa Kids (evita duplicados por ID)
       const existente = await verificarInscripcionExistente(numeroId, 'Copa Kids');
@@ -271,6 +298,23 @@ export default function FormularioKids() {
   if (!mostrarFormulario) {
     return (
       <div className="max-w-3xl mx-auto px-4 py-8">
+        {cuposDisponibles !== null && (
+          <div className={`rounded-xl shadow-md p-4 mb-6 text-center ${
+            cuposDisponibles > 0 ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'
+          }`}>
+            {cuposDisponibles > 0 ? (
+              <p className="text-lg font-bold text-[#1a7a3a]">
+                {`Quedan ${cuposDisponibles} cupo${cuposDisponibles !== 1 ? 's' : ''}`}
+                <span className="block text-xs font-normal text-gray-500 mt-1">{`de ${cupoMaximo} disponibles para Copa Kids`}</span>
+              </p>
+            ) : (
+              <p className="text-lg font-bold text-red-700">
+                {"Cupos agotados"}
+                <span className="block text-xs font-normal text-gray-500 mt-1">{`Se alcanzó el máximo de ${cupoMaximo} inscritos en Copa Kids`}</span>
+              </p>
+            )}
+          </div>
+        )}
         <section className="bg-white rounded-xl shadow-md p-6">
           <h2 className="text-xl font-bold text-[#0d2240] mb-6 pb-2 border-b-2 border-[#0d2240]">
             {"Términos y Condiciones"}
@@ -292,9 +336,9 @@ export default function FormularioKids() {
               {"Acepto los términos y condiciones *"}
             </label>
           </div>
-          <button onClick={() => setMostrarFormulario(true)} disabled={!aceptaTerminos}
+          <button onClick={() => setMostrarFormulario(true)} disabled={!aceptaTerminos || cuposDisponibles === 0}
             className="w-full bg-[#0d2240] text-white px-6 py-4 rounded-xl text-lg font-bold hover:bg-[#1a4f8b] transition-all disabled:opacity-50 disabled:cursor-not-allowed">
-            {"Continuar con la inscripción"}
+            {cuposDisponibles === 0 ? 'Cupos agotados' : 'Continuar con la inscripción'}
           </button>
         </section>
       </div>

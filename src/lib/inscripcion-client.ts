@@ -8,6 +8,23 @@ const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 
 export const supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
 
+// Cupo máximo total para Copa Kids
+export const CUPO_MAXIMO_KIDS = 150;
+
+/**
+ * Devuelve cuántos inscritos hay en Copa Kids y cuántos cupos quedan (sobre CUPO_MAXIMO_KIDS).
+ */
+export async function getCuposKids(): Promise<{ inscritos: number; disponibles: number; maximo: number }> {
+  const { count, error } = await supabaseClient
+    .from('inscripciones')
+    .select('id', { count: 'exact', head: true })
+    .eq('evento', 'Copa Kids');
+
+  const inscritos = !error && typeof count === 'number' ? count : 0;
+  const disponibles = Math.max(0, CUPO_MAXIMO_KIDS - inscritos);
+  return { inscritos, disponibles, maximo: CUPO_MAXIMO_KIDS };
+}
+
 /**
  * Verifica si ya existe una inscripción duplicada.
  * - La Copa: se pasa `categoria` → bloquea por cédula + evento + categoría

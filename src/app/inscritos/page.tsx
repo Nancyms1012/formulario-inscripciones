@@ -6,12 +6,24 @@ export default function InscritosPortada() {
   const [qrCopa, setQrCopa] = useState('');
   const [qrKids, setQrKids] = useState('');
   const [visitas, setVisitas] = useState<number | null>(null);
+  const [cuposKids, setCuposKids] = useState<number | null>(null);
 
   useEffect(() => {
     const base = 'https://inscripciones.raceclubhub.com';
     const qrApi = 'https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=';
     setQrCopa(`${qrApi}${encodeURIComponent(`${base}/inscritos/lista?grupo=copa`)}`);
     setQrKids(`${qrApi}${encodeURIComponent(`${base}/inscritos/lista?grupo=kids`)}`);
+
+    // Cupos disponibles de Copa Kids
+    (async () => {
+      try {
+        const { getCuposKids } = await import('@/lib/inscripcion-client');
+        const { disponibles } = await getCuposKids();
+        setCuposKids(disponibles);
+      } catch {
+        /* ignore */
+      }
+    })();
 
     // Contador de visitas
     const contar = async () => {
@@ -66,7 +78,12 @@ export default function InscritosPortada() {
             <img src="/images/logo-copa-kids.jpeg" alt="Copa Kids"
               className="h-20 w-20 mx-auto rounded-xl object-contain shadow-md mb-4" />
             <h2 className="text-lg font-bold text-green-700 mb-1">Copa Kids</h2>
-            <p className="text-xs text-gray-500 mb-4">Balance · Niños · Preinfantil</p>
+            <p className="text-xs text-gray-500 mb-2">Balance · Niños · Preinfantil</p>
+            {cuposKids !== null && (
+              <p className={`text-xs font-bold mb-3 ${cuposKids > 0 ? 'text-green-700' : 'text-red-600'}`}>
+                {cuposKids > 0 ? `Quedan ${cuposKids} cupo${cuposKids !== 1 ? 's' : ''}` : 'Cupos agotados'}
+              </p>
+            )}
             {qrKids && (
               <img src={qrKids} alt="QR Inscritos Copa Kids" className="w-48 h-48 mx-auto rounded-lg shadow-lg" />
             )}

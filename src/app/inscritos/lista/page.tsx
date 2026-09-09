@@ -114,6 +114,16 @@ function ListaInscritosContent() {
       </header>
 
       <div className="max-w-5xl mx-auto px-4 py-6">
+        {/* Cuadro grande de total (responde a los filtros) */}
+        <div className="rounded-xl shadow-md p-6 mb-6 text-center text-white" style={{ backgroundColor: colorPrimary }}>
+          <p className="text-5xl font-extrabold leading-none">{filtrados.length}</p>
+          <p className="text-sm mt-2 opacity-90">
+            {filtroCategoria || filtroEvento || busqueda
+              ? `Inscritos ${filtroCategoria ? `en ${filtroCategoria}` : ''}${filtroEvento ? ` · ${filtroEvento}` : ''}`.trim()
+              : 'Total de inscritos'}
+          </p>
+        </div>
+
         {/* Buscador y filtros */}
         <div className="bg-white rounded-xl shadow-md p-6 mb-6">
           <h2 className="text-lg font-bold text-gray-800 mb-4">Buscar Inscrito</h2>
