@@ -8,10 +8,11 @@ CREATE TABLE IF NOT EXISTS config_inscripciones (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- IMPORTANTE: desactivar RLS para que la clave anónima (navegador) pueda leer/escribir.
+-- Si RLS queda activo, el cierre desde el Admin NO se guarda (y la tabla queda vacía).
+ALTER TABLE config_inscripciones DISABLE ROW LEVEL SECURITY;
+
 -- Filas iniciales para ambos grupos (abiertas, sin fecha de cierre)
 INSERT INTO config_inscripciones (grupo, abierto, cierre_at)
 VALUES ('copa', TRUE, NULL), ('kids', TRUE, NULL)
 ON CONFLICT (grupo) DO NOTHING;
-
--- Sin RLS (igual que el resto del proyecto)
-ALTER TABLE config_inscripciones DISABLE ROW LEVEL SECURITY;

@@ -85,10 +85,14 @@ export async function actualizarConfigInscripcion(
   grupo: 'copa' | 'kids',
   cambios: { abierto?: boolean; cierre_at?: string | null }
 ): Promise<boolean> {
+  // Upsert: crea la fila si no existe, o la actualiza si ya existe.
+  // Esto evita que un UPDATE sobre una tabla vacía no guarde nada.
   const { error } = await supabaseClient
     .from('config_inscripciones')
-    .update({ ...cambios, updated_at: new Date().toISOString() })
-    .eq('grupo', grupo);
+    .upsert(
+      { grupo, ...cambios, updated_at: new Date().toISOString() },
+      { onConflict: 'grupo' }
+    );
   return !error;
 }
 
