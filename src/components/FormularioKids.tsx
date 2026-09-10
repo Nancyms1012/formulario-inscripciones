@@ -333,7 +333,7 @@ export default function FormularioKids() {
           <div className="rounded-xl shadow-md p-4 mb-6 text-center bg-red-50 border border-red-200">
             {cuposDisponibles > 0 ? (
               <p className="text-lg font-bold text-red-600">
-                {`Quedan ${cuposDisponibles} cupo${cuposDisponibles !== 1 ? 's' : ''}`}
+                {cuposDisponibles === 1 ? 'Queda 1 cupo' : `Quedan ${cuposDisponibles} cupos`}
                 <span className="block text-xs font-normal text-gray-500 mt-1">{`de ${cupoMaximo} disponibles para Copa Kids`}</span>
               </p>
             ) : (

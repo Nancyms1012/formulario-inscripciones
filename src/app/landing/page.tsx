@@ -77,7 +77,7 @@ export default function LandingPage() {
             <p className="text-xs text-gray-500 mb-2">Balance · Niños · Preinfantil</p>
             {cuposKids !== null && (
               <p className="text-xs font-bold mb-3 text-red-600">
-                {cuposKids > 0 ? `Quedan ${cuposKids} cupo${cuposKids !== 1 ? 's' : ''}` : 'Cupos agotados'}
+                {cuposKids <= 0 ? 'Cupos agotados' : cuposKids === 1 ? 'Queda 1 cupo' : `Quedan ${cuposKids} cupos`}
               </p>
             )}
             <div className="w-48 h-48 mx-auto p-3 bg-white rounded-lg shadow-lg">

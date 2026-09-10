@@ -5,18 +5,29 @@ import { useEffect, useState } from 'react';
 
 export default function Home() {
   const [cuposKids, setCuposKids] = useState<number | null>(null);
+  const [copaAbierta, setCopaAbierta] = useState<boolean | null>(null);
+  const [kidsAbierta, setKidsAbierta] = useState<boolean | null>(null);
 
   useEffect(() => {
     (async () => {
       try {
-        const { getCuposKids } = await import('@/lib/inscripcion-client');
+        const { getCuposKids, getEstadoInscripcion } = await import('@/lib/inscripcion-client');
         const { disponibles } = await getCuposKids();
         setCuposKids(disponibles);
+        const estadoCopa = await getEstadoInscripcion('copa');
+        const estadoKids = await getEstadoInscripcion('kids');
+        setCopaAbierta(estadoCopa.abierto);
+        setKidsAbierta(estadoKids.abierto);
       } catch {
-        /* ignore */
+        setCopaAbierta(true);
+        setKidsAbierta(true);
       }
     })();
   }, []);
+
+  // Kids está efectivamente cerrada si la cerraron (manual/fecha) o si no quedan cupos
+  const kidsCerrada = kidsAbierta === false || cuposKids === 0;
+  const copaCerrada = copaAbierta === false;
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-12">
@@ -41,27 +52,49 @@ export default function Home() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           {/* La Copa */}
-          <Link href="/inscripcion/copa"
-            className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow border-2 border-transparent hover:border-[#0d2240]">
-            <img src="/images/LOGO_COPA.jpeg" alt="La Copa"
-              className="h-24 w-24 mx-auto rounded-xl object-cover mb-4" />
-            <h2 className="text-lg font-bold text-[#0d2240]">La Copa</h2>
-            <p className="text-sm text-gray-500 mt-1">XCO · XCC</p>
-          </Link>
+          {copaCerrada ? (
+            <div className="bg-white rounded-xl shadow-lg p-6 border-2 border-transparent opacity-60 cursor-not-allowed">
+              <img src="/images/LOGO_COPA.jpeg" alt="La Copa"
+                className="h-24 w-24 mx-auto rounded-xl object-cover mb-4 grayscale" />
+              <h2 className="text-lg font-bold text-[#0d2240]">La Copa</h2>
+              <p className="text-sm text-gray-500 mt-1">XCO · XCC</p>
+              <p className="text-sm font-bold mt-2 text-red-600">Inscripciones cerradas</p>
+            </div>
+          ) : (
+            <Link href="/inscripcion/copa"
+              className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow border-2 border-transparent hover:border-[#0d2240]">
+              <img src="/images/LOGO_COPA.jpeg" alt="La Copa"
+                className="h-24 w-24 mx-auto rounded-xl object-cover mb-4" />
+              <h2 className="text-lg font-bold text-[#0d2240]">La Copa</h2>
+              <p className="text-sm text-gray-500 mt-1">XCO · XCC</p>
+            </Link>
+          )}
 
           {/* Copa Kids */}
-          <Link href="/inscripcion/kids"
-            className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow border-2 border-transparent hover:border-green-600">
-            <img src="/images/logo-copa-kids.jpeg" alt="Copa Kids"
-              className="h-24 w-24 mx-auto rounded-xl object-contain mb-4" />
-            <h2 className="text-lg font-bold text-green-700">Copa Kids</h2>
-            <p className="text-sm text-gray-500 mt-1">Balance · Niños · Preinfantil</p>
-            {cuposKids !== null && (
+          {kidsCerrada ? (
+            <div className="bg-white rounded-xl shadow-lg p-6 border-2 border-transparent opacity-60 cursor-not-allowed">
+              <img src="/images/logo-copa-kids.jpeg" alt="Copa Kids"
+                className="h-24 w-24 mx-auto rounded-xl object-contain mb-4 grayscale" />
+              <h2 className="text-lg font-bold text-green-700">Copa Kids</h2>
+              <p className="text-sm text-gray-500 mt-1">Balance · Niños · Preinfantil</p>
               <p className="text-sm font-bold mt-2 text-red-600">
-                {cuposKids > 0 ? `Quedan ${cuposKids} cupo${cuposKids !== 1 ? 's' : ''}` : 'Cupos agotados'}
+                {cuposKids === 0 && kidsAbierta !== false ? 'Cupos agotados' : 'Inscripciones cerradas'}
               </p>
-            )}
-          </Link>
+            </div>
+          ) : (
+            <Link href="/inscripcion/kids"
+              className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow border-2 border-transparent hover:border-green-600">
+              <img src="/images/logo-copa-kids.jpeg" alt="Copa Kids"
+                className="h-24 w-24 mx-auto rounded-xl object-contain mb-4" />
+              <h2 className="text-lg font-bold text-green-700">Copa Kids</h2>
+              <p className="text-sm text-gray-500 mt-1">Balance · Niños · Preinfantil</p>
+              {cuposKids !== null && (
+                <p className="text-sm font-bold mt-2 text-red-600">
+                  {cuposKids === 1 ? 'Queda 1 cupo' : `Quedan ${cuposKids} cupos`}
+                </p>
+              )}
+            </Link>
+          )}
         </div>
       </div>
     </div>
