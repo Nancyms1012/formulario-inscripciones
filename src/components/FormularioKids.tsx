@@ -72,17 +72,21 @@ export default function FormularioKids() {
   // Cupos Kids
   const [cuposDisponibles, setCuposDisponibles] = useState<number | null>(null);
   const [cupoMaximo, setCupoMaximo] = useState<number>(150);
+  // Estado de apertura/cierre (manual o por fecha)
+  const [inscripcionesAbiertas, setInscripcionesAbiertas] = useState<boolean | null>(null);
 
-  // Cargar cupos disponibles al abrir el formulario
+  // Cargar cupos y estado de apertura al abrir el formulario
   useEffect(() => {
     (async () => {
       try {
-        const { getCuposKids } = await import('@/lib/inscripcion-client');
+        const { getCuposKids, getEstadoInscripcion } = await import('@/lib/inscripcion-client');
         const { disponibles, maximo } = await getCuposKids();
         setCuposDisponibles(disponibles);
         setCupoMaximo(maximo);
+        const estado = await getEstadoInscripcion('kids');
+        setInscripcionesAbiertas(estado.abierto);
       } catch {
-        /* si falla, no mostramos el contador */
+        setInscripcionesAbiertas(true); // ante error, no bloquear
       }
     })();
   }, []);
@@ -221,7 +225,16 @@ export default function FormularioKids() {
     // ===== SINPE / EFECTIVO: se guarda de una vez =====
     setEnviando(true);
     try {
-      const { guardarInscripcionKids, verificarInscripcionExistente, getCuposKids } = await import('@/lib/inscripcion-client');
+      const { guardarInscripcionKids, verificarInscripcionExistente, getCuposKids, getEstadoInscripcion } = await import('@/lib/inscripcion-client');
+
+      // Re-verificar que las inscripciones sigan abiertas (manual/fecha)
+      const estado = await getEstadoInscripcion('kids');
+      if (!estado.abierto) {
+        setInscripcionesAbiertas(false);
+        setError('Las inscripciones de Copa Kids se cerraron.');
+        setEnviando(false);
+        return;
+      }
 
       // Re-verificar cupos por si se llenaron mientras completaba el formulario
       const { disponibles } = await getCuposKids();
@@ -267,6 +280,26 @@ export default function FormularioKids() {
     }
   };
 
+
+  // Pantalla de inscripciones cerradas (manual, fecha o cupo lleno)
+  if (!exito && (inscripcionesAbiertas === false || cuposDisponibles === 0)) {
+    const porCupo = inscripcionesAbiertas !== false && cuposDisponibles === 0;
+    return (
+      <div className="max-w-md mx-auto px-4 py-16 text-center">
+        <div className="bg-white rounded-xl shadow-lg p-8">
+          <div className="text-5xl mb-4">&#128683;</div>
+          <h2 className="text-2xl font-bold text-[#1a7a3a] mb-2">
+            {porCupo ? 'Cupos agotados' : 'Inscripciones cerradas'}
+          </h2>
+          <p className="text-gray-600">
+            {porCupo
+              ? `Se alcanzó el máximo de ${cupoMaximo} inscritos en Copa Kids.`
+              : 'Las inscripciones para Copa Kids están cerradas por el momento. Para más información, contactá a la organización.'}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   // Pantalla de éxito
   if (exito) {

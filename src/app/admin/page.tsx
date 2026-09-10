@@ -58,8 +58,12 @@ export default function AdminPage() {
   const [reenviando, setReenviando] = useState<string | null>(null); // id en proceso
   const [reenviandoLote, setReenviandoLote] = useState(false);
   const [busqueda, setBusqueda] = useState('');
-  const [tab, setTab] = useState<'inscripciones' | 'resumen' | 'cantones'>('inscripciones');
+  const [tab, setTab] = useState<'inscripciones' | 'resumen' | 'cantones' | 'control'>('inscripciones');
   const [cantonEvento, setCantonEvento] = useState(''); // filtro de evento para la gráfica de cantones
+  // Control de apertura/cierre de inscripciones
+  const [configCopa, setConfigCopa] = useState<{ abierto: boolean; cierre_at: string | null } | null>(null);
+  const [configKids, setConfigKids] = useState<{ abierto: boolean; cierre_at: string | null } | null>(null);
+  const [guardandoConfig, setGuardandoConfig] = useState(false);
   const [cantonProvincia, setCantonProvincia] = useState(''); // filtro de provincia para el detalle de cantones
   // Ordenamiento de la tabla "Detalle por evento y categoría"
   const [resumenOrden, setResumenOrden] = useState<{ col: 'evento' | 'categoria' | 'inscritos' | 'pagoPendiente' | 'factura'; asc: boolean }>({ col: 'evento', asc: true });
@@ -172,7 +176,41 @@ export default function AdminPage() {
 
   useEffect(() => {
     cargarTodas();
+    cargarConfig();
   }, []);
+
+  // Cargar config de apertura/cierre
+  const cargarConfig = async () => {
+    try {
+      const { getConfigInscripciones } = await import('@/lib/inscripcion-client');
+      const cfg = await getConfigInscripciones();
+      const copa = cfg.find((c) => c.grupo === 'copa');
+      const kids = cfg.find((c) => c.grupo === 'kids');
+      setConfigCopa(copa ? { abierto: copa.abierto, cierre_at: copa.cierre_at } : { abierto: true, cierre_at: null });
+      setConfigKids(kids ? { abierto: kids.abierto, cierre_at: kids.cierre_at } : { abierto: true, cierre_at: null });
+    } catch {
+      /* ignore */
+    }
+  };
+
+  // Guardar config de un grupo
+  const guardarConfig = async (grupo: 'copa' | 'kids', cambios: { abierto?: boolean; cierre_at?: string | null }) => {
+    setGuardandoConfig(true);
+    try {
+      const { actualizarConfigInscripcion } = await import('@/lib/inscripcion-client');
+      const ok = await actualizarConfigInscripcion(grupo, cambios);
+      if (ok) {
+        if (grupo === 'copa') setConfigCopa((prev) => ({ ...(prev || { abierto: true, cierre_at: null }), ...cambios }));
+        else setConfigKids((prev) => ({ ...(prev || { abierto: true, cierre_at: null }), ...cambios }));
+      } else {
+        alert('No se pudo guardar el cambio.');
+      }
+    } catch {
+      alert('Error al guardar la configuración.');
+    } finally {
+      setGuardandoConfig(false);
+    }
+  };
 
   // Eliminar una inscripción
   const eliminarInscripcion = async (id: string, nombre: string, codigo: string) => {
@@ -544,7 +582,42 @@ export default function AdminPage() {
         >
           Cantones
         </button>
+        <button
+          onClick={() => setTab('control')}
+          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+            tab === 'control' ? 'border-[#0d2240] text-[#0d2240]' : 'border-transparent text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          Abrir/Cerrar
+        </button>
       </div>
+
+      {/* ===== TAB CONTROL (abrir/cerrar inscripciones) ===== */}
+      {tab === 'control' && (
+        <div>
+          <h2 className="text-lg font-bold text-[#0d2240] mb-1">Control de Inscripciones</h2>
+          <p className="text-sm text-gray-500 mb-6">Abrí o cerrá las inscripciones de cada evento, o programá una fecha y hora de cierre automático.</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <ControlEventoCard
+              titulo="La Copa"
+              color="#0d2240"
+              config={configCopa}
+              guardando={guardandoConfig}
+              onToggle={(abierto) => guardarConfig('copa', { abierto })}
+              onFecha={(cierre_at) => guardarConfig('copa', { cierre_at })}
+            />
+            <ControlEventoCard
+              titulo="Copa Kids"
+              color="#1a7a3a"
+              config={configKids}
+              guardando={guardandoConfig}
+              onToggle={(abierto) => guardarConfig('kids', { abierto })}
+              onFecha={(cierre_at) => guardarConfig('kids', { cierre_at })}
+              nota="Copa Kids también se cierra automáticamente al llegar a los 150 cupos."
+            />
+          </div>
+        </div>
+      )}
 
       {/* ===== TAB CANTONES (gráfica por evento y cantón - uso interno organización) ===== */}
       {tab === 'cantones' && (
@@ -1075,6 +1148,108 @@ export default function AdminPage() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+
+// ===== Tarjeta de control de apertura/cierre por evento =====
+function ControlEventoCard({
+  titulo,
+  color,
+  config,
+  guardando,
+  onToggle,
+  onFecha,
+  nota,
+}: {
+  titulo: string;
+  color: string;
+  config: { abierto: boolean; cierre_at: string | null } | null;
+  guardando: boolean;
+  onToggle: (abierto: boolean) => void;
+  onFecha: (cierre_at: string | null) => void;
+  nota?: string;
+}) {
+  // Convierte ISO a valor para <input type="datetime-local"> (hora local)
+  const toLocalInput = (iso: string | null): string => {
+    if (!iso) return '';
+    const d = new Date(iso);
+    const off = d.getTimezoneOffset();
+    const local = new Date(d.getTime() - off * 60000);
+    return local.toISOString().slice(0, 16);
+  };
+
+  if (!config) {
+    return (
+      <div className="bg-white rounded-xl shadow-md p-5">
+        <p className="text-sm text-gray-400">Cargando {titulo}...</p>
+      </div>
+    );
+  }
+
+  // ¿Está cerrado por fecha ya cumplida?
+  const cerradoPorFecha = !!config.cierre_at && new Date(config.cierre_at).getTime() <= Date.now();
+  const abiertoEfectivo = config.abierto && !cerradoPorFecha;
+
+  return (
+    <div className="bg-white rounded-xl shadow-md p-5 border-t-4" style={{ borderTopColor: color }}>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-bold" style={{ color }}>{titulo}</h3>
+        <span className={`text-xs font-bold px-3 py-1 rounded-full ${
+          abiertoEfectivo ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+        }`}>
+          {abiertoEfectivo ? 'ABIERTO' : 'CERRADO'}
+        </span>
+      </div>
+
+      {/* Interruptor manual */}
+      <div className="flex items-center justify-between mb-4">
+        <span className="text-sm text-gray-700">Inscripciones {config.abierto ? 'abiertas' : 'cerradas'} (manual)</span>
+        <button
+          onClick={() => onToggle(!config.abierto)}
+          disabled={guardando}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 ${
+            config.abierto
+              ? 'bg-red-500 text-white hover:bg-red-600'
+              : 'bg-green-600 text-white hover:bg-green-700'
+          }`}
+        >
+          {config.abierto ? 'Cerrar ahora' : 'Abrir ahora'}
+        </button>
+      </div>
+
+      {/* Fecha/hora de cierre automático */}
+      <div className="border-t border-gray-100 pt-4">
+        <label className="block text-sm font-medium text-gray-700 mb-1">Cierre automático (opcional)</label>
+        <p className="text-xs text-gray-400 mb-2">Al llegar esta fecha y hora, las inscripciones se cierran solas.</p>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <input
+            type="datetime-local"
+            value={toLocalInput(config.cierre_at)}
+            onChange={(e) => onFecha(e.target.value ? new Date(e.target.value).toISOString() : null)}
+            disabled={guardando}
+            className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#1a4f8b]"
+          />
+          {config.cierre_at && (
+            <button
+              onClick={() => onFecha(null)}
+              disabled={guardando}
+              className="text-xs text-[#1a4f8b] hover:underline whitespace-nowrap"
+            >
+              Quitar fecha
+            </button>
+          )}
+        </div>
+        {config.cierre_at && (
+          <p className="text-xs text-gray-500 mt-2">
+            {cerradoPorFecha ? 'Cerrado desde: ' : 'Se cerrará el: '}
+            {new Date(config.cierre_at).toLocaleString('es-CR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+          </p>
+        )}
+      </div>
+
+      {nota && <p className="text-xs text-amber-600 mt-4 bg-amber-50 rounded-lg p-2">{nota}</p>}
     </div>
   );
 }

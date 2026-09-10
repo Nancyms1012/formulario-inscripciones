@@ -77,6 +77,21 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
   const [error, setError] = useState('');
   const [codigoInscripcion, setCodigoInscripcion] = useState('');
 
+  // Estado de apertura/cierre de inscripciones
+  const [inscripcionesAbiertas, setInscripcionesAbiertas] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { getEstadoInscripcion } = await import('@/lib/inscripcion-client');
+        const estado = await getEstadoInscripcion('copa');
+        setInscripcionesAbiertas(estado.abierto);
+      } catch {
+        setInscripcionesAbiertas(true); // ante error, no bloquear
+      }
+    })();
+  }, []);
+
   // Calcular categorías disponibles
   useEffect(() => {
     if (genero && anio && evento) {
@@ -207,7 +222,16 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
     // ===== SINPE / EFECTIVO: se guarda de una vez =====
     setEnviando(true);
     try {
-      const { guardarInscripcion, verificarInscripcionExistente } = await import('@/lib/inscripcion-client');
+      const { guardarInscripcion, verificarInscripcionExistente, getEstadoInscripcion } = await import('@/lib/inscripcion-client');
+
+      // Re-verificar que las inscripciones sigan abiertas
+      const estado = await getEstadoInscripcion('copa');
+      if (!estado.abierto) {
+        setInscripcionesAbiertas(false);
+        setError('Las inscripciones se cerraron.');
+        setEnviando(false);
+        return;
+      }
 
       // Verificar duplicado por cédula + evento + categoría (permite misma cédula en otra categoría/evento)
       const existente = await verificarInscripcionExistente(numeroId, evento, categoria);
@@ -244,6 +268,19 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
     }
   };
 
+
+  // Pantalla de inscripciones cerradas
+  if (inscripcionesAbiertas === false && !exito) {
+    return (
+      <div className="max-w-md mx-auto px-4 py-16 text-center">
+        <div className="bg-white rounded-xl shadow-lg p-8">
+          <div className="text-5xl mb-4">&#128683;</div>
+          <h2 className="text-2xl font-bold text-[#0d2240] mb-2">Inscripciones cerradas</h2>
+          <p className="text-gray-600">Las inscripciones para La Copa están cerradas por el momento. Para más información, contactá a la organización.</p>
+        </div>
+      </div>
+    );
+  }
 
   // Pantalla de éxito
   if (exito) {

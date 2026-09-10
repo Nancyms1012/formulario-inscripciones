@@ -25,6 +25,73 @@ export async function getCuposKids(): Promise<{ inscritos: number; disponibles: 
   return { inscritos, disponibles, maximo: CUPO_MAXIMO_KIDS };
 }
 
+// ===== Configuración de apertura/cierre de inscripciones =====
+
+export interface ConfigInscripcion {
+  grupo: string; // 'copa' | 'kids'
+  abierto: boolean;
+  cierre_at: string | null; // ISO datetime o null
+}
+
+export interface EstadoInscripcion {
+  abierto: boolean;
+  motivo: 'abierto' | 'cerrado_manual' | 'cerrado_fecha' | 'cupo_lleno';
+  cierre_at: string | null;
+}
+
+/**
+ * Lee la configuración de un grupo ('copa' o 'kids') y determina si está abierto.
+ * Considera: interruptor manual (abierto) y fecha de cierre (cierre_at).
+ * El cierre por cupo (Kids) se evalúa aparte con getCuposKids.
+ */
+export async function getEstadoInscripcion(grupo: 'copa' | 'kids'): Promise<EstadoInscripcion> {
+  try {
+    const { data, error } = await supabaseClient
+      .from('config_inscripciones')
+      .select('grupo, abierto, cierre_at')
+      .eq('grupo', grupo)
+      .single();
+
+    if (error || !data) {
+      // Si no hay config, asumimos abierto (no bloquear por error)
+      return { abierto: true, motivo: 'abierto', cierre_at: null };
+    }
+
+    if (!data.abierto) {
+      return { abierto: false, motivo: 'cerrado_manual', cierre_at: data.cierre_at };
+    }
+
+    if (data.cierre_at && new Date(data.cierre_at).getTime() <= Date.now()) {
+      return { abierto: false, motivo: 'cerrado_fecha', cierre_at: data.cierre_at };
+    }
+
+    return { abierto: true, motivo: 'abierto', cierre_at: data.cierre_at };
+  } catch {
+    return { abierto: true, motivo: 'abierto', cierre_at: null };
+  }
+}
+
+/** Lee la config cruda de ambos grupos (para el panel de Admin). */
+export async function getConfigInscripciones(): Promise<ConfigInscripcion[]> {
+  const { data, error } = await supabaseClient
+    .from('config_inscripciones')
+    .select('grupo, abierto, cierre_at');
+  if (error || !data) return [];
+  return data as ConfigInscripcion[];
+}
+
+/** Actualiza la config de un grupo (desde el Admin). */
+export async function actualizarConfigInscripcion(
+  grupo: 'copa' | 'kids',
+  cambios: { abierto?: boolean; cierre_at?: string | null }
+): Promise<boolean> {
+  const { error } = await supabaseClient
+    .from('config_inscripciones')
+    .update({ ...cambios, updated_at: new Date().toISOString() })
+    .eq('grupo', grupo);
+  return !error;
+}
+
 export interface DatosCorreo {
   id?: string; // id de la inscripción (para marcar email_enviado)
   email: string;
