@@ -928,7 +928,7 @@ export default function AdminPage() {
                       )}
                     </td>
                     <td className="px-4 py-3 text-xs text-gray-500">
-                      {new Date(insc.created_at).toLocaleDateString('es-CR')}
+                      {new Date(insc.created_at).toLocaleDateString('es-CR', { timeZone: 'America/Costa_Rica' })}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex gap-1">
@@ -1244,7 +1244,7 @@ function ControlEventoCard({
         {config.cierre_at && (
           <p className="text-xs text-gray-500 mt-2">
             {cerradoPorFecha ? 'Cerrado desde: ' : 'Se cerrará el: '}
-            {new Date(config.cierre_at).toLocaleString('es-CR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+            {new Date(config.cierre_at).toLocaleString('es-CR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'America/Costa_Rica' })}
           </p>
         )}
       </div>

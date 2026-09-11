@@ -33,6 +33,7 @@ function formatoHora(iso?: string | null): string {
   try {
     return new Date(iso).toLocaleString('es-CR', {
       day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
+      timeZone: 'America/Costa_Rica',
     });
   } catch {
     return '—';
