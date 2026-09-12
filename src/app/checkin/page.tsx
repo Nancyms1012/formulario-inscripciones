@@ -224,8 +224,9 @@ export default function CheckinPage() {
       if (data && data.length > 0) {
         const insc = data[0] as InscripcionData;
         setInscripcion(insc);
-        // Check-in automático al escanear el QR
+        // Check-in automático + lectura por voz al escanear el QR
         if (autoCheckin && dia) {
+          leerEnVoz(insc);
           await aplicarCheckin(insc);
         }
       } else {
@@ -271,6 +272,23 @@ export default function CheckinPage() {
     } finally {
       setBuscando(false);
     }
+  };
+
+  // Lee en voz alta (español) el dorsal, nombre y categoría del participante
+  const leerEnVoz = (insc: InscripcionData) => {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return;
+    try {
+      const partes: string[] = [];
+      if (insc.dorsal) partes.push(`Dorsal ${insc.dorsal}`);
+      partes.push(`${insc.nombre} ${insc.primer_apellido}`.trim());
+      if (insc.categoria) partes.push(insc.categoria);
+      const texto = partes.join('. ');
+      window.speechSynthesis.cancel(); // cortar cualquier lectura anterior
+      const u = new SpeechSynthesisUtterance(texto);
+      u.lang = 'es-ES';
+      u.rate = 0.95;
+      window.speechSynthesis.speak(u);
+    } catch { /* si no hay soporte de voz, ignorar */ }
   };
 
   // Aplica el check-in a una inscripción dada (usado por el botón y por el auto-checkin)
@@ -490,8 +508,8 @@ export default function CheckinPage() {
   const pct = statTotal.total > 0 ? Math.round((statTotal.hechos / statTotal.total) * 100) : 0;
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8">
-      <div className="text-center mb-6">
+    <div className="max-w-3xl mx-auto px-4 py-8 flex flex-col">
+      <div className="text-center mb-6 order-1">
         <h1 className="text-2xl font-bold text-[#0d2240]">Check-in · {modoLabel}</h1>
         <p className="text-gray-600 mt-1">
           {modoFecha} · Escaneá el QR o buscá por código, nombre o cédula
@@ -507,7 +525,7 @@ export default function CheckinPage() {
       </div>
 
       {/* ===== PANEL DE PROGRESO ===== */}
-      <div className="bg-white rounded-xl shadow-md p-6 mb-6">
+      <div className="bg-white rounded-xl shadow-md p-6 mb-6 order-2">
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-sm font-bold text-[#0d2240] uppercase flex items-center gap-2">
             <svg className="w-5 h-5 text-[#1a4f8b]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -529,7 +547,7 @@ export default function CheckinPage() {
       </div>
 
       {/* Scanner QR */}
-      <div className="bg-white rounded-xl shadow-md p-6 mb-6">
+      <div className="bg-white rounded-xl shadow-md p-6 mb-6 order-3">
         <div className="flex gap-3 mb-4">
           {!scannerActivo ? (
             <button onClick={iniciarScanner}
@@ -582,7 +600,7 @@ export default function CheckinPage() {
 
       {/* Tarjetas por categoría */}
       {statsPorCategoria.length > 0 && (
-        <div className="mb-6">
+        <div className="mb-6 order-5">
           <h3 className="text-sm font-bold text-[#0d2240] uppercase mb-3">Por Categoría</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {statsPorCategoria.map((s) => {
@@ -606,7 +624,7 @@ export default function CheckinPage() {
       )}
 
       {/* ===== LISTA DE PARTICIPANTES ===== */}
-      <div className="bg-white rounded-xl shadow-md p-4 mb-6">
+      <div className="bg-white rounded-xl shadow-md p-4 mb-6 order-6">
         <button onClick={() => setMostrarLista((v) => !v)}
           className="w-full flex items-center justify-between text-left">
           <span className="text-sm font-bold text-[#0d2240] uppercase">
@@ -680,12 +698,12 @@ export default function CheckinPage() {
 
       {/* Error */}
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">{error}</div>
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6 order-4">{error}</div>
       )}
 
       {/* Lista de resultados (cuando hay varios) */}
       {resultados.length > 0 && (
-        <div className="bg-white rounded-xl shadow-md p-6 mb-6">
+        <div className="bg-white rounded-xl shadow-md p-6 mb-6 order-4">
           <h2 className="text-lg font-bold text-[#0d2240] mb-4">
             Se encontraron {resultados.length} resultados — seleccioná uno:
           </h2>
@@ -711,7 +729,7 @@ export default function CheckinPage() {
 
       {/* Resultado individual */}
       {inscripcion && (
-        <div className="bg-white rounded-xl shadow-md p-6">
+        <div className="bg-white rounded-xl shadow-md p-6 order-4">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bold text-[#0d2240]">Datos del Participante</h2>
             {yaHizoCheckin(inscripcion) && (
