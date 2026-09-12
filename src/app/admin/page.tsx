@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { EVENTS } from '@/lib/categories';
+import { EVENTS, getAvailableCategories, type EventType, type Gender } from '@/lib/categories';
 import MapaProvincias from '@/components/MapaProvincias';
 import { CANTONES_POR_PROVINCIA } from '@/lib/cantones';
 
@@ -412,6 +412,94 @@ export default function AdminPage() {
   const [subiendoDorsales, setSubiendoDorsales] = useState(false);
   const [subiendoBoxes, setSubiendoBoxes] = useState(false);
 
+  // Modal "Agregar inscripción" (inscripción manual en sitio)
+  const [mostrarAgregar, setMostrarAgregar] = useState(false);
+  const [guardandoNueva, setGuardandoNueva] = useState(false);
+  const [nueva, setNueva] = useState({
+    nombre: '', primer_apellido: '', segundo_apellido: '',
+    numero_identificacion: '', genero: 'M', anio: '',
+    evento: 'XCO', categoria: '', dorsal: '',
+    email: '', celular: '', equipo: '',
+    metodo_pago: 'Efectivo', estado_pago: 'confirmado',
+  });
+
+  // Categorías disponibles para el evento/género/año elegidos en el modal
+  const categoriasNueva = (() => {
+    if (!nueva.evento || !nueva.genero || !nueva.anio) return [];
+    const anioNum = parseInt(nueva.anio);
+    if (isNaN(anioNum)) return [];
+    try {
+      return getAvailableCategories(nueva.evento as EventType, nueva.genero as Gender, anioNum);
+    } catch {
+      return [];
+    }
+  })();
+
+  // Guardar la nueva inscripción manual
+  const guardarNuevaInscripcion = async () => {
+    if (!nueva.nombre.trim() || !nueva.primer_apellido.trim() || !nueva.numero_identificacion.trim() || !nueva.evento || !nueva.categoria) {
+      alert('Completá al menos: nombre, primer apellido, cédula, evento y categoría.');
+      return;
+    }
+    setGuardandoNueva(true);
+    try {
+      const { supabaseClient } = await import('@/lib/inscripcion-client');
+      // Código de inscripción único
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      let codigo = 'LC-';
+      for (let i = 0; i < 6; i++) codigo += chars.charAt(Math.floor(Math.random() * chars.length));
+
+      const fila = {
+        codigo_inscripcion: codigo,
+        nacionalidad: 'Nacional',
+        tipo_identificacion: 'Cédula física',
+        numero_identificacion: nueva.numero_identificacion.trim(),
+        nombre: nueva.nombre.trim(),
+        primer_apellido: nueva.primer_apellido.trim(),
+        segundo_apellido: nueva.segundo_apellido.trim(),
+        celular: nueva.celular.trim(),
+        email: nueva.email.trim(),
+        fecha_nacimiento: nueva.anio ? `${nueva.anio}-01-01` : null,
+        genero: nueva.genero,
+        provincia: '',
+        equipo: nueva.equipo.trim(),
+        tipo_licencia: '',
+        uci_id: '',
+        evento: nueva.evento,
+        categoria: nueva.categoria,
+        beneficiario_nombre: '', beneficiario_cedula: '', beneficiario_telefono: '', beneficiario_parentesco: '',
+        metodo_pago: nueva.metodo_pago,
+        requiere_factura: false,
+        estado_pago: nueva.estado_pago,
+        dorsal: nueva.dorsal.trim(),
+        email_enviado: true, // no se envía correo en inscripción manual
+      };
+
+      const { error } = await supabaseClient.from('inscripciones').insert(fila);
+      if (error) {
+        alert('Error al guardar: ' + error.message);
+        setGuardandoNueva(false);
+        return;
+      }
+      alert(`Inscripción creada: ${codigo}`);
+      setMostrarAgregar(false);
+      setNueva({
+        nombre: '', primer_apellido: '', segundo_apellido: '',
+        numero_identificacion: '', genero: 'M', anio: '',
+        evento: 'XCO', categoria: '', dorsal: '',
+        email: '', celular: '', equipo: '',
+        metodo_pago: 'Efectivo', estado_pago: 'confirmado',
+      });
+      cargarInscripciones();
+      cargarTodas();
+    } catch (err) {
+      alert('Error al crear la inscripción.');
+      console.error(err);
+    } finally {
+      setGuardandoNueva(false);
+    }
+  };
+
   // Descargar plantilla CSV para subir dorsales
   const descargarPlantillaDorsales = () => {
     const contenido = 'identificacion,dorsal\n109680438,101\n', // ejemplo
@@ -649,6 +737,12 @@ export default function AdminPage() {
             className="bg-[#1a4f8b] text-white px-4 py-2 rounded-lg hover:bg-[#0d2240] transition-colors text-sm"
           >
             Descargar CSV
+          </button>
+          <button
+            onClick={() => setMostrarAgregar(true)}
+            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
+          >
+            + Agregar inscripción
           </button>
           <button
             onClick={descargarPlantillaDorsales}
@@ -1264,6 +1358,87 @@ export default function AdminPage() {
               </div>
             </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* ===== MODAL: Agregar inscripción manual ===== */}
+      {mostrarAgregar && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setMostrarAgregar(false)}>
+          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-green-600 text-white px-6 py-4 rounded-t-xl flex items-center justify-between sticky top-0">
+              <h2 className="font-bold text-lg">Agregar inscripción</h2>
+              <button onClick={() => setMostrarAgregar(false)} className="text-white hover:bg-white/20 rounded-lg w-8 h-8 flex items-center justify-center text-xl">&times;</button>
+            </div>
+            <div className="p-6 space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <label className="block"><span className="text-gray-500 text-xs">Nombre *</span>
+                  <input type="text" value={nueva.nombre} onChange={(e) => setNueva({ ...nueva, nombre: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 mt-1" /></label>
+                <label className="block"><span className="text-gray-500 text-xs">Dorsal</span>
+                  <input type="text" value={nueva.dorsal} onChange={(e) => setNueva({ ...nueva, dorsal: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 mt-1" /></label>
+                <label className="block"><span className="text-gray-500 text-xs">Primer apellido *</span>
+                  <input type="text" value={nueva.primer_apellido} onChange={(e) => setNueva({ ...nueva, primer_apellido: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 mt-1" /></label>
+                <label className="block"><span className="text-gray-500 text-xs">Segundo apellido</span>
+                  <input type="text" value={nueva.segundo_apellido} onChange={(e) => setNueva({ ...nueva, segundo_apellido: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 mt-1" /></label>
+                <label className="block"><span className="text-gray-500 text-xs"># Cédula *</span>
+                  <input type="text" value={nueva.numero_identificacion} onChange={(e) => setNueva({ ...nueva, numero_identificacion: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 mt-1" /></label>
+                <label className="block"><span className="text-gray-500 text-xs">Año nacimiento</span>
+                  <input type="text" value={nueva.anio} onChange={(e) => setNueva({ ...nueva, anio: e.target.value.replace(/[^0-9]/g, '').slice(0, 4), categoria: '' })}
+                    placeholder="Ej: 1990" className="w-full border border-gray-300 rounded-lg px-3 py-2 mt-1" /></label>
+                <label className="block"><span className="text-gray-500 text-xs">Género</span>
+                  <select value={nueva.genero} onChange={(e) => setNueva({ ...nueva, genero: e.target.value, categoria: '' })}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 mt-1">
+                    <option value="M">Masculino</option>
+                    <option value="F">Femenino</option>
+                  </select></label>
+                <label className="block"><span className="text-gray-500 text-xs">Evento *</span>
+                  <select value={nueva.evento} onChange={(e) => setNueva({ ...nueva, evento: e.target.value, categoria: '' })}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 mt-1">
+                    {EVENTS.map((ev) => (<option key={ev} value={ev}>{ev}</option>))}
+                  </select></label>
+                <label className="block sm:col-span-2"><span className="text-gray-500 text-xs">Categoría *</span>
+                  <select value={nueva.categoria} onChange={(e) => setNueva({ ...nueva, categoria: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 mt-1">
+                    <option value="">{categoriasNueva.length === 0 ? 'Completá año, género y evento' : 'Seleccionar...'}</option>
+                    {categoriasNueva.map((c) => (<option key={c} value={c}>{c}</option>))}
+                  </select></label>
+                <label className="block"><span className="text-gray-500 text-xs">Método de pago</span>
+                  <select value={nueva.metodo_pago} onChange={(e) => setNueva({ ...nueva, metodo_pago: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 mt-1">
+                    <option value="Efectivo">Efectivo</option>
+                    <option value="Sinpe">Sinpe</option>
+                    <option value="Tarjeta">Tarjeta</option>
+                  </select></label>
+                <label className="block"><span className="text-gray-500 text-xs">Estado de pago</span>
+                  <select value={nueva.estado_pago} onChange={(e) => setNueva({ ...nueva, estado_pago: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 mt-1">
+                    <option value="confirmado">Confirmado</option>
+                    <option value="pendiente">Pendiente</option>
+                  </select></label>
+                <label className="block"><span className="text-gray-500 text-xs">E-mail</span>
+                  <input type="email" value={nueva.email} onChange={(e) => setNueva({ ...nueva, email: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 mt-1" /></label>
+                <label className="block"><span className="text-gray-500 text-xs"># Celular</span>
+                  <input type="text" value={nueva.celular} onChange={(e) => setNueva({ ...nueva, celular: e.target.value.replace(/[^0-9]/g, '').slice(0, 8) })}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 mt-1" /></label>
+                <label className="block sm:col-span-2"><span className="text-gray-500 text-xs">Equipo</span>
+                  <input type="text" value={nueva.equipo} onChange={(e) => setNueva({ ...nueva, equipo: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 mt-1" /></label>
+              </div>
+              <div className="flex gap-2 pt-2">
+                <button onClick={guardarNuevaInscripcion} disabled={guardandoNueva}
+                  className="flex-1 bg-green-600 text-white px-4 py-3 rounded-lg font-bold hover:bg-green-700 transition-colors disabled:opacity-50">
+                  {guardandoNueva ? 'Guardando...' : 'Crear inscripción'}
+                </button>
+                <button onClick={() => setMostrarAgregar(false)}
+                  className="px-4 py-3 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">Cancelar</button>
+              </div>
+            </div>
           </div>
         </div>
       )}
