@@ -528,6 +528,58 @@ export default function CheckinPage() {
         </div>
       </div>
 
+      {/* Scanner QR */}
+      <div className="bg-white rounded-xl shadow-md p-6 mb-6">
+        <div className="flex gap-3 mb-4">
+          {!scannerActivo ? (
+            <button onClick={iniciarScanner}
+              className="flex-1 bg-[#0d2240] text-white px-4 py-3 rounded-lg hover:bg-[#1a4f8b] transition-colors flex items-center justify-center gap-2">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+              </svg>
+              Escanear QR
+            </button>
+          ) : (
+            <button onClick={detenerScanner}
+              className="flex-1 bg-red-600 text-white px-4 py-3 rounded-lg hover:bg-red-700 transition-colors">
+              Detener cámara
+            </button>
+          )}
+        </div>
+
+        <div className={`relative rounded-lg overflow-hidden mb-4 ${scannerActivo ? '' : 'hidden'}`} style={{ minHeight: '300px' }}>
+          <div id={scannerContainerId} className="w-full" />
+        </div>
+
+        {/* Búsqueda por código */}
+        <label className="block text-sm font-medium text-gray-700 mb-1">Buscar por código:</label>
+        <div className="flex gap-2 mb-4">
+          <input type="text" value={codigo}
+            onChange={(e) => setCodigo(e.target.value.toUpperCase())}
+            onKeyDown={(e) => e.key === 'Enter' && buscarPorCodigo()}
+            placeholder="Código (ej: LC-ABC123)"
+            className="flex-1 border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent" />
+          <button onClick={() => buscarPorCodigo()} disabled={buscando}
+            className="bg-[#1a4f8b] text-white px-6 py-3 rounded-lg hover:bg-[#0d2240] transition-colors disabled:opacity-50">
+            {buscando ? '...' : 'Buscar'}
+          </button>
+        </div>
+
+        {/* Búsqueda por nombre/cédula */}
+        <label className="block text-sm font-medium text-gray-700 mb-1">Buscar por nombre, apellido o cédula:</label>
+        <div className="flex gap-2">
+          <input type="text" value={busquedaTexto}
+            onChange={(e) => setBusquedaTexto(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && buscarPorTexto()}
+            placeholder="Nombre, apellido o # cédula"
+            className="flex-1 border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent" />
+          <button onClick={buscarPorTexto} disabled={buscando}
+            className="bg-[#1a4f8b] text-white px-6 py-3 rounded-lg hover:bg-[#0d2240] transition-colors disabled:opacity-50">
+            {buscando ? '...' : 'Buscar'}
+          </button>
+        </div>
+      </div>
+
       {/* Tarjetas por categoría */}
       {statsPorCategoria.length > 0 && (
         <div className="mb-6">
@@ -624,58 +676,6 @@ export default function CheckinPage() {
             </div>
           </div>
         )}
-      </div>
-
-      {/* Scanner QR */}
-      <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-        <div className="flex gap-3 mb-4">
-          {!scannerActivo ? (
-            <button onClick={iniciarScanner}
-              className="flex-1 bg-[#0d2240] text-white px-4 py-3 rounded-lg hover:bg-[#1a4f8b] transition-colors flex items-center justify-center gap-2">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
-              </svg>
-              Escanear QR
-            </button>
-          ) : (
-            <button onClick={detenerScanner}
-              className="flex-1 bg-red-600 text-white px-4 py-3 rounded-lg hover:bg-red-700 transition-colors">
-              Detener cámara
-            </button>
-          )}
-        </div>
-
-        <div className={`relative rounded-lg overflow-hidden mb-4 ${scannerActivo ? '' : 'hidden'}`} style={{ minHeight: '300px' }}>
-          <div id={scannerContainerId} className="w-full" />
-        </div>
-
-        {/* Búsqueda por código */}
-        <label className="block text-sm font-medium text-gray-700 mb-1">Buscar por código:</label>
-        <div className="flex gap-2 mb-4">
-          <input type="text" value={codigo}
-            onChange={(e) => setCodigo(e.target.value.toUpperCase())}
-            onKeyDown={(e) => e.key === 'Enter' && buscarPorCodigo()}
-            placeholder="Código (ej: LC-ABC123)"
-            className="flex-1 border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent" />
-          <button onClick={() => buscarPorCodigo()} disabled={buscando}
-            className="bg-[#1a4f8b] text-white px-6 py-3 rounded-lg hover:bg-[#0d2240] transition-colors disabled:opacity-50">
-            {buscando ? '...' : 'Buscar'}
-          </button>
-        </div>
-
-        {/* Búsqueda por nombre/cédula */}
-        <label className="block text-sm font-medium text-gray-700 mb-1">Buscar por nombre, apellido o cédula:</label>
-        <div className="flex gap-2">
-          <input type="text" value={busquedaTexto}
-            onChange={(e) => setBusquedaTexto(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && buscarPorTexto()}
-            placeholder="Nombre, apellido o # cédula"
-            className="flex-1 border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent" />
-          <button onClick={buscarPorTexto} disabled={buscando}
-            className="bg-[#1a4f8b] text-white px-6 py-3 rounded-lg hover:bg-[#0d2240] transition-colors disabled:opacity-50">
-            {buscando ? '...' : 'Buscar'}
-          </button>
-        </div>
       </div>
 
       {/* Error */}
