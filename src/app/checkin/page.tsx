@@ -342,29 +342,47 @@ export default function CheckinPage() {
   };
 
   // Reversar check-in (por si se aplicó por error)
-  const reversarCheckin = async () => {
-    if (!inscripcion || !dia) return;
-    if (!confirm('¿Reversar el check-in de este participante? Podrá volver a hacer check-in.')) return;
-
+  // Reversar el check-in de una inscripción por su id (reutilizable: detalle o lista)
+  const reversarPorId = async (id: string) => {
+    if (!dia) return false;
     const cambios = dia === 'XCC'
       ? { checkin_xcc: false, checkin_xcc_fecha: null, checkin_xcc_por: null }
       : { checkin_xco: false, checkin_xco_fecha: null, checkin_xco_por: null };
-
     try {
       const { supabaseClient } = await import('@/lib/inscripcion-client');
       const { error } = await supabaseClient
         .from('inscripciones')
         .update(cambios)
-        .eq('id', inscripcion.id);
-
+        .eq('id', id);
       if (error) throw new Error(error.message);
-
-      setCheckinExitoso(false);
-      setInscripcion({ ...inscripcion, ...cambios });
+      // Actualizar la lista local sin esperar el refresco
+      setLista((prev) => prev.map((r) => r.id === id ? { ...r, ...cambios } : r));
       if (modo) cargarStats(modo);
+      return true;
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Error al reversar');
+      return false;
     }
+  };
+
+  // Reversar desde el detalle del participante
+  const reversarCheckin = async () => {
+    if (!inscripcion) return;
+    if (!confirm('¿Reversar el check-in de este participante? Podrá volver a hacer check-in.')) return;
+    const ok = await reversarPorId(inscripcion.id);
+    if (ok) {
+      const cambios = dia === 'XCC'
+        ? { checkin_xcc: false, checkin_xcc_fecha: null, checkin_xcc_por: null }
+        : { checkin_xco: false, checkin_xco_fecha: null, checkin_xco_por: null };
+      setCheckinExitoso(false);
+      setInscripcion({ ...inscripcion, ...cambios });
+    }
+  };
+
+  // Reversar desde la lista (con confirmación por nombre)
+  const reversarDesdeLista = async (r: InscripcionData) => {
+    if (!confirm(`¿Reversar el check-in de ${r.nombre} ${r.primer_apellido}? Podrá volver a hacer check-in.`)) return;
+    await reversarPorId(r.id);
   };
 
   // Seleccionar de lista de resultados
@@ -672,6 +690,7 @@ export default function CheckinPage() {
                     <th className="text-left px-4 py-2 hidden sm:table-cell">Categoría</th>
                     <th className="text-left px-4 py-2">Estado</th>
                     <th className="text-left px-4 py-2 hidden md:table-cell">Operador</th>
+                    <th className="text-left px-4 py-2">Acción</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -698,6 +717,14 @@ export default function CheckinPage() {
                               : <span className="text-gray-400">Pendiente</span>}
                           </td>
                           <td className="px-4 py-2 hidden md:table-cell text-gray-500">{por || '—'}</td>
+                          <td className="px-4 py-2">
+                            {hecho && (
+                              <button onClick={() => reversarDesdeLista(r)}
+                                className="text-red-600 hover:text-red-800 hover:bg-red-50 rounded px-2 py-1 text-xs font-medium transition-colors border border-red-200">
+                                Reversar
+                              </button>
+                            )}
+                          </td>
                         </tr>
                       );
                     })}
