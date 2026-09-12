@@ -511,10 +511,14 @@ export default function AdminPage() {
         return;
       }
 
+      // Detectar el delimitador (coma, punto y coma o tab)
+      const primeraLinea = lineas[0];
+      const delim = primeraLinea.includes(';') ? ';' : primeraLinea.includes('\t') ? '\t' : ',';
+
       // Detectar columnas del encabezado
-      const encabezado = lineas[0].split(',').map((h) => h.trim().toLowerCase());
+      const encabezado = primeraLinea.split(delim).map((h) => h.trim().toLowerCase());
       const idxId = encabezado.findIndex((h) => h.includes('identificacion') || h.includes('identificación') || h.includes('cedula') || h.includes('cédula') || h === 'id');
-      const idxDorsal = encabezado.findIndex((h) => h.includes('dorsal') || h.includes('numero') || h.includes('número') || h === 'placa');
+      const idxDorsal = encabezado.findIndex((h) => h.includes('dorsal') || h.includes('numero') || h.includes('número') || h === 'placa' || h === 'racenr');
 
       if (idxId === -1 || idxDorsal === -1) {
         alert('El CSV debe tener una columna de identificación (cédula) y una de dorsal.\n\nEjemplo de encabezado:\nidentificacion,dorsal');
@@ -522,30 +526,45 @@ export default function AdminPage() {
         return;
       }
 
+      // Normaliza la cédula: quita todo lo que no sea dígito o letra (guiones, espacios, comillas)
+      const normalizarId = (v: string) => v.trim().replace(/["']/g, '').replace(/[\s-]/g, '');
+
+      // Traer todas las cédulas actuales para matchear de forma flexible (normalizada)
       const { supabaseClient } = await import('@/lib/inscripcion-client');
+      const { data: todos } = await supabaseClient.from('inscripciones').select('id, numero_identificacion');
+      const idMap = new Map<string, string>(); // idNormalizado -> id de fila
+      for (const r of todos || []) {
+        if (r.numero_identificacion) idMap.set(normalizarId(String(r.numero_identificacion)), r.id);
+      }
+
       let actualizados = 0;
       let noEncontrados = 0;
+      const noEncontradosLista: string[] = [];
 
       for (let i = 1; i < lineas.length; i++) {
-        const cols = lineas[i].split(',');
-        const idVal = (cols[idxId] || '').trim().replace(/["']/g, '');
+        const cols = lineas[i].split(delim);
+        const idVal = normalizarId(cols[idxId] || '');
         const dorsalVal = (cols[idxDorsal] || '').trim().replace(/["']/g, '');
         if (!idVal || !dorsalVal) continue;
 
-        const { data, error } = await supabaseClient
-          .from('inscripciones')
-          .update({ dorsal: dorsalVal })
-          .eq('numero_identificacion', idVal)
-          .select('id');
-
-        if (!error && data && data.length > 0) {
-          actualizados += data.length;
+        const filaId = idMap.get(idVal);
+        if (filaId) {
+          const { error } = await supabaseClient
+            .from('inscripciones')
+            .update({ dorsal: dorsalVal })
+            .eq('id', filaId);
+          if (!error) actualizados++;
+          else noEncontrados++;
         } else {
           noEncontrados++;
+          if (noEncontradosLista.length < 10) noEncontradosLista.push(idVal);
         }
       }
 
-      alert(`Dorsales actualizados: ${actualizados}\nNo encontrados: ${noEncontrados}`);
+      const detalle = noEncontradosLista.length > 0
+        ? `\n\nEjemplos no encontrados (cédula normalizada):\n${noEncontradosLista.join(', ')}`
+        : '';
+      alert(`Dorsales actualizados: ${actualizados}\nNo encontrados: ${noEncontrados}${detalle}`);
       cargarInscripciones();
       cargarTodas();
     } catch (err) {
