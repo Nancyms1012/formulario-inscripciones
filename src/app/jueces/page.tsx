@@ -50,18 +50,31 @@ export default function JuecesPage() {
   const [dia, setDia] = useState<DiaEvento>('XCO');
   const [busqueda, setBusqueda] = useState('');
   const [dropdownAbierto, setDropdownAbierto] = useState(false);
+  const [filtroHora, setFiltroHora] = useState('');
+  // Mapa dorsal -> hora de salida (de la tabla boxes; por ahora solo sábado)
+  const [horaPorDorsal, setHoraPorDorsal] = useState<Record<string, string>>({});
 
   const cargar = useCallback(async () => {
     setCargando(true);
     setError('');
     try {
       const { supabaseClient } = await import('@/lib/inscripcion-client');
-      const { data, error } = await supabaseClient
-        .from('inscripciones')
-        .select('id, dorsal, nombre, primer_apellido, segundo_apellido, evento, categoria, numero_identificacion, checkin_xcc, checkin_xcc_fecha, checkin_xcc_por, checkin_xco, checkin_xco_fecha, checkin_xco_por');
+      const [insRes, boxesRes] = await Promise.all([
+        supabaseClient
+          .from('inscripciones')
+          .select('id, dorsal, nombre, primer_apellido, segundo_apellido, evento, categoria, numero_identificacion, checkin_xcc, checkin_xcc_fecha, checkin_xcc_por, checkin_xco, checkin_xco_fecha, checkin_xco_por'),
+        supabaseClient.from('boxes').select('dorsal, hora_salida'),
+      ]);
 
-      if (error) throw new Error(error.message);
-      setRegistros(data || []);
+      if (insRes.error) throw new Error(insRes.error.message);
+      setRegistros(insRes.data || []);
+
+      // Construir mapa dorsal -> hora (si hay boxes cargados)
+      const mapa: Record<string, string> = {};
+      for (const b of boxesRes.data || []) {
+        if (b.dorsal && b.hora_salida) mapa[String(b.dorsal).trim()] = b.hora_salida;
+      }
+      setHoraPorDorsal(mapa);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Error al cargar');
     } finally {
@@ -86,6 +99,12 @@ export default function JuecesPage() {
     return Array.from(set).sort();
   }, [registros, filtroEvento, dia]);
 
+  // Horas de salida disponibles (de la tabla boxes). Por ahora solo hay del sábado.
+  const horasDisponibles = useMemo(() => {
+    const set = new Set(Object.values(horaPorDorsal).filter(Boolean));
+    return Array.from(set).sort();
+  }, [horaPorDorsal]);
+
   // Al cambiar de evento, limpiar categorías que ya no existen
   useEffect(() => {
     setCategoriasSel((prev) => prev.filter((c) => categoriasDisponibles.includes(c)));
@@ -102,6 +121,7 @@ export default function JuecesPage() {
     let res = registros.filter((r) => getDiasParticipa(r.evento, r.categoria).includes(dia));
     if (filtroEvento) res = res.filter((r) => r.evento === filtroEvento);
     if (categoriasSel.length > 0) res = res.filter((r) => categoriasSel.includes(r.categoria));
+    if (filtroHora) res = res.filter((r) => horaPorDorsal[String(r.dorsal || '').trim()] === filtroHora);
     if (busqueda.trim()) {
       const t = busqueda.trim().toLowerCase();
       res = res.filter((r) =>
@@ -117,10 +137,10 @@ export default function JuecesPage() {
       if (!isNaN(da) && !isNaN(db)) return da - db;
       return `${a.primer_apellido} ${a.nombre}`.localeCompare(`${b.primer_apellido} ${b.nombre}`);
     });
-  }, [registros, dia, filtroEvento, categoriasSel, busqueda]);
+  }, [registros, dia, filtroEvento, categoriasSel, busqueda, filtroHora, horaPorDorsal]);
 
-  // Mostrar listado solo cuando ya se eligió al menos un filtro (categoría)
-  const mostrarLista = categoriasSel.length > 0 || filtroEvento !== '';
+  // Mostrar listado solo cuando ya se eligió al menos un filtro (categoría, evento u hora)
+  const mostrarLista = categoriasSel.length > 0 || filtroEvento !== '' || filtroHora !== '';
 
   const totalHechos = filtrados.filter((r) => estadoDia(r, dia).hecho).length;
 
@@ -153,6 +173,18 @@ export default function JuecesPage() {
           <option value="">Todos los eventos</option>
           {eventos.map((ev) => <option key={ev} value={ev}>{ev}</option>)}
         </select>
+
+        {/* Hora de salida (solo si hay parrilla de boxes cargada) */}
+        {horasDisponibles.length > 0 && (
+          <>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Hora de salida</label>
+            <select value={filtroHora} onChange={(e) => setFiltroHora(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2 mb-4 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent">
+              <option value="">Todas las horas</option>
+              {horasDisponibles.map((h) => <option key={h} value={h}>{h}</option>)}
+            </select>
+          </>
+        )}
 
         {/* Categorías (desplegable con selección múltiple) */}
         <div className="flex items-center justify-between mb-2">
