@@ -120,10 +120,10 @@ export default function BoxesPage() {
     return base.sort((a, b) => a.orden - b.orden);
   }, [rows, horaSel, boxSel, categoriasSel]);
 
-  // Lista de DNS: los que NO tienen salida_final marcada como "en box" al cerrar.
-  // Regla acordada: DNS = quien NO estuvo en el box (en_box=false).
+  // Lista de DNS: solo cuando ya se dio la SALIDA de la tanda (salida_final=true)
+  // y el corredor NO estuvo en el box. Así no aparecen tandas que aún no han salido.
   const listaDNS = useMemo(
-    () => rows.filter((r) => !r.en_box).sort((a, b) => a.orden - b.orden),
+    () => rows.filter((r) => r.salida_final && !r.en_box).sort((a, b) => a.orden - b.orden),
     [rows]
   );
 
@@ -154,23 +154,55 @@ export default function BoxesPage() {
     }
   };
 
-  // Marcar / desmarcar "salida final" (check del comisario)
-  const toggleSalidaFinal = async (row: BoxRow) => {
-    const nuevo = !row.salida_final;
-    setRows((prev) => prev.map((r) => r.id === row.id
-      ? { ...r, salida_final: nuevo, salida_final_por: nuevo ? operador : null }
+  // Dar la salida a TODA la tanda de una hora (check único del comisario).
+  // Marca salida_final=true para todos los de esa hora. Los que NO están "en el box" quedan DNS.
+  const darSalidaHora = async (hora: string) => {
+    const dela = rows.filter((r) => r.hora_salida === hora);
+    const enBox = dela.filter((r) => r.en_box).length;
+    const dns = dela.length - enBox;
+    if (!window.confirm(
+      `¿Dar la SALIDA a la tanda de las ${hora}?\n\nEn el box (salen): ${enBox}\nNo estaban en el box (DNS): ${dns}\n\nEsta acción marca la salida de toda la tanda.`
+    )) return;
+
+    const ahora = new Date().toISOString();
+    // Optimista
+    setRows((prev) => prev.map((r) => r.hora_salida === hora
+      ? { ...r, salida_final: true, salida_final_por: operador, salida_final_fecha: ahora }
       : r));
     try {
       const { supabaseClient } = await import('@/lib/inscripcion-client');
       await supabaseClient.from('boxes').update({
-        salida_final: nuevo,
-        salida_final_por: nuevo ? operador : null,
-        salida_final_fecha: nuevo ? new Date().toISOString() : null,
-      }).eq('id', row.id);
+        salida_final: true,
+        salida_final_por: operador,
+        salida_final_fecha: ahora,
+      }).eq('hora_salida', hora);
     } catch {
-      setRows((prev) => prev.map((r) => r.id === row.id ? { ...r, salida_final: row.salida_final, salida_final_por: row.salida_final_por } : r));
-      setError('No se pudo guardar el cambio de salida.');
+      setError('No se pudo guardar la salida de la tanda.');
+      cargar();
     }
+  };
+
+  // Revertir la salida de una tanda (por si se dio por error)
+  const revertirSalidaHora = async (hora: string) => {
+    if (!window.confirm(`¿Revertir la salida de la tanda de las ${hora}?`)) return;
+    setRows((prev) => prev.map((r) => r.hora_salida === hora
+      ? { ...r, salida_final: false, salida_final_por: null, salida_final_fecha: null }
+      : r));
+    try {
+      const { supabaseClient } = await import('@/lib/inscripcion-client');
+      await supabaseClient.from('boxes').update({
+        salida_final: false, salida_final_por: null, salida_final_fecha: null,
+      }).eq('hora_salida', hora);
+    } catch {
+      setError('No se pudo revertir la salida.');
+      cargar();
+    }
+  };
+
+  // ¿Ya se dio la salida de esta hora? (todos los de la hora con salida_final)
+  const salidaDadaHora = (hora: string): boolean => {
+    const dela = rows.filter((r) => r.hora_salida === hora);
+    return dela.length > 0 && dela.every((r) => r.salida_final);
   };
 
   const horaLabel = (h: string) => h; // ya viene HH:MM
@@ -311,7 +343,21 @@ export default function BoxesPage() {
           {/* Cuadros de boxes de la hora seleccionada */}
           {horaSel && (
             <div className="bg-white rounded-xl shadow-md p-5 mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-3">Boxes de las {horaSel}</label>
+              <div className="flex items-center justify-between mb-3">
+                <label className="block text-sm font-medium text-gray-700">Boxes de las {horaSel}</label>
+                {/* Botón ÚNICO de salida por hora (comisario) */}
+                {salidaDadaHora(horaSel) ? (
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold text-[#0d2240] bg-blue-50 px-3 py-1.5 rounded-lg">&#10003; Salida dada</span>
+                    <button onClick={() => revertirSalidaHora(horaSel)} className="text-xs text-[#1a4f8b] hover:underline">Revertir</button>
+                  </div>
+                ) : (
+                  <button onClick={() => darSalidaHora(horaSel)}
+                    className="bg-[#0d2240] text-white px-5 py-2 rounded-lg text-sm font-bold hover:bg-[#1a4f8b] transition-colors">
+                    Dar salida {horaSel}
+                  </button>
+                )}
+              </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {boxesDeHora.map((b) => (
                   <button key={b} onClick={() => setBoxSel(b)}
@@ -359,13 +405,6 @@ export default function BoxesPage() {
                       r.en_box ? 'bg-green-600 text-white border-green-600' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
                     }`}>
                     <span>{r.en_box ? '\u2713' : '\u25CB'}</span> En el box
-                  </button>
-                  {/* Toggle: salida final (comisario) */}
-                  <button onClick={() => toggleSalidaFinal(r)}
-                    className={`flex items-center gap-1.5 text-xs px-2 py-1 rounded-lg border transition-colors ${
-                      r.salida_final ? 'bg-[#0d2240] text-white border-[#0d2240]' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
-                    }`}>
-                    <span>{r.salida_final ? '\u2713' : '\u25CB'}</span> Salida
                   </button>
                 </div>
               </div>
