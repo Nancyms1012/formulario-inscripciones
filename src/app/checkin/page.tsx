@@ -78,6 +78,7 @@ export default function CheckinPage() {
   const [lista, setLista] = useState<InscripcionData[]>([]);
   const [mostrarLista, setMostrarLista] = useState(false);
   const [filtroLista, setFiltroLista] = useState<'todos' | 'hechos' | 'pendientes'>('todos');
+  const [filtroCategoria, setFiltroCategoria] = useState('');
 
   // QR hacia la página de consulta para jueces
   const [qrJueces, setQrJueces] = useState('');
@@ -665,8 +666,8 @@ export default function CheckinPage() {
 
         {mostrarLista && (
           <div className="mt-4">
-            {/* Filtro del listado */}
-            <div className="flex gap-2 mb-3">
+            {/* Filtro del listado (estado) */}
+            <div className="flex gap-2 mb-3 flex-wrap">
               {([
                 { k: 'todos', label: `Todos (${lista.length})` },
                 { k: 'hechos', label: `Con check-in (${lista.filter(yaHizoCheckin).length})` },
@@ -679,6 +680,17 @@ export default function CheckinPage() {
                   {f.label}
                 </button>
               ))}
+            </div>
+
+            {/* Filtro por categoría */}
+            <div className="mb-3">
+              <select value={filtroCategoria} onChange={(e) => setFiltroCategoria(e.target.value)}
+                className="w-full sm:w-auto border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#1a4f8b]">
+                <option value="">Todas las categorías</option>
+                {Array.from(new Set(lista.map((r) => r.categoria).filter(Boolean))).sort().map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
             </div>
 
             <div className="overflow-x-auto -mx-4">
@@ -695,6 +707,7 @@ export default function CheckinPage() {
                 </thead>
                 <tbody>
                   {lista
+                    .filter((r) => !filtroCategoria || r.categoria === filtroCategoria)
                     .filter((r) => {
                       if (filtroLista === 'hechos') return yaHizoCheckin(r);
                       if (filtroLista === 'pendientes') return !yaHizoCheckin(r);
