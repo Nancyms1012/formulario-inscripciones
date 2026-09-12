@@ -185,9 +185,25 @@ export default function CheckinPage() {
     if (modo) cargarStats(modo);
   }, [modo, cargarStats]);
 
-  // Buscar por código QR
-  const buscarPorCodigo = async (codigoBuscar?: string) => {
-    const codigoFinal = codigoBuscar || codigo;
+  // Extrae el código de inscripción de un texto que puede ser el código directo
+  // o una URL tipo ".../mi-inscripcion?codigo=LC-XXXXXX"
+  const extraerCodigo = (texto: string): string => {
+    const t = texto.trim();
+    // Buscar patrón LC-XXXXXX en cualquier parte (código o URL)
+    const m = t.match(/LC-[A-Z0-9]+/i);
+    if (m) return m[0].toUpperCase();
+    // Intentar parsear como URL con ?codigo=
+    try {
+      const u = new URL(t);
+      const c = u.searchParams.get('codigo');
+      if (c) return c.trim().toUpperCase();
+    } catch { /* no era URL */ }
+    return t.toUpperCase();
+  };
+
+  // Buscar por código QR. Si autoCheckin=true (viene del escaneo), aplica el check-in solo.
+  const buscarPorCodigo = async (codigoBuscar?: string, autoCheckin = false) => {
+    const codigoFinal = extraerCodigo(codigoBuscar || codigo);
     if (!codigoFinal.trim()) return;
 
     setError('');
@@ -206,7 +222,12 @@ export default function CheckinPage() {
       if (error) throw new Error(error.message);
 
       if (data && data.length > 0) {
-        setInscripcion(data[0]);
+        const insc = data[0] as InscripcionData;
+        setInscripcion(insc);
+        // Check-in automático al escanear el QR
+        if (autoCheckin && dia) {
+          await aplicarCheckin(insc);
+        }
       } else {
         setError('No se encontró ninguna inscripción con ese código.');
       }
@@ -252,9 +273,15 @@ export default function CheckinPage() {
     }
   };
 
-  // Confirmar check-in (para el día seleccionado)
-  const confirmarCheckin = async () => {
-    if (!inscripcion || !dia) return;
+  // Aplica el check-in a una inscripción dada (usado por el botón y por el auto-checkin)
+  const aplicarCheckin = async (insc: InscripcionData) => {
+    if (!dia) return;
+    // Si ya hizo check-in en el día, no repetir (pero mostrar éxito igual)
+    const yaHecho = dia === 'XCC' ? !!insc.checkin_xcc : !!insc.checkin_xco;
+    if (yaHecho) {
+      setCheckinExitoso(true);
+      return;
+    }
 
     const ahora = new Date().toISOString();
     const cambios = dia === 'XCC'
@@ -266,17 +293,22 @@ export default function CheckinPage() {
       const { error } = await supabaseClient
         .from('inscripciones')
         .update(cambios)
-        .eq('id', inscripcion.id);
+        .eq('id', insc.id);
 
       if (error) throw new Error(error.message);
 
       setCheckinExitoso(true);
-      setInscripcion({ ...inscripcion, ...cambios });
-      // Actualizar stats en vivo
+      setInscripcion({ ...insc, ...cambios });
       if (modo) cargarStats(modo);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Error al confirmar');
     }
+  };
+
+  // Confirmar check-in (botón, para el día seleccionado)
+  const confirmarCheckin = async () => {
+    if (!inscripcion) return;
+    await aplicarCheckin(inscripcion);
   };
 
   // Reversar check-in (por si se aplicó por error)
@@ -330,7 +362,7 @@ export default function CheckinPage() {
           scanner.stop().then(() => {
             setScannerActivo(false);
             setCodigo(decodedText);
-            buscarPorCodigo(decodedText);
+            buscarPorCodigo(decodedText, true); // auto check-in al escanear
           });
         },
         () => {} // ignorar errores de frames sin QR
@@ -424,6 +456,14 @@ export default function CheckinPage() {
             <p className="text-gray-500 mt-1">Domingo 13 Setiembre</p>
             <p className="text-xs text-gray-400 mt-2">Balance · Niños · Preinfantil</p>
           </button>
+        </div>
+
+        {/* Acceso a Check-in Boxes */}
+        <div className="mt-6 text-center">
+          <a href="/checkin/boxes"
+            className="inline-block bg-[#1a7a3a] text-white px-6 py-3 rounded-lg font-medium hover:bg-green-800 transition-colors">
+            Ir a Check-in Boxes
+          </a>
         </div>
 
         {/* QR para jueces (consulta de solo lectura) */}
