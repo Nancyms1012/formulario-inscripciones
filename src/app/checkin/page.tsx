@@ -185,6 +185,18 @@ export default function CheckinPage() {
     if (modo) cargarStats(modo);
   }, [modo, cargarStats]);
 
+  // Auto-refresco: actualiza contador y lista cada 10 s en segundo plano
+  // (para ver en tiempo casi real las llegadas de otros operadores).
+  // No interrumpe el escaneo ni la búsqueda: solo recarga las estadísticas/lista.
+  useEffect(() => {
+    if (!modo) return;
+    const intervalo = setInterval(() => {
+      // No refrescar mientras la cámara del scanner está activa (evita cortes)
+      if (!scannerActivo) cargarStats(modo);
+    }, 10000);
+    return () => clearInterval(intervalo);
+  }, [modo, scannerActivo, cargarStats]);
+
   // Extrae el código de inscripción de un texto que puede ser el código directo
   // o una URL tipo ".../mi-inscripcion?codigo=LC-XXXXXX"
   const extraerCodigo = (texto: string): string => {
