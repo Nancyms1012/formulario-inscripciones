@@ -159,6 +159,18 @@ export default function BoxesPage() {
     }
   };
 
+  // Anuncio por voz (español)
+  const hablar = (texto: string) => {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return;
+    try {
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(texto);
+      u.lang = 'es-ES';
+      u.rate = 0.95;
+      window.speechSynthesis.speak(u);
+    } catch { /* sin soporte de voz */ }
+  };
+
   // Dar la salida a TODA la tanda de una hora (check único del comisario).
   // Marca salida_final=true para todos los de esa hora. Los que NO están "en el box" quedan DNS.
   const darSalidaHora = async (hora: string) => {
@@ -168,6 +180,9 @@ export default function BoxesPage() {
     if (!window.confirm(
       `¿Dar la SALIDA a la tanda de las ${hora}?\n\nEn el box (salen): ${enBox}\nNo estaban en el box (DNS): ${dns}\n\nEsta acción marca la salida de toda la tanda.`
     )) return;
+
+    // Anuncio hablado del cierre de la tanda
+    hablar(`Salida dada. Tanda de las ${hora.replace(':', ' ')}. ${enBox} corredores salen. ${dns} no salen.`);
 
     const ahora = new Date().toISOString();
     // Optimista
