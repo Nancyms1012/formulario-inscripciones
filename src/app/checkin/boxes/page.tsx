@@ -47,6 +47,9 @@ export default function BoxesPage() {
     if (g) setOperador(g);
   }, []);
 
+  // Solo el operador "Admin" puede revertir salidas (los demás no ven el botón)
+  const esAdmin = (operador || '').trim().toLowerCase() === 'admin';
+
   const guardarOperador = () => {
     const n = operadorInput.trim();
     if (!n) return;
@@ -202,8 +205,9 @@ export default function BoxesPage() {
     }
   };
 
-  // Revertir la salida de una tanda (por si se dio por error)
+  // Revertir la salida de una tanda (solo Admin, por si se dio por error)
   const revertirSalidaHora = async (hora: string) => {
+    if (!esAdmin) return; // solo el operador "Admin" puede revertir
     if (!window.confirm(`¿Revertir la salida de la tanda de las ${hora}?`)) return;
     setRows((prev) => prev.map((r) => r.hora_salida === hora
       ? { ...r, salida_final: false, salida_final_por: null, salida_final_fecha: null }
@@ -374,7 +378,10 @@ export default function BoxesPage() {
                 {salidaDadaHora(horaSel) ? (
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-bold text-[#0d2240] bg-blue-50 px-3 py-1.5 rounded-lg">&#10003; Salida dada</span>
-                    <button onClick={() => revertirSalidaHora(horaSel)} className="text-xs text-[#1a4f8b] hover:underline">Revertir</button>
+                    {/* Revertir solo visible para el operador "Admin" */}
+                    {esAdmin && (
+                      <button onClick={() => revertirSalidaHora(horaSel)} className="text-xs text-[#1a4f8b] hover:underline">Revertir</button>
+                    )}
                   </div>
                 ) : (
                   <button onClick={() => darSalidaHora(horaSel)}
