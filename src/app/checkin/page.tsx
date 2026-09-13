@@ -264,16 +264,19 @@ export default function CheckinPage() {
 
     try {
       const { supabaseClient } = await import('@/lib/inscripcion-client');
-      const texto = busquedaTexto.trim().toLowerCase();
+      const texto = busquedaTexto.trim();
+      const esSoloNumero = /^\d+$/.test(texto);
 
-      // Filtros base: nombre, apellidos, cédula y dorsal (por texto)
-      const filtros = [
-        `nombre.ilike.%${texto}%`,
-        `primer_apellido.ilike.%${texto}%`,
-        `segundo_apellido.ilike.%${texto}%`,
-        `numero_identificacion.ilike.%${texto}%`,
-        `dorsal.ilike.%${texto}%`,
-      ];
+      // Si es SOLO un número → buscar por DORSAL exacto (evita traer cédulas parciales).
+      // Si tiene letras → buscar por nombre, apellidos o cédula.
+      const filtros = esSoloNumero
+        ? [`dorsal.eq.${texto}`]
+        : [
+            `nombre.ilike.%${texto.toLowerCase()}%`,
+            `primer_apellido.ilike.%${texto.toLowerCase()}%`,
+            `segundo_apellido.ilike.%${texto.toLowerCase()}%`,
+            `numero_identificacion.ilike.%${texto.toLowerCase()}%`,
+          ];
 
       const { data, error } = await supabaseClient
         .from('inscripciones')
@@ -624,12 +627,13 @@ export default function CheckinPage() {
         </div>
 
         {/* Búsqueda por nombre/cédula/dorsal */}
-        <label className="block text-sm font-medium text-gray-700 mb-1">Buscar por nombre, apellido, cédula o dorsal:</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Buscar por nombre, cédula o dorsal:</label>
+        <p className="text-xs text-gray-400 mb-1">Si escribís solo números, busca por dorsal.</p>
         <div className="flex gap-2">
           <input type="text" value={busquedaTexto}
             onChange={(e) => setBusquedaTexto(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && buscarPorTexto()}
-            placeholder="Nombre, apellido, # cédula o dorsal"
+            placeholder="Nombre / cédula / dorsal"
             className="flex-1 border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent" />
           <button onClick={buscarPorTexto} disabled={buscando}
             className="bg-[#1a4f8b] text-white px-6 py-3 rounded-lg hover:bg-[#0d2240] transition-colors disabled:opacity-50">
