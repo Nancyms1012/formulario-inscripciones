@@ -252,7 +252,7 @@ export default function CheckinPage() {
     }
   };
 
-  // Buscar por nombre, apellido o cédula
+  // Buscar por nombre, apellido, cédula o dorsal
   const buscarPorTexto = async () => {
     if (!busquedaTexto.trim()) return;
 
@@ -266,10 +266,19 @@ export default function CheckinPage() {
       const { supabaseClient } = await import('@/lib/inscripcion-client');
       const texto = busquedaTexto.trim().toLowerCase();
 
+      // Filtros base: nombre, apellidos, cédula y dorsal (por texto)
+      const filtros = [
+        `nombre.ilike.%${texto}%`,
+        `primer_apellido.ilike.%${texto}%`,
+        `segundo_apellido.ilike.%${texto}%`,
+        `numero_identificacion.ilike.%${texto}%`,
+        `dorsal.ilike.%${texto}%`,
+      ];
+
       const { data, error } = await supabaseClient
         .from('inscripciones')
         .select('*')
-        .or(`nombre.ilike.%${texto}%,primer_apellido.ilike.%${texto}%,segundo_apellido.ilike.%${texto}%,numero_identificacion.ilike.%${texto}%`);
+        .or(filtros.join(','));
 
       if (error) throw new Error(error.message);
 
@@ -278,7 +287,7 @@ export default function CheckinPage() {
       } else if (data && data.length > 1) {
         setResultados(data);
       } else {
-        setError('No se encontró ninguna inscripción con ese nombre o cédula.');
+        setError('No se encontró ninguna inscripción con ese nombre, cédula o dorsal.');
       }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Error al buscar');
@@ -614,13 +623,13 @@ export default function CheckinPage() {
           </button>
         </div>
 
-        {/* Búsqueda por nombre/cédula */}
-        <label className="block text-sm font-medium text-gray-700 mb-1">Buscar por nombre, apellido o cédula:</label>
+        {/* Búsqueda por nombre/cédula/dorsal */}
+        <label className="block text-sm font-medium text-gray-700 mb-1">Buscar por nombre, apellido, cédula o dorsal:</label>
         <div className="flex gap-2">
           <input type="text" value={busquedaTexto}
             onChange={(e) => setBusquedaTexto(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && buscarPorTexto()}
-            placeholder="Nombre, apellido o # cédula"
+            placeholder="Nombre, apellido, # cédula o dorsal"
             className="flex-1 border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent" />
           <button onClick={buscarPorTexto} disabled={buscando}
             className="bg-[#1a4f8b] text-white px-6 py-3 rounded-lg hover:bg-[#0d2240] transition-colors disabled:opacity-50">
