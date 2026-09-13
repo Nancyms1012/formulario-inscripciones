@@ -423,7 +423,11 @@ export default function BoxesPage() {
             {corredoresDelBox.map((r) => (
               <div key={r.id}
                 className={`rounded-xl border-2 p-3 transition-all ${
-                  r.en_box ? 'bg-green-50 border-green-300' : 'bg-white border-gray-200'
+                  r.en_box
+                    ? 'bg-green-50 border-green-300'
+                    : !r.ins_checkin
+                    ? 'bg-amber-50 border-amber-400' // resaltar: aún NO hizo check-in
+                    : 'bg-white border-gray-200'
                 }`}>
                 {/* Dorsal grande */}
                 <p className="text-3xl font-extrabold text-[#1a4f8b] text-center leading-none">{r.dorsal}</p>
@@ -432,11 +436,16 @@ export default function BoxesPage() {
                   {formatoNombre(r.ins_primer_apellido, r.ins_nombre) || r.nombre_archivo}
                 </p>
                 <div className="flex flex-col gap-1.5 mt-2">
-                  {/* Estado check-in (de la BD, solo lectura) */}
-                  <div className="flex items-center gap-1.5 text-xs">
-                    <span className={r.ins_checkin ? 'text-green-600' : 'text-gray-300'}>&#10003;</span>
-                    <span className={r.ins_checkin ? 'text-green-700' : 'text-gray-400'}>Check-in</span>
-                  </div>
+                  {/* Estado check-in (de la BD, solo lectura) — etiqueta clara */}
+                  {r.ins_checkin ? (
+                    <div className="flex items-center justify-center gap-1 text-xs font-semibold text-green-700 bg-green-100 rounded-md py-1">
+                      <span>&#10003;</span> Check-in
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center gap-1 text-xs font-bold text-amber-700 bg-amber-100 rounded-md py-1">
+                      <span>&#9888;</span> SIN check-in
+                    </div>
+                  )}
                   {/* Toggle: en el box (bloqueado si la salida ya fue dada) */}
                   <button onClick={() => toggleEnBox(r)}
                     disabled={r.salida_final}
