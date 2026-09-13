@@ -135,6 +135,11 @@ export default function BoxesPage() {
 
   // Marcar / desmarcar "en el box"
   const toggleEnBox = async (row: BoxRow) => {
+    // Si la tanda ya tiene la salida dada, el box está cerrado: no permitir cambios
+    if (row.salida_final) {
+      setError(`La salida de las ${row.hora_salida} ya fue dada. Revertí la salida de esa tanda para poder modificar.`);
+      return;
+    }
     const nuevo = !row.en_box;
     // Optimista
     setRows((prev) => prev.map((r) => r.id === row.id
@@ -381,6 +386,12 @@ export default function BoxesPage() {
             <h2 className="text-lg font-bold text-[#0d2240]">{boxSel} · {horaSel}</h2>
             <p className="text-sm text-gray-500">{corredoresDelBox.length} corredores</p>
           </div>
+          {salidaDadaHora(horaSel) && (
+            <div className="bg-gray-100 border border-gray-200 text-gray-600 text-sm px-4 py-2 rounded-lg mb-4 flex items-center gap-2">
+              <span aria-hidden="true">&#128274;</span>
+              Box cerrado: la salida de las {horaSel} ya fue dada. Para modificar, revertí la salida de esa tanda.
+            </div>
+          )}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {corredoresDelBox.map((r) => (
               <div key={r.id}
@@ -399,12 +410,16 @@ export default function BoxesPage() {
                     <span className={r.ins_checkin ? 'text-green-600' : 'text-gray-300'}>&#10003;</span>
                     <span className={r.ins_checkin ? 'text-green-700' : 'text-gray-400'}>Check-in</span>
                   </div>
-                  {/* Toggle: en el box */}
+                  {/* Toggle: en el box (bloqueado si la salida ya fue dada) */}
                   <button onClick={() => toggleEnBox(r)}
+                    disabled={r.salida_final}
+                    title={r.salida_final ? 'Box cerrado: salida ya dada' : ''}
                     className={`flex items-center gap-1.5 text-xs px-2 py-1 rounded-lg border transition-colors ${
-                      r.en_box ? 'bg-green-600 text-white border-green-600' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
+                      r.salida_final
+                        ? (r.en_box ? 'bg-green-600 text-white border-green-600 opacity-60 cursor-not-allowed' : 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed')
+                        : (r.en_box ? 'bg-green-600 text-white border-green-600' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50')
                     }`}>
-                    <span>{r.en_box ? '\u2713' : '\u25CB'}</span> En el box
+                    <span>{r.salida_final ? '\uD83D\uDD12' : (r.en_box ? '\u2713' : '\u25CB')}</span> En el box
                   </button>
                 </div>
               </div>
