@@ -681,19 +681,21 @@ export default function AdminPage() {
     const columnas = [
       'codigo_inscripcion', 'nacionalidad', 'tipo_identificacion', 'numero_identificacion',
       'nombre', 'primer_apellido', 'segundo_apellido', 'celular', 'email',
-      'fecha_nacimiento', 'genero', 'provincia', 'canton', 'equipo', 'tipo_licencia', 'uci_id',
+      'fecha_nacimiento', 'genero', 'lateralidad', 'provincia', 'equipo', 'tipo_licencia', 'uci_id',
       'evento', 'categoria', 'beneficiario_nombre', 'beneficiario_cedula',
       'beneficiario_telefono', 'beneficiario_parentesco', 'metodo_pago',
-      'estado_pago', 'requiere_factura', 'checkin', 'checkin_fecha', 'created_at'
+      'requiere_factura', 'factura_nombre', 'factura_cedula', 'factura_email',
+      'estado_pago', 'checkin', 'checkin_fecha', 'created_at'
     ];
 
     const encabezados = [
       'Código', 'Nacionalidad', 'Tipo ID', '# Identificación',
       'Nombre', 'Primer Apellido', 'Segundo Apellido', 'Celular', 'Email',
-      'Fecha Nacimiento', 'Género', 'Provincia', 'Cantón', 'Equipo', 'Tipo Licencia', 'UCI ID',
+      'Fecha Nacimiento', 'Género', 'Lateralidad', 'Provincia', 'Equipo', 'Tipo Licencia', 'UCI ID',
       'Evento', 'Categoría', 'Beneficiario Nombre', 'Beneficiario Cédula',
       'Beneficiario Teléfono', 'Beneficiario Parentesco', 'Método Pago',
-      'Estado Pago', 'Requiere Factura', 'Check-in', 'Fecha Check-in', 'Fecha Inscripción'
+      'Requiere Factura', 'Factura Nombre', 'Factura Cédula', 'Factura Email',
+      'Estado Pago', 'Check-in', 'Fecha Check-in', 'Fecha Inscripción'
     ];
 
     // Crear CSV
