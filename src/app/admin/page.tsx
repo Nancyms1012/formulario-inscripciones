@@ -665,12 +665,16 @@ export default function AdminPage() {
 
   // Descargar CSV con todas las columnas
   const descargarCSV = async () => {
-    // Traer TODOS los datos (sin filtros) con todas las columnas
+    // Traer datos aplicando filtros actuales
     const { supabaseClient } = await import('@/lib/inscripcion-client');
-    const { data, error } = await supabaseClient
-      .from('inscripciones')
-      .select('*')
-      .order('created_at', { ascending: false });
+    let query = supabaseClient.from('inscripciones').select('*');
+
+    // Aplicar filtros actuales
+    if (filtroEvento) query = query.eq('evento', filtroEvento);
+    if (filtroCategoria) query = query.eq('categoria', filtroCategoria);
+    if (filtroFactura) query = query.eq('requiere_factura', true);
+
+    const { data, error } = await query.order('created_at', { ascending: false });
 
     if (error || !data || data.length === 0) {
       alert('No hay datos para descargar.');
