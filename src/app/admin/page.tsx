@@ -667,6 +667,8 @@ export default function AdminPage() {
   const descargarCSV = async () => {
     // Traer datos aplicando filtros actuales
     const { supabaseClient } = await import('@/lib/inscripcion-client');
+    const { getPaymentLink } = await import('@/lib/payment-links');
+    
     let query = supabaseClient.from('inscripciones').select('*');
 
     // Aplicar filtros actuales
@@ -699,12 +701,16 @@ export default function AdminPage() {
       'Evento', 'Categoría', 'Beneficiario Nombre', 'Beneficiario Cédula',
       'Beneficiario Teléfono', 'Beneficiario Parentesco', 'Método Pago',
       'Requiere Factura', 'Factura Nombre', 'Factura Cédula', 'Factura Email',
-      'Estado Pago', 'Check-in', 'Fecha Check-in', 'Fecha Inscripción'
+      'Estado Pago', 'Check-in', 'Fecha Check-in', 'Fecha Inscripción', 'Monto a Cancelar (₡)'
     ];
 
     // Crear CSV
-    const filas = data.map((row: Record<string, unknown>) =>
-      columnas.map((col) => {
+    const filas = data.map((row: Record<string, unknown>) => {
+      // Calcular monto según evento y categoría
+      const paymentLink = getPaymentLink(String(row.evento || ''), String(row.categoria || ''));
+      const monto = paymentLink ? paymentLink.monto : '';
+
+      const valores = columnas.map((col) => {
         const valor = row[col];
         if (valor === null || valor === undefined) return '';
         if (typeof valor === 'boolean') return valor ? 'Sí' : 'No';
@@ -714,8 +720,12 @@ export default function AdminPage() {
           return `"${str.replace(/"/g, '""')}"`;
         }
         return str;
-      }).join(',')
-    );
+      });
+
+      // Agregar monto al final
+      valores.push(String(monto));
+      return valores.join(',');
+    });
 
     const csv = [encabezados.join(','), ...filas].join('\n');
 
