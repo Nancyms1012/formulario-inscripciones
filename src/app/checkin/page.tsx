@@ -519,14 +519,6 @@ export default function CheckinPage() {
           </button>
         </div>
 
-        {/* Acceso a Check-in Boxes */}
-        <div className="mt-6 text-center">
-          <a href="/checkin/boxes"
-            className="inline-block bg-[#1a7a3a] text-white px-6 py-3 rounded-lg font-medium hover:bg-green-800 transition-colors">
-            Ir a Check-in Boxes
-          </a>
-        </div>
-
         {/* QR para jueces (consulta de solo lectura) */}
         <div className="bg-white rounded-xl shadow-md p-6 mt-6 text-center">
           <h2 className="text-sm font-bold text-[#0d2240] uppercase mb-1">Consulta para Jueces</h2>
