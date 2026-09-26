@@ -408,9 +408,7 @@ export default function AdminPage() {
     return acc;
   }, {} as Record<string, number>);
 
-  // Subir CSV de dorsales (match por número de identificación)
-  const [subiendoDorsales, setSubiendoDorsales] = useState(false);
-  const [subiendoBoxes, setSubiendoBoxes] = useState(false);
+
 
   // Modal "Agregar inscripción" (inscripción manual en sitio)
   const [mostrarAgregar, setMostrarAgregar] = useState(false);
@@ -500,168 +498,9 @@ export default function AdminPage() {
     }
   };
 
-  // Descargar plantilla CSV para subir dorsales
-  const descargarPlantillaDorsales = () => {
-    const contenido = 'identificacion,dorsal\n109680438,101\n', // ejemplo
-      blob = new Blob(['\ufeff' + contenido], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'plantilla-dorsales.csv';
-    link.click();
-    URL.revokeObjectURL(url);
-  };
 
-  // Subir archivo de BOXES (Excel .xlsx o .csv). Columnas: RaceNr, RaceNr_1, Categoría, Número Box, SALIDA
-  const subirBoxes = async (file: File) => {
-    setSubiendoBoxes(true);
-    try {
-      const XLSX = await import('xlsx');
-      const buf = await file.arrayBuffer();
-      const wb = XLSX.read(buf, { type: 'array' });
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const filas = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: '' });
 
-      if (filas.length === 0) {
-        alert('El archivo está vacío.');
-        setSubiendoBoxes(false);
-        return;
-      }
 
-      // Detectar nombres de columnas (flexible ante variaciones)
-      const claves = Object.keys(filas[0]);
-      const col = (frags: string[]) =>
-        claves.find((k) => frags.some((f) => k.toLowerCase().includes(f))) || '';
-      const colDorsal = col(['racenr', 'dorsal', 'numero de corredor']);
-      const colNombre = claves.find((k) => k.toLowerCase() === 'racenr_1') || col(['nombre', '_1']);
-      const colCategoria = col(['categor']);
-      const colBox = col(['box']);
-      const colSalida = col(['salida', 'hora']);
-
-      if (!colDorsal || !colBox || !colSalida) {
-        alert('No se reconocen las columnas. Se esperan: RaceNr (dorsal), Número Box y SALIDA (hora).');
-        setSubiendoBoxes(false);
-        return;
-      }
-
-      // Convierte la hora: número Excel (fracción de día) o texto "HH:MM"
-      const parseHora = (v: unknown): string => {
-        if (typeof v === 'number') {
-          const mins = Math.round(v * 24 * 60);
-          const h = Math.floor(mins / 60);
-          const m = mins % 60;
-          return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-        }
-        const s = String(v).trim();
-        // Si ya viene "8:00" o "08:00:00"
-        const match = s.match(/(\d{1,2}):(\d{2})/);
-        if (match) return `${match[1].padStart(2, '0')}:${match[2]}`;
-        return s;
-      };
-
-      const registros = filas
-        .map((r, i) => ({
-          dorsal: String((r as Record<string, unknown>)[colDorsal] ?? '').trim(),
-          nombre_archivo: String((r as Record<string, unknown>)[colNombre] ?? '').trim(),
-          categoria: String((r as Record<string, unknown>)[colCategoria] ?? '').trim(),
-          box: String((r as Record<string, unknown>)[colBox] ?? '').trim(),
-          hora_salida: parseHora((r as Record<string, unknown>)[colSalida]),
-          orden: i, // respeta el orden del archivo
-        }))
-        .filter((r) => r.dorsal && r.box && r.hora_salida);
-
-      const { supabaseClient } = await import('@/lib/inscripcion-client');
-      // Reemplazar todo: borrar la parrilla anterior y cargar la nueva
-      await supabaseClient.from('boxes').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-      const { error } = await supabaseClient.from('boxes').insert(registros);
-
-      if (error) {
-        alert('Error al subir boxes: ' + error.message);
-      } else {
-        alert(`Parrilla de boxes cargada: ${registros.length} corredores.`);
-      }
-    } catch (err) {
-      alert('Error al procesar el archivo de boxes.');
-      console.error(err);
-    } finally {
-      setSubiendoBoxes(false);
-    }
-  };
-
-  const subirDorsales = async (file: File) => {
-    setSubiendoDorsales(true);
-    try {
-      const texto = await file.text();
-      const lineas = texto.split(/\r?\n/).filter((l) => l.trim());
-      if (lineas.length < 2) {
-        alert('El archivo está vacío o no tiene datos.');
-        setSubiendoDorsales(false);
-        return;
-      }
-
-      // Detectar el delimitador (coma, punto y coma o tab)
-      const primeraLinea = lineas[0];
-      const delim = primeraLinea.includes(';') ? ';' : primeraLinea.includes('\t') ? '\t' : ',';
-
-      // Detectar columnas del encabezado
-      const encabezado = primeraLinea.split(delim).map((h) => h.trim().toLowerCase());
-      const idxId = encabezado.findIndex((h) => h.includes('identificacion') || h.includes('identificación') || h.includes('cedula') || h.includes('cédula') || h === 'id');
-      const idxDorsal = encabezado.findIndex((h) => h.includes('dorsal') || h.includes('numero') || h.includes('número') || h === 'placa' || h === 'racenr');
-
-      if (idxId === -1 || idxDorsal === -1) {
-        alert('El CSV debe tener una columna de identificación (cédula) y una de dorsal.\n\nEjemplo de encabezado:\nidentificacion,dorsal');
-        setSubiendoDorsales(false);
-        return;
-      }
-
-      // Normaliza la cédula: quita todo lo que no sea dígito o letra (guiones, espacios, comillas)
-      const normalizarId = (v: string) => v.trim().replace(/["']/g, '').replace(/[\s-]/g, '');
-
-      // Traer todas las cédulas actuales para matchear de forma flexible (normalizada)
-      const { supabaseClient } = await import('@/lib/inscripcion-client');
-      const { data: todos } = await supabaseClient.from('inscripciones').select('id, numero_identificacion');
-      const idMap = new Map<string, string>(); // idNormalizado -> id de fila
-      for (const r of todos || []) {
-        if (r.numero_identificacion) idMap.set(normalizarId(String(r.numero_identificacion)), r.id);
-      }
-
-      let actualizados = 0;
-      let noEncontrados = 0;
-      const noEncontradosLista: string[] = [];
-
-      for (let i = 1; i < lineas.length; i++) {
-        const cols = lineas[i].split(delim);
-        const idVal = normalizarId(cols[idxId] || '');
-        const dorsalVal = (cols[idxDorsal] || '').trim().replace(/["']/g, '');
-        if (!idVal || !dorsalVal) continue;
-
-        const filaId = idMap.get(idVal);
-        if (filaId) {
-          const { error } = await supabaseClient
-            .from('inscripciones')
-            .update({ dorsal: dorsalVal })
-            .eq('id', filaId);
-          if (!error) actualizados++;
-          else noEncontrados++;
-        } else {
-          noEncontrados++;
-          if (noEncontradosLista.length < 10) noEncontradosLista.push(idVal);
-        }
-      }
-
-      const detalle = noEncontradosLista.length > 0
-        ? `\n\nEjemplos no encontrados (cédula normalizada):\n${noEncontradosLista.join(', ')}`
-        : '';
-      alert(`Dorsales actualizados: ${actualizados}\nNo encontrados: ${noEncontrados}${detalle}`);
-      cargarInscripciones();
-      cargarTodas();
-    } catch (err) {
-      alert('Error al procesar el CSV.');
-      console.error(err);
-    } finally {
-      setSubiendoDorsales(false);
-    }
-  };
 
   // Descargar CSV con todas las columnas
   const descargarCSV = async () => {
@@ -760,28 +599,6 @@ export default function AdminPage() {
           >
             + Agregar inscripción
           </button>
-          <button
-            onClick={descargarPlantillaDorsales}
-            className="bg-white border border-[#1a4f8b] text-[#1a4f8b] px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors text-sm"
-          >
-            Plantilla dorsales
-          </button>
-          <label className="bg-[#1a4f8b] text-white px-4 py-2 rounded-lg hover:bg-[#0d2240] transition-colors text-sm cursor-pointer">
-            {subiendoDorsales ? 'Subiendo...' : 'Subir dorsales (CSV)'}
-            <input type="file" accept=".csv" className="hidden" disabled={subiendoDorsales}
-              onChange={(e) => { const f = e.target.files?.[0]; if (f) subirDorsales(f); e.target.value = ''; }} />
-          </label>
-          <label className="bg-[#1a7a3a] text-white px-4 py-2 rounded-lg hover:bg-green-800 transition-colors text-sm cursor-pointer">
-            {subiendoBoxes ? 'Subiendo...' : 'Subir boxes'}
-            <input type="file" accept=".xlsx,.xls,.csv" className="hidden" disabled={subiendoBoxes}
-              onChange={(e) => { const f = e.target.files?.[0]; if (f) subirBoxes(f); e.target.value = ''; }} />
-          </label>
-          <a
-            href="/checkin"
-            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm"
-          >
-            Ir a Check-in
-          </a>
         </div>
       </div>
 
