@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f8fafc; padding: 20px;">
         <div style="background: #0d2240; padding: 20px; border-radius: 12px 12px 0 0; text-align: center;">
           <h1 style="color: white; margin: 0; font-size: 24px;">La Copa</h1>
-          <p style="color: #93c5fd; margin: 4px 0 0 0; font-size: 14px;">VI Fecha 13-14 Setiembre</p>
+          <p style="color: #93c5fd; margin: 4px 0 0 0; font-size: 14px;">VII Fecha Sarapiquí · 31 Octubre - 01 Noviembre</p>
         </div>
         <div style="background: white; padding: 30px; border-radius: 0 0 12px 12px; border: 1px solid #e2e8f0;">
           <h2 style="color: #0d2240; margin-top: 0;">Inscripcion exitosa!</h2>

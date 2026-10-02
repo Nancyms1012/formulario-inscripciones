@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "La Copa - VI Fecha Orosi",
-  description: "Formulario de inscripción - VI Fecha Orosi, 12 y 13 Setiembre - La Copa",
+  title: "La Copa - VII Fecha Sarapiquí",
+  description: "Formulario de inscripción - VII Fecha Sarapiquí, 31 Octubre - 01 Noviembre - La Copa",
 };
 
 export default function RootLayout({

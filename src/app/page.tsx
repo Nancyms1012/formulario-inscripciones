@@ -32,7 +32,7 @@ export default function Home() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-12">
       <div className="max-w-lg w-full text-center">
-        <h1 className="text-2xl font-bold text-[#0d2240] mb-2">VI Fecha Orosi · 12 y 13 Setiembre</h1>
+        <h1 className="text-2xl font-bold text-[#0d2240] mb-2">VII Fecha Sarapiquí · 31 Octubre - 01 Noviembre</h1>
         <p className="text-gray-600 mb-4">Selecciona tu evento para inscribirte</p>
 
         {/* Leyenda Guía Técnica */}

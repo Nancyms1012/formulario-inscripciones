@@ -502,19 +502,19 @@ export default function CheckinPage() {
           <button onClick={() => setModo('XCC')}
             className="bg-white rounded-xl shadow-md p-8 hover:shadow-xl transition-shadow border-2 border-transparent hover:border-[#0d2240] text-center">
             <p className="text-2xl font-bold text-[#0d2240]">XCC</p>
-            <p className="text-gray-500 mt-1">Sábado 12 Setiembre</p>
+            <p className="text-gray-500 mt-1">Sábado 31 Octubre</p>
             <p className="text-xs text-gray-400 mt-2">Short Track</p>
           </button>
           <button onClick={() => setModo('XCO')}
             className="bg-white rounded-xl shadow-md p-8 hover:shadow-xl transition-shadow border-2 border-transparent hover:border-[#0d2240] text-center">
             <p className="text-2xl font-bold text-[#0d2240]">XCO</p>
-            <p className="text-gray-500 mt-1">Domingo 13 Setiembre</p>
+            <p className="text-gray-500 mt-1">Domingo 01 Noviembre</p>
             <p className="text-xs text-gray-400 mt-2">Cross Country (sin Kids)</p>
           </button>
           <button onClick={() => setModo('KIDS')}
             className="bg-white rounded-xl shadow-md p-8 hover:shadow-xl transition-shadow border-2 border-transparent hover:border-[#1a7a3a] text-center">
             <p className="text-2xl font-bold text-[#1a7a3a]">Copa Kids</p>
-            <p className="text-gray-500 mt-1">Domingo 13 Setiembre</p>
+            <p className="text-gray-500 mt-1">Domingo 01 Noviembre</p>
             <p className="text-xs text-gray-400 mt-2">Balance · Niños · Preinfantil</p>
           </button>
         </div>
@@ -537,7 +537,7 @@ export default function CheckinPage() {
 
   // Etiquetas según el modo
   const modoLabel = modo === 'KIDS' ? 'Copa Kids' : modo;
-  const modoFecha = modo === 'XCC' ? 'Sábado 12 Setiembre' : 'Domingo 13 Setiembre';
+  const modoFecha = modo === 'XCC' ? 'Sábado 31 Octubre' : 'Domingo 01 Noviembre';
 
   const pendientes = statTotal.total - statTotal.hechos;
   const pct = statTotal.total > 0 ? Math.round((statTotal.hechos / statTotal.total) * 100) : 0;

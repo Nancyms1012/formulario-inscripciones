@@ -65,7 +65,7 @@ function MiInscripcionContent() {
     <div className="min-h-screen bg-gray-50 flex flex-col items-center px-4 py-10">
       <div className="w-full max-w-md">
         <h1 className="text-xl font-bold text-[#0d2240] text-center mb-1">Mi Inscripción</h1>
-        <p className="text-sm text-gray-500 text-center mb-6">VI Fecha Orosi · 12 y 13 Setiembre</p>
+        <p className="text-sm text-gray-500 text-center mb-6">VII Fecha Sarapiquí · 31 Octubre - 01 Noviembre</p>
 
         {/* Buscador manual */}
         <div className="bg-white rounded-xl shadow-md p-4 mb-6">

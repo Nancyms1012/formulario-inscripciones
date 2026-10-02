@@ -46,7 +46,7 @@ export default function InscritosPortada() {
       <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-2xl w-full">
         {/* Título */}
         <h1 className="text-2xl font-bold text-[#0d2240] text-center mb-1">
-          VI Fecha Orosi · 12 y 13 Setiembre
+          VII Fecha Sarapiquí · 31 Octubre - 01 Noviembre
         </h1>
         <p className="text-gray-600 text-center mb-8">
           Escaneá el código QR para ver los inscritos
