@@ -164,3 +164,6 @@ export const PARENTESCOS = [
 
 // Métodos de pago
 export const METODOS_PAGO = ['Tarjeta', 'Sinpe', 'Efectivo'];
+
+// Tallas de camiseta (Copa Kids)
+export const TALLAS_CAMISETA = ['2', '4', '6', '8', '10', '12', '14', '16', 'XS', 'S', 'M'];

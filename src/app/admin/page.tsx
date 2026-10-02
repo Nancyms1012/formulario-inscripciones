@@ -21,6 +21,7 @@ interface Inscripcion {
   genero: string;
   provincia: string;
   canton?: string;
+  talla_camiseta?: string;
   equipo?: string;
   tipo_licencia?: string;
   uci_id?: string;
@@ -526,7 +527,7 @@ export default function AdminPage() {
     const columnas = [
       'codigo_inscripcion', 'nacionalidad', 'tipo_identificacion', 'numero_identificacion',
       'nombre', 'primer_apellido', 'segundo_apellido', 'celular', 'email',
-      'fecha_nacimiento', 'genero', 'lateralidad', 'provincia', 'equipo', 'tipo_licencia', 'uci_id',
+      'fecha_nacimiento', 'genero', 'lateralidad', 'provincia', 'talla_camiseta', 'equipo', 'tipo_licencia', 'uci_id',
       'evento', 'categoria', 'beneficiario_nombre', 'beneficiario_cedula',
       'beneficiario_telefono', 'beneficiario_parentesco', 'metodo_pago',
       'requiere_factura', 'factura_nombre', 'factura_cedula', 'factura_email',
@@ -536,7 +537,7 @@ export default function AdminPage() {
     const encabezados = [
       'Código', 'Nacionalidad', 'Tipo ID', '# Identificación',
       'Nombre', 'Primer Apellido', 'Segundo Apellido', 'Celular', 'Email',
-      'Fecha Nacimiento', 'Género', 'Lateralidad', 'Provincia', 'Equipo', 'Tipo Licencia', 'UCI ID',
+      'Fecha Nacimiento', 'Género', 'Lateralidad', 'Provincia', 'Talla Camiseta', 'Equipo', 'Tipo Licencia', 'UCI ID',
       'Evento', 'Categoría', 'Beneficiario Nombre', 'Beneficiario Cédula',
       'Beneficiario Teléfono', 'Beneficiario Parentesco', 'Método Pago',
       'Requiere Factura', 'Factura Nombre', 'Factura Cédula', 'Factura Email',

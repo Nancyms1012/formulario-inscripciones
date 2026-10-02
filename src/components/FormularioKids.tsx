@@ -9,6 +9,7 @@ import {
   NACIONALIDADES,
   PARENTESCOS,
   METODOS_PAGO,
+  TALLAS_CAMISETA,
   CURRENT_YEAR,
 } from '@/lib/categories';
 import type { Gender, EventType } from '@/lib/categories';
@@ -35,6 +36,7 @@ export default function FormularioKids() {
   const [provincia, setProvincia] = useState('');
   const [canton, setCanton] = useState('');
   const [lateralidad, setLateralidad] = useState('');
+  const [tallaCamiseta, setTallaCamiseta] = useState('');
 
   // Categoría
   const [categoria, setCategoria] = useState('');
@@ -195,6 +197,7 @@ export default function FormularioKids() {
       provincia,
       canton,
       lateralidad,
+      tallaCamiseta,
       categoria,
       equipo,
       encargadoNombre,
@@ -515,6 +518,15 @@ export default function FormularioKids() {
               <option value="Diestro">{"Diestro"}</option>
               <option value="Zurdo">{"Zurdo"}</option>
               <option value="Ambidiestro">{"Ambidiestro"}</option>
+            </select>
+          </div>
+          {/* Talla de camiseta */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{"Talla de camiseta *"}</label>
+            <select value={tallaCamiseta} onChange={(e) => setTallaCamiseta(e.target.value)} required
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent">
+              <option value="">{"Seleccionar..."}</option>
+              {TALLAS_CAMISETA.map((t) => (<option key={t} value={t}>{t}</option>))}
             </select>
           </div>
         </div>
