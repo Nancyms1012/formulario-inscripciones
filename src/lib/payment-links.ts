@@ -57,6 +57,13 @@ export const PAYMENT_LINKS: Record<string, PaymentLink> = {
   'XCC|Cyclocross': { url: 'https://tp.cr/l/MTUxNjQ0', monto: 7000 },
   'XCO|Cyclocross': { url: 'https://tp.cr/l/MTUxNjQ0', monto: 7000 },
   'XCO+XCC|Cyclocross': { url: 'https://tp.cr/l/MTUxNjQ0', monto: 7000 },
+  // Cyclocross Élite y Máster (mismo link de Cyclocross, ₡7.000)
+  'XCC|Cyclocross Élite': { url: 'https://tp.cr/l/MTUxNjQ0', monto: 7000 },
+  'XCO|Cyclocross Élite': { url: 'https://tp.cr/l/MTUxNjQ0', monto: 7000 },
+  'XCO+XCC|Cyclocross Élite': { url: 'https://tp.cr/l/MTUxNjQ0', monto: 7000 },
+  'XCC|Cyclocross Máster': { url: 'https://tp.cr/l/MTUxNjQ0', monto: 7000 },
+  'XCO|Cyclocross Máster': { url: 'https://tp.cr/l/MTUxNjQ0', monto: 7000 },
+  'XCO+XCC|Cyclocross Máster': { url: 'https://tp.cr/l/MTUxNjQ0', monto: 7000 },
   'XCO+XCC|E-Bike': { url: 'https://tp.cr/l/MTE4NTU3', monto: 17000 },
   'XCO|E-Bike': { url: 'https://tp.cr/l/MTQ5ODE=', monto: 17000 },
 

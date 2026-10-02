@@ -64,10 +64,12 @@ export function getCompetitiveAge(birthYear: number): number {
 
 // Categorías adicionales (abiertas) y en qué eventos aplican
 // Estas NO dependen de la edad exacta más allá de un mínimo, y aparecen como opción extra
-export const CATEGORIAS_ESPECIALES: { name: string; gender: 'F' | 'M' | 'F/M'; minAge: number; eventos: EventType[] }[] = [
+// maxAge opcional: si se define, la categoría solo aparece hasta esa edad (ej. Élite 19-34)
+export const CATEGORIAS_ESPECIALES: { name: string; gender: 'F' | 'M' | 'F/M'; minAge: number; maxAge?: number; eventos: EventType[] }[] = [
   { name: 'E-Bike', gender: 'F/M', minAge: 18, eventos: ['XCO', 'XCO+XCC'] },
-  // Cyclocross desactivado: no se corre en esta fecha. Descomentar para reactivar.
-  // { name: 'Cyclocross', gender: 'F/M', minAge: 17, eventos: ['XCO', 'XCC', 'XCO+XCC'] },
+  // Cyclocross: Élite (19-34) y Máster (35+), ambos géneros. Usan el link de pago de Cyclocross.
+  { name: 'Cyclocross Élite', gender: 'F/M', minAge: 19, maxAge: 34, eventos: ['XCO', 'XCC', 'XCO+XCC'] },
+  { name: 'Cyclocross Máster', gender: 'F/M', minAge: 35, eventos: ['XCO', 'XCC', 'XCO+XCC'] },
   { name: 'Pasados de línea', gender: 'M', minAge: 18, eventos: ['XCO', 'XCC', 'XCO+XCC'] },
   { name: 'Ligas menores', gender: 'F/M', minAge: 0, eventos: ['XCC'] },
 
@@ -111,7 +113,9 @@ export function getAvailableCategories(
   for (const esp of CATEGORIAS_ESPECIALES) {
     if (!esp.eventos.includes(event)) continue;
     if (esp.gender !== 'F/M' && esp.gender !== gender) continue;
-    if (age >= esp.minAge) {
+    const cumpleMin = age >= esp.minAge;
+    const cumpleMax = esp.maxAge === undefined || age <= esp.maxAge;
+    if (cumpleMin && cumpleMax) {
       available.add(`${esp.name} ${genderLabel}`);
     }
   }
