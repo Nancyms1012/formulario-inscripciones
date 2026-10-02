@@ -71,7 +71,8 @@ export const CATEGORIAS_ESPECIALES: { name: string; gender: 'F' | 'M' | 'F/M'; m
   { name: 'Cyclocross Élite', gender: 'F/M', minAge: 19, maxAge: 34, eventos: ['XCO', 'XCC', 'XCO+XCC'] },
   { name: 'Cyclocross Máster', gender: 'F/M', minAge: 35, eventos: ['XCO', 'XCC', 'XCO+XCC'] },
   { name: 'Pasados de línea', gender: 'M', minAge: 18, eventos: ['XCO', 'XCC', 'XCO+XCC'] },
-  { name: 'Ligas menores', gender: 'F/M', minAge: 0, eventos: ['XCC'] },
+  // Ligas menores desactivada: no se usa en esta fecha. Descomentar para reactivar.
+  // { name: 'Ligas menores', gender: 'F/M', minAge: 0, eventos: ['XCC'] },
 
 ];
 
