@@ -1,6 +1,8 @@
 // Lógica de categorías para La Copa
 // Edad competitiva = Año actual (2026) - Año de nacimiento
 
+import { getPaymentLink } from './payment-links';
+
 export const CURRENT_YEAR = 2026;
 
 export type Gender = 'F' | 'M';
@@ -121,7 +123,9 @@ export function getAvailableCategories(
     }
   }
 
-  return Array.from(available);
+  // Solo devolver categorías que TIENEN link de pago configurado para este evento
+  // (evita ofrecer categorías sin precio/pago, ej. en XCO+XCC+XCE)
+  return Array.from(available).filter((cat) => getPaymentLink(event, cat) !== null);
 }
 
 // Eventos disponibles

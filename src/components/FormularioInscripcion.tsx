@@ -42,7 +42,10 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
   // Eventos según modo
   const eventosDisponibles = modo === 'kids'
     ? (['Copa Kids'] as EventType[])
-    : (['XCO', 'XCC', 'XCO+XCC'] as EventType[]);
+    : (['XCO', 'XCC', 'XCO+XCC', 'XCO+XCC+XCE'] as EventType[]);
+  // Etiqueta amigable para mostrar al usuario (el valor interno se mantiene)
+  const etiquetaEvento = (ev: EventType): string =>
+    ev === 'XCO+XCC+XCE' ? 'XCO+XCC+Cyclocross' : ev;
   const [equipo, setEquipo] = useState('');
   const [tipoLicencia, setTipoLicencia] = useState('');
   const [uciId, setUciId] = useState('');
@@ -535,7 +538,7 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
             <select value={evento} onChange={(e) => setEvento(e.target.value)} required
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#1a4f8b] focus:border-transparent">
               <option value="">Seleccionar evento...</option>
-              {eventosDisponibles.map((ev) => (<option key={ev} value={ev}>{ev}</option>))}
+              {eventosDisponibles.map((ev) => (<option key={ev} value={ev}>{etiquetaEvento(ev)}</option>))}
             </select>
           </div>
           {/* Categoría */}
@@ -594,7 +597,7 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
             <div className="bg-[#0d2240] text-white rounded-lg p-4 text-center">
               <p className="text-sm text-blue-200">Monto a pagar</p>
               <p className="text-3xl font-bold">₡{paymentLink.monto.toLocaleString('es-CR')}</p>
-              <p className="text-xs text-blue-200 mt-1">{evento} · {categoria}</p>
+              <p className="text-xs text-blue-200 mt-1">{etiquetaEvento(evento as EventType)} · {categoria}</p>
             </div>
           )}
           {evento && categoria && !paymentLink && (
