@@ -15,14 +15,16 @@ export function getCategoriaBase(categoria: string): string {
 // Mapa: "evento|categoriaBase" -> link de pago
 export const PAYMENT_LINKS: Record<string, PaymentLink> = {
   // ===== XCO+XCC+XCE =====
-  'XCO+XCC+XCE|Élite': { url: 'https://tilo.co/s/Smw8fwjG', monto: 34000 },
-  'XCO+XCC+XCE|Sub 23': { url: 'https://tilo.co/s/Smw8fwjG', monto: 34000 },
-  'XCO+XCC+XCE|Juvenil': { url: 'https://tilo.co/s/8gMjG8qz', monto: 26000 },
-  'XCO+XCC+XCE|Máster A': { url: 'https://tilo.co/s/veH5DHSG', monto: 29000 },
-  'XCO+XCC+XCE|Máster B': { url: 'https://tilo.co/s/veH5DHSG', monto: 29000 },
-  'XCO+XCC+XCE|Máster C': { url: 'https://tilo.co/s/veH5DHSG', monto: 29000 },
-  'XCO+XCC+XCE|Máster D': { url: 'https://tilo.co/s/veH5DHSG', monto: 29000 },
-  'XCO+XCC+XCE|Máster E': { url: 'https://tilo.co/s/veH5DHSG', monto: 29000 },
+  // XCO+XCC+Cyclocross: monto = precio XCO+XCC + ₡7.000 de Cyclocross.
+  // url vacía = sin link de tarjeta; el pago se hace por SINPE o Efectivo.
+  'XCO+XCC+XCE|Élite': { url: '', monto: 35000 },
+  'XCO+XCC+XCE|Sub 23': { url: '', monto: 35000 },
+  'XCO+XCC+XCE|Juvenil': { url: '', monto: 27000 },
+  'XCO+XCC+XCE|Máster A': { url: '', monto: 30000 },
+  'XCO+XCC+XCE|Máster B': { url: '', monto: 30000 },
+  'XCO+XCC+XCE|Máster C': { url: '', monto: 30000 },
+  'XCO+XCC+XCE|Máster D': { url: '', monto: 30000 },
+  'XCO+XCC+XCE|Máster E': { url: '', monto: 30000 },
 
   // ===== XCC (Short Track) =====
   'XCC|Élite': { url: 'https://tilo.co/s/kMn7JEzG', monto: 6000 },

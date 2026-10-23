@@ -110,6 +110,13 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
     }
   }, [genero, anio, evento]);
 
+  // Si el evento/categoría no tiene link de tarjeta, no permitir método Tarjeta
+  useEffect(() => {
+    if (metodoPago === 'Tarjeta' && (!paymentLink || !paymentLink.url)) {
+      setMetodoPago('');
+    }
+  }, [evento, categoria, paymentLink, metodoPago]);
+
 
   // Validar # Identificación según nacionalidad y tipo
   const handleNumeroIdChange = (value: string) => {
@@ -209,8 +216,8 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
 
     // ===== TARJETA: NO se guarda hasta que el pago sea exitoso =====
     if (metodoPago === 'Tarjeta') {
-      if (!paymentLink) {
-        setError('No se encontró el link de pago para esta categoría.');
+      if (!paymentLink || !paymentLink.url) {
+        setError('Para este evento el pago con tarjeta no está disponible. Usá SINPE Móvil o Efectivo.');
         return;
       }
       try {
@@ -665,7 +672,9 @@ export default function FormularioInscripcion({ modo }: { modo: 'copa' | 'kids' 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Método de pago *</label>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {METODOS_PAGO.map((metodo) => (
+              {METODOS_PAGO
+                .filter((metodo) => metodo !== 'Tarjeta' || (paymentLink && paymentLink.url))
+                .map((metodo) => (
                 <label key={metodo}
                   className={`flex items-center justify-center p-3 border-2 rounded-lg cursor-pointer transition-all ${
                     metodoPago === metodo ? 'border-[#1a4f8b] bg-blue-50 text-[#0d2240] font-medium' : 'border-gray-200 hover:border-gray-300'
