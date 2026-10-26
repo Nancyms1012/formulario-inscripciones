@@ -302,7 +302,6 @@ export interface InscripcionKidsData {
   provincia: string;
   canton: string;
   lateralidad: string;
-  tallaCamiseta: string;
   categoria: string;
   equipo: string;
   encargadoNombre: string;
@@ -358,7 +357,6 @@ export async function guardarInscripcionKids(datos: InscripcionKidsData): Promis
       genero: datos.genero,
       provincia: datos.provincia,
       canton: datos.canton,
-      talla_camiseta: datos.tallaCamiseta,
       equipo: datos.equipo,
       tipo_licencia: '',
       uci_id: '',
