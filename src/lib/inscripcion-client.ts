@@ -9,7 +9,7 @@ const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 export const supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
 
 // Cupo máximo total para Copa Kids
-export const CUPO_MAXIMO_KIDS = 150;
+export const CUPO_MAXIMO_KIDS = 130;
 
 /**
  * Devuelve cuántos inscritos hay en Copa Kids y cuántos cupos quedan (sobre CUPO_MAXIMO_KIDS).

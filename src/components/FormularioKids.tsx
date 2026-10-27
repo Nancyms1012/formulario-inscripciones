@@ -71,7 +71,7 @@ export default function FormularioKids() {
 
   // Cupos Kids
   const [cuposDisponibles, setCuposDisponibles] = useState<number | null>(null);
-  const [cupoMaximo, setCupoMaximo] = useState<number>(150);
+  const [cupoMaximo, setCupoMaximo] = useState<number>(130);
   // Estado de apertura/cierre (manual o por fecha)
   const [inscripcionesAbiertas, setInscripcionesAbiertas] = useState<boolean | null>(null);
 

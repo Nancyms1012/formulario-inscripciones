@@ -659,7 +659,7 @@ export default function AdminPage() {
               guardando={guardandoConfig}
               onToggle={(abierto) => guardarConfig('kids', { abierto })}
               onFecha={(cierre_at) => guardarConfig('kids', { cierre_at })}
-              nota="Copa Kids también se cierra automáticamente al llegar a los 150 cupos."
+              nota="Copa Kids también se cierra automáticamente al llegar a los 130 cupos."
             />
           </div>
         </div>
