@@ -986,6 +986,14 @@ export default function AdminPage() {
                           Ver
                         </button>
                         <button
+                          onClick={() => reenviarCorreo(insc)}
+                          disabled={reenviando === insc.id}
+                          className="text-green-700 hover:text-green-900 hover:bg-green-50 rounded px-2 py-1 text-xs font-medium transition-colors disabled:opacity-50"
+                          title="Reenviar el correo de confirmación con el QR (al correo guardado en la inscripción)"
+                        >
+                          {reenviando === insc.id ? 'Enviando...' : 'Reenviar correo'}
+                        </button>
+                        <button
                           onClick={() => eliminarInscripcion(insc.id, `${insc.nombre} ${insc.primer_apellido}`, insc.codigo_inscripcion)}
                           className="text-red-600 hover:text-red-800 hover:bg-red-50 rounded px-2 py-1 text-xs font-medium transition-colors"
                           title="Eliminar inscripción"
