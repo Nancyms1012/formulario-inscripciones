@@ -71,14 +71,6 @@ export default function AdminPage() {
   const [editando, setEditando] = useState(false);
   const [editForm, setEditForm] = useState<Partial<Inscripcion>>({});
   const [guardandoEdit, setGuardandoEdit] = useState(false);
-  // Subida de dorsales por CSV
-  const [subiendoDorsales, setSubiendoDorsales] = useState(false);
-  const [resultadoDorsales, setResultadoDorsales] = useState<{
-    asignados: number;
-    noEncontrados: string[];
-    filasInvalidas: number;
-    total: number;
-  } | null>(null);
 
   // Iniciar edición: copiar datos del detalle al formulario
   const iniciarEdicion = () => {
@@ -510,143 +502,6 @@ export default function AdminPage() {
 
 
 
-  // Descargar una plantilla CSV de ejemplo para la carga de dorsales.
-  // Match por cédula (# de identificación). nombre/equipo/categoria son solo referencia.
-  const descargarPlantillaDorsales = () => {
-    const encabezado = 'cedula;dorsal;nombre;equipo;categoria';
-    const ejemplos = [
-      '210130539;101;Nombre Apellido;Equipo de ejemplo;Infantil Masculino',
-      '148400585008;102;Otro Nombre;Otro Equipo;Élite Femenino',
-    ];
-    const csv = [encabezado, ...ejemplos].join('\r\n');
-    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'plantilla_dorsales.csv';
-    link.click();
-    URL.revokeObjectURL(url);
-  };
-
-  // Parsea una línea CSV respetando comillas. Acepta separador ; o ,
-  const parsearLineaCSV = (linea: string, sep: string): string[] => {
-    const campos: string[] = [];
-    let actual = '';
-    let entreComillas = false;
-    for (let i = 0; i < linea.length; i++) {
-      const c = linea[i];
-      if (c === '"') {
-        if (entreComillas && linea[i + 1] === '"') {
-          actual += '"';
-          i++;
-        } else {
-          entreComillas = !entreComillas;
-        }
-      } else if (c === sep && !entreComillas) {
-        campos.push(actual);
-        actual = '';
-      } else {
-        actual += c;
-      }
-    }
-    campos.push(actual);
-    return campos.map((s) => s.trim());
-  };
-
-  // Subir dorsales desde un CSV. Match por cédula (numero_identificacion).
-  const subirDorsalesCSV = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    e.target.value = ''; // permite volver a subir el mismo archivo
-    if (!file) return;
-
-    setSubiendoDorsales(true);
-    setResultadoDorsales(null);
-    try {
-      let texto = await file.text();
-      // Quitar BOM si viene de Excel
-      if (texto.charCodeAt(0) === 0xfeff) texto = texto.slice(1);
-
-      const lineas = texto.split(/\r?\n/).filter((l) => l.trim() !== '');
-      if (lineas.length === 0) {
-        alert('El archivo está vacío.');
-        setSubiendoDorsales(false);
-        return;
-      }
-
-      // Detectar separador: el que más aparezca en la primera línea (; o ,)
-      const primera = lineas[0];
-      const sep = (primera.split(';').length - 1) >= (primera.split(',').length - 1) ? ';' : ',';
-
-      // Detectar si la primera fila es encabezado (contiene "cedula" o "dorsal")
-      const primeraMin = primera.toLowerCase();
-      const hayEncabezado = primeraMin.includes('cedula') || primeraMin.includes('cédula') || primeraMin.includes('dorsal') || primeraMin.includes('identificacion');
-      const filasDatos = hayEncabezado ? lineas.slice(1) : lineas;
-
-      // Construir pares {cedula, dorsal}
-      const pares: { cedula: string; dorsal: string }[] = [];
-      let filasInvalidas = 0;
-      for (const linea of filasDatos) {
-        const cols = parsearLineaCSV(linea, sep);
-        const cedula = (cols[0] || '').replace(/\s+/g, '');
-        const dorsal = (cols[1] || '').trim();
-        if (!cedula || !dorsal) {
-          filasInvalidas++;
-          continue;
-        }
-        pares.push({ cedula, dorsal });
-      }
-
-      if (pares.length === 0) {
-        alert('No se encontraron filas válidas (se esperan columnas: cédula ; dorsal).');
-        setSubiendoDorsales(false);
-        return;
-      }
-
-      const { supabaseClient } = await import('@/lib/inscripcion-client');
-
-      // Traer las cédulas existentes para saber cuáles no hacen match
-      const { data: existentes, error: errExist } = await supabaseClient
-        .from('inscripciones')
-        .select('numero_identificacion');
-      if (errExist) {
-        alert('Error consultando inscripciones: ' + errExist.message);
-        setSubiendoDorsales(false);
-        return;
-      }
-      const setCedulas = new Set((existentes || []).map((r: { numero_identificacion: string }) => (r.numero_identificacion || '').replace(/\s+/g, '')));
-
-      let asignados = 0;
-      const noEncontrados: string[] = [];
-
-      // Actualizar una por una (match exacto por cédula)
-      for (const { cedula, dorsal } of pares) {
-        if (!setCedulas.has(cedula)) {
-          noEncontrados.push(cedula);
-          continue;
-        }
-        const { error: errUpd } = await supabaseClient
-          .from('inscripciones')
-          .update({ dorsal })
-          .eq('numero_identificacion', cedula);
-        if (errUpd) {
-          noEncontrados.push(cedula + ' (error al guardar)');
-        } else {
-          asignados++;
-        }
-      }
-
-      setResultadoDorsales({ asignados, noEncontrados, filasInvalidas, total: pares.length });
-      // Refrescar las listas para ver los dorsales ya asignados
-      cargarInscripciones();
-      cargarTodas();
-    } catch (err) {
-      console.error(err);
-      alert('Error procesando el archivo: ' + (err instanceof Error ? err.message : 'desconocido'));
-    } finally {
-      setSubiendoDorsales(false);
-    }
-  };
-
   // Descargar CSV con todas las columnas
   const descargarCSV = async () => {
     // Traer datos aplicando filtros actuales
@@ -737,22 +592,6 @@ export default function AdminPage() {
             className="bg-[#1a4f8b] text-white px-4 py-2 rounded-lg hover:bg-[#0d2240] transition-colors text-sm"
           >
             Descargar CSV
-          </button>
-          <label className={`bg-amber-500 text-white px-4 py-2 rounded-lg hover:bg-amber-600 transition-colors text-sm font-medium cursor-pointer ${subiendoDorsales ? 'opacity-50 pointer-events-none' : ''}`}>
-            {subiendoDorsales ? 'Subiendo...' : '📋 Subir dorsales (CSV)'}
-            <input
-              type="file"
-              accept=".csv,text/csv"
-              onChange={subirDorsalesCSV}
-              disabled={subiendoDorsales}
-              className="hidden"
-            />
-          </label>
-          <button
-            onClick={descargarPlantillaDorsales}
-            className="bg-white text-amber-700 border border-amber-500 px-4 py-2 rounded-lg hover:bg-amber-50 transition-colors text-sm"
-          >
-            Plantilla dorsales
           </button>
           <button
             onClick={() => setMostrarAgregar(true)}
@@ -1365,55 +1204,6 @@ export default function AdminPage() {
       )}
 
       {/* ===== MODAL: Agregar inscripción manual ===== */}
-      {resultadoDorsales && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setResultadoDorsales(null)}>
-          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="bg-amber-500 text-white px-6 py-4 rounded-t-xl flex items-center justify-between sticky top-0">
-              <h2 className="font-bold text-lg">Resultado: subida de dorsales</h2>
-              <button onClick={() => setResultadoDorsales(null)} className="text-white hover:bg-white/20 rounded-lg w-8 h-8 flex items-center justify-center text-xl">&times;</button>
-            </div>
-            <div className="p-6 space-y-4 text-sm">
-              <div className="grid grid-cols-3 gap-3 text-center">
-                <div className="bg-green-50 rounded-lg p-3">
-                  <p className="text-2xl font-bold text-green-700">{resultadoDorsales.asignados}</p>
-                  <p className="text-gray-600 text-xs">Dorsales asignados</p>
-                </div>
-                <div className="bg-red-50 rounded-lg p-3">
-                  <p className="text-2xl font-bold text-red-700">{resultadoDorsales.noEncontrados.length}</p>
-                  <p className="text-gray-600 text-xs">Cédulas sin match</p>
-                </div>
-                <div className="bg-gray-100 rounded-lg p-3">
-                  <p className="text-2xl font-bold text-gray-700">{resultadoDorsales.filasInvalidas}</p>
-                  <p className="text-gray-600 text-xs">Filas inválidas</p>
-                </div>
-              </div>
-              <p className="text-gray-600">
-                Se procesaron <strong>{resultadoDorsales.total}</strong> filas con cédula y dorsal.
-              </p>
-              {resultadoDorsales.noEncontrados.length > 0 && (
-                <div>
-                  <p className="font-semibold text-red-700 mb-1">Cédulas que NO se encontraron en inscripciones:</p>
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-3 max-h-48 overflow-y-auto">
-                    <ul className="list-disc list-inside text-red-800 space-y-0.5">
-                      {resultadoDorsales.noEncontrados.map((c, i) => (
-                        <li key={i} className="font-mono text-xs">{c}</li>
-                      ))}
-                    </ul>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1">Revisá que la cédula esté escrita igual que en la inscripción. Esos dorsales no se asignaron.</p>
-                </div>
-              )}
-              <button
-                onClick={() => setResultadoDorsales(null)}
-                className="w-full bg-[#1a4f8b] text-white font-bold py-2 rounded-lg hover:bg-[#0d2240]"
-              >
-                Entendido
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {mostrarAgregar && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setMostrarAgregar(false)}>
           <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
