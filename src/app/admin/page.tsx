@@ -68,6 +68,8 @@ export default function AdminPage() {
   const [consCategoria, setConsCategoria] = useState(''); // filtro por categoría
   const [consProvincia, setConsProvincia] = useState(''); // provincia seleccionada en el mapa
   const [consBusqueda, setConsBusqueda] = useState(''); // buscador del detalle por corredor
+  const [detEvento, setDetEvento] = useState(''); // filtro por evento (solo detalle por corredor)
+  const [detCategoria, setDetCategoria] = useState(''); // filtro por categoría (solo detalle por corredor)
 
   const cargarHistorico = async () => {
     if (histCargado) return;
@@ -809,8 +811,12 @@ export default function AdminPage() {
         const maxC = cantonesOrd.length ? cantonesOrd[0].cantidad : 0;
 
         // Detalle por corredor: map cédula -> {nombre, VI: categoria, VII: categoria}
+        // Usa sus propios filtros (detEvento/detCategoria), independientes de los de arriba.
+        const pasaDet = (r: HistRow) =>
+          (!detEvento || r.evento === detEvento) &&
+          (!detCategoria || r.categoria === detCategoria);
         const porCorredor = new Map<string, { nombre: string; vi: string; vii: string }>();
-        historico.filter(pasaFiltro).forEach((r) => {
+        historico.filter(pasaDet).forEach((r) => {
           const ced = r.numero_identificacion || '(sin céd)';
           if (!porCorredor.has(ced)) {
             const nom = [r.nombre, r.primer_apellido, r.segundo_apellido].filter(Boolean).join(' ').trim();
@@ -931,6 +937,25 @@ export default function AdminPage() {
                 <span className="text-xs text-gray-500">{corredores.length} corredores · {enAmbas} en ambas fechas</span>
                 <input value={consBusqueda} onChange={(e) => setConsBusqueda(e.target.value)} placeholder="Buscar nombre o cédula…"
                   className="border border-gray-300 rounded-lg px-3 py-2 text-sm sm:ml-auto w-full sm:w-64" />
+              </div>
+              <div className="flex flex-wrap items-end gap-3 mb-4">
+                <div>
+                  <label className="text-xs text-gray-600 block mb-1">Evento</label>
+                  <select value={detEvento} onChange={(e) => setDetEvento(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                    <option value="">Todos</option>
+                    {eventos.map((ev) => <option key={ev} value={ev}>{ev}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs text-gray-600 block mb-1">Categoría</label>
+                  <select value={detCategoria} onChange={(e) => setDetCategoria(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                    <option value="">Todas</option>
+                    {categorias.map((c) => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+                {(detEvento || detCategoria) && (
+                  <button onClick={() => { setDetEvento(''); setDetCategoria(''); }} className="text-xs text-[#1a4f8b] hover:underline pb-2">Limpiar filtros</button>
+                )}
               </div>
               <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
                 <table className="w-full text-sm">
