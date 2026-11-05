@@ -48,3 +48,14 @@ CREATE INDEX IF NOT EXISTS idx_hist_cedula  ON public.inscripciones_historico (n
 
 -- Verificación
 SELECT 'Tabla inscripciones_historico lista' AS resultado;
+
+
+-- ============================================================
+-- SI AL INSERTAR DA ERROR "violates row-level security policy":
+-- correr esto (deshabilita RLS y, por si acaso, crea una política permisiva).
+-- ============================================================
+ALTER TABLE public.inscripciones_historico DISABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS hist_all ON public.inscripciones_historico;
+CREATE POLICY hist_all ON public.inscripciones_historico
+  FOR ALL TO anon USING (true) WITH CHECK (true);
