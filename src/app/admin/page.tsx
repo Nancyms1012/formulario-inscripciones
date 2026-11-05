@@ -58,7 +58,29 @@ export default function AdminPage() {
   const [reenviando, setReenviando] = useState<string | null>(null); // id en proceso
   const [reenviandoLote, setReenviandoLote] = useState(false);
   const [busqueda, setBusqueda] = useState('');
-  const [tab, setTab] = useState<'inscripciones' | 'resumen' | 'cantones' | 'control'>('inscripciones');
+  const [tab, setTab] = useState<'inscripciones' | 'resumen' | 'cantones' | 'control' | 'consolidado'>('inscripciones');
+  // ===== Consolidado VI vs VII (lee de inscripciones_historico) =====
+  interface HistRow { fecha_evento: string; numero_identificacion: string; nombre: string; primer_apellido: string; segundo_apellido: string; provincia: string; canton: string; equipo: string; evento: string; categoria: string; }
+  const [historico, setHistorico] = useState<HistRow[]>([]);
+  const [histCargado, setHistCargado] = useState(false);
+  const [consFecha, setConsFecha] = useState<'ambas' | 'VI' | 'VII'>('ambas'); // filtro de fecha para el mapa
+  const [consEvento, setConsEvento] = useState(''); // filtro por evento
+  const [consCategoria, setConsCategoria] = useState(''); // filtro por categoría
+  const [consProvincia, setConsProvincia] = useState(''); // provincia seleccionada en el mapa
+  const [consBusqueda, setConsBusqueda] = useState(''); // buscador del detalle por corredor
+
+  const cargarHistorico = async () => {
+    if (histCargado) return;
+    try {
+      const { supabaseClient } = await import('@/lib/inscripcion-client');
+      const { data, error } = await supabaseClient
+        .from('inscripciones_historico')
+        .select('fecha_evento, numero_identificacion, nombre, primer_apellido, segundo_apellido, provincia, canton, equipo, evento, categoria');
+      if (error) { console.error(error); return; }
+      setHistorico((data || []) as HistRow[]);
+      setHistCargado(true);
+    } catch (e) { console.error(e); }
+  };
   const [cantonEvento, setCantonEvento] = useState(''); // filtro de evento para la gráfica de cantones
   // Control de apertura/cierre de inscripciones
   const [configCopa, setConfigCopa] = useState<{ abierto: boolean; cierre_at: string | null } | null>(null);
@@ -636,6 +658,14 @@ export default function AdminPage() {
         >
           Abrir/Cerrar
         </button>
+        <button
+          onClick={() => { setTab('consolidado'); cargarHistorico(); }}
+          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+            tab === 'consolidado' ? 'border-[#0d2240] text-[#0d2240]' : 'border-transparent text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          Consolidado
+        </button>
       </div>
 
       {/* ===== TAB CONTROL (abrir/cerrar inscripciones) ===== */}
@@ -743,6 +773,191 @@ export default function AdminPage() {
           </div>
         </div>
       )}
+
+      {/* ===== TAB CONSOLIDADO (VI vs VII) ===== */}
+      {tab === 'consolidado' && (() => {
+        // Filas filtradas por evento/categoría (para cards, mapa y detalle)
+        const pasaFiltro = (r: HistRow) =>
+          (!consEvento || r.evento === consEvento) &&
+          (!consCategoria || r.categoria === consCategoria);
+        const filtradas = historico.filter(pasaFiltro);
+        const viRows = filtradas.filter((r) => r.fecha_evento === 'VI');
+        const viiRows = filtradas.filter((r) => r.fecha_evento === 'VII');
+
+        // Opciones de filtro
+        const eventos = Array.from(new Set(historico.map((r) => r.evento).filter(Boolean))).sort();
+        const categorias = Array.from(new Set(historico.map((r) => r.categoria).filter(Boolean))).sort();
+
+        // Resumen por evento de una fecha
+        const porEvento = (rows: HistRow[]) => {
+          const m: Record<string, number> = {};
+          rows.forEach((r) => { m[r.evento || '(sin evento)'] = (m[r.evento || '(sin evento)'] || 0) + 1; });
+          return Object.entries(m).sort((a, b) => b[1] - a[1]);
+        };
+
+        // Conteo por provincia según el filtro de fecha (para el mapa)
+        const rowsMapa = consFecha === 'VI' ? viRows : consFecha === 'VII' ? viiRows : filtradas;
+        const conteoProv: Record<string, number> = {};
+        rowsMapa.forEach((r) => { if (r.provincia) conteoProv[r.provincia] = (conteoProv[r.provincia] || 0) + 1; });
+        const totalMapa = rowsMapa.length;
+
+        // Detalle por cantón (según provincia seleccionada + filtro de fecha)
+        const rowsCanton = rowsMapa.filter((r) => !consProvincia || r.provincia === consProvincia);
+        const cantonM: Record<string, number> = {};
+        rowsCanton.forEach((r) => { const c = r.canton || '(sin cantón)'; cantonM[c] = (cantonM[c] || 0) + 1; });
+        const cantonesOrd = Object.entries(cantonM).map(([canton, cantidad]) => ({ canton, cantidad })).sort((a, b) => b.cantidad - a.cantidad);
+        const maxC = cantonesOrd.length ? cantonesOrd[0].cantidad : 0;
+
+        // Detalle por corredor: map cédula -> {nombre, VI: categoria, VII: categoria}
+        const porCorredor = new Map<string, { nombre: string; vi: string; vii: string }>();
+        historico.filter(pasaFiltro).forEach((r) => {
+          const ced = r.numero_identificacion || '(sin céd)';
+          if (!porCorredor.has(ced)) {
+            const nom = [r.nombre, r.primer_apellido, r.segundo_apellido].filter(Boolean).join(' ').trim();
+            porCorredor.set(ced, { nombre: nom, vi: '', vii: '' });
+          }
+          const e = porCorredor.get(ced)!;
+          if (r.fecha_evento === 'VI') e.vi = `${r.categoria} (${r.evento})`;
+          if (r.fecha_evento === 'VII') e.vii = `${r.categoria} (${r.evento})`;
+        });
+        let corredores = Array.from(porCorredor.entries()).map(([ced, v]) => ({ ced, ...v }));
+        const bq = consBusqueda.trim().toLowerCase();
+        if (bq) corredores = corredores.filter((c) => c.nombre.toLowerCase().includes(bq) || c.ced.includes(bq));
+        corredores.sort((a, b) => a.nombre.localeCompare(b.nombre));
+        const enAmbas = corredores.filter((c) => c.vi && c.vii).length;
+
+        if (!histCargado) {
+          return <div className="text-center text-gray-500 py-10">Cargando datos del consolidado…</div>;
+        }
+
+        return (
+          <div>
+            <h2 className="text-lg font-bold text-[#0d2240] mb-1">Consolidado VI vs VII Fecha</h2>
+            <p className="text-sm text-gray-500 mb-4">Comparación de inscripciones entre las dos fechas (por cédula).</p>
+
+            {/* Filtros */}
+            <div className="flex flex-wrap gap-3 mb-5">
+              <div>
+                <label className="text-xs text-gray-600 block mb-1">Evento</label>
+                <select value={consEvento} onChange={(e) => setConsEvento(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                  <option value="">Todos</option>
+                  {eventos.map((ev) => <option key={ev} value={ev}>{ev}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs text-gray-600 block mb-1">Categoría</label>
+                <select value={consCategoria} onChange={(e) => setConsCategoria(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                  <option value="">Todas</option>
+                  {categorias.map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+            </div>
+
+            {/* Cards resumen por fecha */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              {[{ t: 'VI Fecha', rows: viRows, color: '#1a4f8b' }, { t: 'VII Fecha', rows: viiRows, color: '#0d2240' }].map((f) => (
+                <div key={f.t} className="bg-white rounded-xl shadow-md p-5">
+                  <div className="flex items-baseline justify-between mb-3">
+                    <h3 className="text-base font-bold" style={{ color: f.color }}>{f.t}</h3>
+                    <span className="text-3xl font-bold" style={{ color: f.color }}>{f.rows.length}</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mb-2">inscritos{consEvento || consCategoria ? ' (con filtro)' : ''}</p>
+                  <div className="space-y-1">
+                    {porEvento(f.rows).map(([ev, n]) => (
+                      <div key={ev} className="flex justify-between text-sm border-b border-gray-100 py-0.5">
+                        <span className="text-gray-700">{ev}</span><span className="font-semibold text-[#0d2240]">{n}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Mapa por provincia con filtro de fecha */}
+            <div className="bg-white rounded-xl shadow-md p-5 mb-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+                <div>
+                  <h3 className="text-sm font-bold text-[#0d2240]">Mapa por provincia</h3>
+                  <p className="text-xs text-gray-500">{totalMapa} inscrito(s) · {consFecha === 'ambas' ? 'ambas fechas' : consFecha + ' Fecha'}</p>
+                </div>
+                <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
+                  {(['ambas', 'VI', 'VII'] as const).map((op) => (
+                    <button key={op} onClick={() => setConsFecha(op)}
+                      className={`px-3 py-1 rounded-md text-xs font-medium ${consFecha === op ? 'bg-white shadow text-[#0d2240]' : 'text-gray-500'}`}>
+                      {op === 'ambas' ? 'Ambas' : op}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="max-w-2xl mx-auto">
+                <MapaProvincias conteo={conteoProv} provinciaActiva={consProvincia} onSelectProvincia={setConsProvincia} />
+              </div>
+            </div>
+
+            {/* Detalle por cantón */}
+            <div className="bg-white rounded-xl shadow-md p-5 mb-6">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-4">
+                <h3 className="text-sm font-bold text-[#0d2240]">Detalle por cantón</h3>
+                <select value={consProvincia} onChange={(e) => setConsProvincia(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 text-sm sm:ml-auto">
+                  <option value="">Todas las provincias</option>
+                  {Object.keys(CANTONES_POR_PROVINCIA).map((prov) => <option key={prov} value={prov}>{prov}</option>)}
+                </select>
+                {consProvincia && <button onClick={() => setConsProvincia('')} className="text-xs text-[#1a4f8b] hover:underline">Ver todas</button>}
+              </div>
+              {cantonesOrd.length === 0 ? <p className="text-gray-400 text-center py-4">Sin datos.</p> : (
+                <div className="space-y-2">
+                  {cantonesOrd.map(({ canton, cantidad }) => {
+                    const pct = maxC > 0 ? Math.round((cantidad / maxC) * 100) : 0;
+                    const pctTotal = totalMapa > 0 ? ((cantidad / totalMapa) * 100).toFixed(1) : '0';
+                    return (
+                      <div key={canton} className="flex items-center gap-3">
+                        <div className="w-40 shrink-0 text-sm text-gray-700 text-right truncate" title={canton}>{canton}</div>
+                        <div className="flex-1 bg-gray-100 rounded-full h-6 overflow-hidden">
+                          <div className="bg-[#1a4f8b] h-6 rounded-full flex items-center justify-end px-2" style={{ width: `${Math.max(pct, 8)}%` }}>
+                            <span className="text-xs font-bold text-white">{cantidad} · {pctTotal}%</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Detalle por corredor (VI / VII) */}
+            <div className="bg-white rounded-xl shadow-md p-5">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-3">
+                <h3 className="text-sm font-bold text-[#0d2240]">Detalle por corredor</h3>
+                <span className="text-xs text-gray-500">{corredores.length} corredores · {enAmbas} en ambas fechas</span>
+                <input value={consBusqueda} onChange={(e) => setConsBusqueda(e.target.value)} placeholder="Buscar nombre o cédula…"
+                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm sm:ml-auto w-full sm:w-64" />
+              </div>
+              <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-100 sticky top-0">
+                    <tr>
+                      <th className="px-3 py-2 text-left font-semibold text-gray-700">Corredor</th>
+                      <th className="px-3 py-2 text-left font-semibold text-gray-700">Cédula</th>
+                      <th className="px-3 py-2 text-left font-semibold text-gray-700">VI Fecha</th>
+                      <th className="px-3 py-2 text-left font-semibold text-gray-700">VII Fecha</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {corredores.map((c) => (
+                      <tr key={c.ced} className="border-b border-gray-100 hover:bg-gray-50">
+                        <td className="px-3 py-2">{c.nombre || '—'}</td>
+                        <td className="px-3 py-2 font-mono text-xs text-gray-500">{c.ced}</td>
+                        <td className={`px-3 py-2 text-xs ${c.vi ? 'text-gray-700' : 'text-gray-300'}`}>{c.vi || '—'}</td>
+                        <td className={`px-3 py-2 text-xs ${c.vii ? 'text-gray-700' : 'text-gray-300'}`}>{c.vii || '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ===== TAB RESUMEN ===== */}
       {tab === 'resumen' && (
